@@ -1,0 +1,226 @@
+/* Story captions use 32px on desktop and 24px on mobile. */
+.page {
+  --anyday-caption-gap: 2rem;
+  /* Every card's media shares one frame: 792 × 440 on desktop. */
+  --anyday-card-aspect: 1.8;
+  /* How much of that frame a 2000 × 1075 annotated export fills once it is
+     letterboxed, so its marks and notes stay on the screen beneath. */
+  --anyday-marked-fill: calc(var(--anyday-card-aspect) / (2000 / 1075) * 100%);
+  /* The opening film's portal window is 1236 × 740 of a 1620 × 1080 frame.
+     This zoom trims the outer restaurant so the window sits closer to evenly
+     inset on the shared frame. */
+  --anyday-opening-zoom: 1.06;
+}
+
+.openingVideo {
+  aspect-ratio: var(--anyday-card-aspect);
+}
+
+.openingVideo
+  :is(:global(.anyday-video-hairline), :global(.anyday-video-player)) {
+  height: 100%;
+  aspect-ratio: auto !important;
+}
+
+.openingVideo :is(video, :global(.anyday-video-backdrop)) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100% !important;
+  object-fit: cover;
+  scale: var(--anyday-opening-zoom);
+}
+
+/* These containers use in-flow story captions, so they need no tile reserve. */
+.page :global(.pg-tile) {
+  margin-block-end: 0;
+  scroll-margin-block-end: 0;
+}
+
+.page :global(.anyday-reveal) > :global(.anyday-row):last-child {
+  margin-block-end: 0;
+}
+
+.page .story :global(.humi-story-media) > figcaption {
+  margin-block-start: var(--anyday-caption-gap);
+}
+
+/* Match the 600px narrative measure while keeping the shared reading edge. */
+.page p.caption {
+  width: min(100%, 600px);
+  margin-block: var(--anyday-caption-gap) 5rem;
+  margin-inline: 0;
+  padding-inline: 1.5rem;
+  color: var(--anyday-muted);
+  font-size: var(--site-text-narrative);
+  letter-spacing: var(--site-tracking-body);
+  line-height: var(--site-leading-narrative);
+  text-wrap: pretty;
+}
+
+.page :global(.anyday-prose) > p.caption {
+  padding-inline: 0;
+}
+
+.page p.caption strong {
+  color: var(--anyday-ink);
+  font-weight: var(--humi-weight-medium);
+}
+
+/* The shared card supplies the media width and gutters. */
+.story :global(.anyday-row) {
+  width: 100%;
+  margin: 0;
+  padding-inline: 0;
+}
+
+/* Every card's media is cut to the shared frame. Wider exports cover it and
+   lose a little at each side; taller ones lose a little top and bottom. */
+.payoutVideo,
+.story :global(.anyday-row--column),
+.story :global(.anyday-client-portal-grid .pg-grid),
+.story :global(.anyday-fin-support-board),
+.story :global(.humi-story-card > figure > .humi-story-media__zoom) {
+  aspect-ratio: var(--anyday-card-aspect) !important;
+}
+
+.story :global(.anyday-figure__frame) {
+  aspect-ratio: var(--anyday-card-aspect) !important;
+}
+
+.story :global(.anyday-figure__zoom) {
+  min-width: 0;
+  aspect-ratio: auto !important;
+}
+
+.story :global(.anyday-client-portal-grid .pg-grid) {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.story :global(.anyday-client-portal-grid .anyday-client-portal-tile) {
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+.story :global(.anyday-client-portal-grid video),
+.payoutVideo video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+/* Saving's two phones split the shared frame between them. */
+.story :global(.anyday-row--column) {
+  align-items: stretch;
+}
+
+.story :global(.anyday-row--column > .anyday-figure),
+.story :global(.anyday-row--column .anyday-figure__lift),
+.story :global(.anyday-row--column .anyday-figure__frame) {
+  height: 100%;
+  aspect-ratio: auto !important;
+}
+
+/* The annotated legacy screens letterbox on their own ground instead of
+   cropping, so each handwritten mark still lands on what it points at. */
+.story
+  :global(.humi-story-card > figure > .humi-story-media__zoom)
+  :is(
+    :global(.humi-story-media__tilt),
+    :global(.humi-story-media__stage),
+    :global(.humi-story-media__frame),
+    :global(.humi-story-media__frame img)
+  ) {
+  height: 100%;
+}
+
+.story
+  :global(.humi-story-media__frame--marked)
+  > :global(.humi-story-annotations__marks),
+.story
+  :global(.humi-story-media__stage:has(> .humi-story-media__frame--marked))
+  > :global(.humi-story-annotations) {
+  inset-block: calc((100% - var(--anyday-marked-fill)) / 2);
+  height: var(--anyday-marked-fill);
+}
+
+/* The phone board keeps its composition at every width, like the portal. */
+.story :global(.anyday-phone-board) {
+  aspect-ratio: var(--anyday-card-aspect) !important;
+}
+
+.story :global(.anyday-phone-board) > :global(.humi-story-annotations__marks),
+.story :global(.anyday-phone-board-stage) > :global(.humi-story-annotations) {
+  inset-block: calc((100% - var(--anyday-marked-fill)) / 2);
+  height: var(--anyday-marked-fill);
+}
+
+/* Text-only findings keep the same caption edge, measure, and type as Humi. */
+.note {
+  max-width: 38rem;
+  margin-inline-start: max(0px, calc((100% - 42.25rem) / 2));
+}
+
+.story :global(.humi-story-media) figcaption > p,
+.story .note > p,
+.story :global(p.humi-impact__lede) {
+  max-width: 600px;
+  margin: 0;
+  font-size: var(--site-text-narrative);
+  letter-spacing: var(--site-tracking-body);
+  line-height: var(--site-leading-narrative);
+  text-wrap: pretty;
+}
+
+.note strong {
+  font-weight: var(--humi-weight-medium);
+}
+
+.note span {
+  color: var(--humi-muted);
+}
+
+.story :global(.humi-impact__lede + .humi-impact__lede) {
+  margin-block-start: 1.25rem;
+}
+
+@media (max-width: 40rem) {
+  .page {
+    --anyday-caption-gap: 1.5rem;
+    --anyday-card-aspect: 1.5;
+    /* At 3:2 the window sits evenly inset: 126px of the 1620 × 1080 frame on
+       every side. */
+    --anyday-opening-zoom: 1.089;
+  }
+
+  .page p.caption {
+    margin-block: var(--anyday-caption-gap) 3.5rem;
+    line-height: 1.4;
+  }
+
+  .story .note > p,
+  .story :global(p.humi-impact__lede) {
+    line-height: 1.4;
+  }
+}
+
+/* Keep the compact teardown notes close-set beside the legacy screens. */
+.story :global(.humi-story-annotations__note) {
+  line-height: 1;
+}
+
+@media (min-width: 78rem) {
+  .story :global(.humi-story-annotations__note) {
+    --note-size: 1.8cqw;
+    font-size: var(--note-size);
+    transform-origin: left center;
+  }
+}
+
+@media (min-width: 78rem) {
+  .story :global(.humi-story-annotations__note--left) {
+    transform-origin: right center;
+  }
+}

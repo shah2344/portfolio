@@ -1,0 +1,487 @@
+@reference "../../../app/globals.css";
+
+/* Two cards share the homepage column until the smaller tablet breakpoint. */
+.root {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.panel {
+  min-width: 0;
+  container-type: inline-size;
+  position: sticky;
+  top: 48px;
+}
+
+/* The tile carries the shadow, the surface clips the artwork, and Lisse draws
+   the outside hairline and inner rim from the edge surface onto the tile. */
+.tile {
+  --site-media-surface: #fcfbf9;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  border: 0;
+  padding: 0;
+  border-radius: var(--case-study-card-radius);
+  box-shadow: var(--site-shadow-media);
+  color: var(--editorial-ink);
+  transform-origin: 50% 0;
+}
+
+/* Both rings follow the real outer card edge, including its corner shape. */
+.tile:has(.tileLink:focus-visible) {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
+  animation: var(--site-focus-animation);
+}
+
+.surface {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  overflow: hidden;
+  border-radius: calc(var(--case-study-card-radius) - 0.5px);
+  background: var(--site-media-surface);
+}
+
+.edge {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* AnyDay only changes the inner stroke's transparency. */
+.panel[data-tone="dark"] .tile {
+  --site-media-stroke: rgb(255 255 255 / 20%);
+
+  @variant dark {
+    --site-media-stroke: rgb(255 255 255 / 8%);
+  }
+}
+
+.panel[data-tone="light"] .tile {
+  @variant dark {
+    --site-media-stroke: rgb(255 255 255 / 10%);
+  }
+}
+
+/* A card is artwork, and keeps the tone it was drawn in whatever the page
+   around it does: Humi's illustration is exported on its own light ground, so
+   its copy keeps the dark ink instead of following the page's to white, and
+   a mark keeps its white tile rather than taking the dark icon the rest of
+   the page gives it. */
+@media (prefers-color-scheme: dark) {
+  .panel[data-tone="light"] .tile {
+    color: #2a2a2a;
+  }
+
+  .tile .brand .mark {
+    background: #ffffff;
+  }
+
+  .tile .brand .mark img {
+    filter: none;
+  }
+}
+
+.tile,
+.surface,
+.edge,
+.tileLink {
+}
+
+/* #1e1103 is the shadow brown in the top of the kitchen photograph — the
+   darkest of its wall — so the ground the reflection fades into is the room's
+   own dark, not a neutral one. */
+.panel[data-tone="dark"] .tile {
+  --site-media-surface: #1e1103;
+  /* The reveal's timing, shared by everything that waits on the film's first
+     frame here and in `anyday-film.module.css`. An even ease-out rather than
+     the page's steep one: that did most of its fade in the first beat, so the
+     film arrived as a bright smear. */
+  --tile-reveal: 720ms cubic-bezier(0.215, 0.61, 0.355, 1);
+  color: #ffffff;
+}
+
+/*
+ * Until the film has a frame, the filmed tile waits on its own brown ground,
+ * with the film's stand-in — the still, its haze and reflection baked in —
+ * already on it. The ground never changes, so the reveal is only the film
+ * fading in over it — a light skeleton here flipped the whole card from grey
+ * to near-black the moment the film landed, which read as a flash. The film
+ * then fades in over its still (see
+ * `.film video[data-waiting]`). The copy doesn't wait: it is legible on the
+ * bare ground, so it arrives with the page rather than with the film.
+ */
+
+/* --- AnyDay: the film at the foot ---------------------------------------- */
+
+/* A tenth wider than the tile and centred, so the product window reads larger
+   and the kitchen at its sides runs off the tile's edges. The whole stage is
+   widened, not the film alone, so its reflection stays on the same pixels.
+   It tucks a little way under the copy — the film's top sixth is only wall
+   — but only a little: the copy should sit on the hazed reflection, not on
+   the film's own sharp strip of wall. */
+.film,
+.stage {
+  z-index: 1;
+  width: 110%;
+  margin-block-start: -20px;
+}
+
+/* Crop the counter's dark foot. Film and reflection scale together. */
+.film {
+  scale: 1.09;
+  transform-origin: 50% 0;
+}
+
+/* The same brown, laid over the hazed top of the tile: near-solid at the top
+   edge, thinning through the copy, and gone before the product window. It
+   deepens the blur rather than greying it, and keeps white type off the
+   brightest of the wall.
+
+   A deep brown ramp has only a few dozen 8-bit steps to spend over several
+   hundred pixels, and so does the blurred wall under it; both band. A faint
+   grain tiled over the same box dithers those steps apart. It is one small
+   SVG, rasterised once and composited with ordinary alpha — no blend mode,
+   nothing redrawn per frame of the film. The box stops short of the product
+   window and feathers out, so the screen is never grained. */
+.panel[data-tone="dark"] .surface::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 60%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 .045'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(
+      to bottom,
+      rgb(30 17 3 / 100%),
+      rgb(30 17 3 / 90%) 30%,
+      rgb(30 17 3 / 48%) 58%,
+      rgb(30 17 3 / 0%) 86%
+    );
+  background-size:
+    128px 128px,
+    100% 100%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* --- Copy, centred at the top -------------------------------------------- */
+
+.copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 32px 16px 0;
+  text-align: center;
+  z-index: 20;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: var(--site-text-label);
+  letter-spacing: var(--site-tracking-17);
+  font-weight: 590;
+  font-family: var(--site-font-display);
+  line-height: var(--site-leading-label);
+}
+
+/* On the card the mark stands on its own: none of the shared mark's ring, side
+   shadows or inner hairline, which read as a border at this size. Three
+   classes deep so it outweighs the shared treatment and its doubled Montran
+   selector. It is also cut to a full circle rather than the shared tile's
+   rounded square. */
+.tile .brand .mark {
+  --mark-radius: 0.5;
+  box-shadow: none;
+}
+
+/* Humi's supplied glyph is its own rounded mark, so on the card it is drawn
+   bare: no tile fill, no Lisse edge layers, clip or inset, filling the full
+   mark height. */
+.tile .brand .mark:global(.experience-item__mark--humi) {
+  --mark-radius: 0;
+  --lisse-radius: 0px;
+  --lisse-border-width: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.tile .brand .mark:global(.experience-item__mark--humi) > svg,
+.tile .brand .mark:global(.experience-item__mark--humi)::before,
+.tile .brand .mark:global(.experience-item__mark--humi)::after {
+  display: none;
+}
+
+.tile .brand .mark:global(.experience-item__mark--humi) img {
+  width: 100%;
+  padding: 0;
+  object-fit: contain;
+}
+
+.tile .brand .mark::before {
+  content: none;
+}
+
+/* An app icon carries its own tile, corners and sheen, so it is drawn as
+   supplied. */
+.icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.headline {
+  max-width: 15ch;
+  margin: 0;
+  font-size: clamp(1.375rem, 7.6cqw, 1.625rem);
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-display);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* The clipped link covers the artwork; the tile draws its external focus ring. */
+.tileLink {
+  position: absolute;
+  z-index: 25;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.tileLink:focus-visible {
+  outline: none;
+  animation: none;
+}
+
+/* --- Humi: the illustration, enlarged and framed slightly higher --------- */
+
+/* The same frame the film takes — a tenth wider than the tile, at the film's
+   3:2 — so both tiles come out the same height. The illustration stands on
+   its floor, centred and wider than the frame, with a small upward offset
+   to crop the artwork's margins and bring the figures closer. */
+.stage {
+  position: relative;
+  aspect-ratio: 3 / 2;
+}
+
+.illustration {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 120%;
+  max-width: none;
+  height: auto;
+  translate: -50% 0;
+}
+
+/* --- The tile underneath settles back ------------------------------------ */
+
+@keyframes settle {
+  to {
+    transform: scale(0.94);
+    filter: brightness(0.7) blur(7px);
+    opacity: 0.25;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Held until the next tile is a third of the way in, so the one being
+       read isn't already shrinking the moment the next one's edge appears. */
+    .tile[data-recedes] {
+      animation: settle linear both;
+      animation-range: entry 35% entry 100%;
+    }
+
+    /* On a phone the tiles are short against a tall viewport, so the next
+       one's entry is over almost as soon as it appears. Hold the settle until
+       that tile is wholly in view and let it run as it rises over this one. */
+    @media (max-width: 40rem) {
+      .tile[data-recedes] {
+        animation-range: contain 20% contain 100%;
+      }
+    }
+  }
+}
+
+/* TEMPORARY: the stack is switched off — the tiles no longer pin and rise
+   over one another, and the one underneath no longer shrinks, blurs, or
+   fades. They sit one after the other in the column. Delete these rules to
+   bring the stack back; everything above is left as it was. Scoped under
+   `.root` so it also outweighs the phone breakpoint's `top` below. */
+.root .panel {
+  position: relative;
+  top: auto;
+}
+
+.tile[data-recedes] {
+  animation: none;
+}
+
+/* A small lift on hover, composed with the scroll-driven settle. The ease is
+   an even ease-out, not the page's steep flight curve: that covered most of
+   the distance in its first tenth of a second, so the lift read as a snap.
+   It rises slowly and settles back a little quicker. The shadow deepens with
+   it, so the lift reads as elevation rather than the card simply growing. It
+   has the same four layers as `--site-shadow-media`, so each one
+   interpolates instead of popping. */
+@media (hover: hover) {
+  .panel {
+    --tile-hover-ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  .tile {
+    transition: box-shadow 380ms var(--tile-hover-ease);
+  }
+
+  .panel:hover .tile {
+    box-shadow:
+      0 56px 40px -14px #00000014,
+      0 28px 18px -8px #0000000c,
+      0 12px 8px -2px #0000000c,
+      0 2px 2px 0 #00000008;
+    transition-duration: 600ms;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .panel {
+    transition: scale 380ms var(--tile-hover-ease);
+  }
+
+  .panel:hover {
+    scale: 1.01;
+    transition-duration: 600ms;
+  }
+}
+
+/* Pressing gives way at once, before the click lands and the page changes. */
+@media (prefers-reduced-motion: no-preference) {
+  .panel:has(.tileLink:active) {
+    scale: 0.98;
+    transition: scale 120ms var(--site-ease-standard);
+  }
+}
+
+@media (max-width: 40rem) {
+  /* The shorter stacked cards take the Feed's corner, so 20px doesn't read
+     as rounder here. The case-study pages keep the shared token. */
+  .root {
+    --case-study-card-radius: var(--r-md);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .headline {
+    font-size: clamp(1.625rem, 6.5cqw, 2rem);
+  }
+
+  .panel {
+    top: 24px;
+  }
+
+  /* Stacked cards run a little shorter: the artwork's foot is cropped, and
+     Humi's figures sit lower into the frame. */
+  .film,
+  .stage {
+    margin-block: -12px -16px;
+  }
+
+  /* Lift the film, without shortening the card, so the product window's
+     bottom gap matches its side gaps. */
+  .film {
+    translate: 0 -14px;
+  }
+
+  .illustration {
+    bottom: -4px;
+  }
+}
+
+/* Compact cards leave a little extra height above the artwork. */
+@media (min-width: 40.001rem) {
+  .tile {
+    height: 356px;
+  }
+  .surface {
+    height: 100%;
+  }
+  .film,
+  .stage {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+  }
+  /* Match the product window's side gaps to its bottom gap. The phone
+     layout already uses a wider film; compact cards need this extra zoom.
+     Centre it to preserve the bottom spacing and crop the dark counter. */
+  .film {
+    scale: 1.17;
+    transform-origin: 50% 50%;
+  }
+}
+
+.tile .brand .mark {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: none;
+}
+.tile .brand .mark::before,
+.tile .brand .mark::after {
+  content: none;
+}
+.tile .brand .mark img {
+  padding: 2px 0;
+  object-fit: contain;
+}
+.tile .brand .mark img {
+  @variant dark {
+    filter: none;
+  }
+}
+.panel[data-tone="light"] .tile {
+  @variant dark {
+    color: #2a2a2a;
+  }
+}
+@media (hover: hover) {
+  .tile,
+  .panel {
+    transition-duration: 220ms;
+  }
+  .panel:hover,
+  .panel:hover .tile {
+    transition-duration: 220ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .tile,
+  .panel:hover,
+  .panel:hover .tile {
+    transition: none;
+  }
+}
+
+/* The artwork clip and edge surface share Lisse's measured corner radius. */
+.surface,
+.edge {
+  --lisse-radius: var(--case-study-card-radius);
+}

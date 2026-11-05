@@ -1,0 +1,188 @@
+.root > :global(.section-heading) {
+  padding-block-start: 0;
+}
+
+/* A size container, so the preview can be held inside the column below. */
+.frame {
+  position: relative;
+  container-type: inline-size;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  border-block-end: 0.5px solid rgb(0 0 0 / 12%);
+  transition: opacity var(--site-duration-medium) var(--site-ease-standard);
+}
+
+.frame[data-active] .item:not(:hover, :focus-within) {
+  opacity: 0.4;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 40px;
+  color: var(--editorial-ink);
+  text-decoration: none;
+  border-radius: 16px;
+  outline-offset: var(--site-focus-gap);
+}
+
+.meta {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 510;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  color: var(--editorial-muted);
+}
+
+.meta span:first-child {
+  margin-inline-end: 4px;
+  color: var(--editorial-ink);
+}
+
+/* One sentence, two tones, at section-headline size. */
+.headline {
+  max-width: 20ch;
+  margin: 0;
+  font-size: clamp(32px, 5.4vw, 48px);
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-display);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.quiet {
+  color: #86868b;
+  transition: color var(--site-duration-medium) var(--site-ease-standard);
+}
+
+.row:hover .quiet,
+.row:focus-visible .quiet {
+  color: var(--editorial-ink);
+}
+
+.proof {
+  max-width: 44ch;
+  margin-block-start: 4px;
+  font-size: 18px;
+  letter-spacing: var(--site-tracking-17);
+  line-height: 1.47;
+  color: var(--editorial-muted);
+}
+
+.proof strong {
+  font-weight: 590;
+  color: var(--editorial-ink);
+}
+
+.more {
+  margin-block-start: 2px;
+}
+
+.row:hover .more {
+  text-decoration: underline;
+}
+
+.thumb {
+  display: none;
+}
+
+/* --- Preview under the cursor -------------------------------------------- */
+
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  aspect-ratio: 1.59;
+  pointer-events: none;
+  /* Beside the pointer where there's room, pinned to the column's right edge
+     where there isn't, so it never pushes the page sideways. */
+  transform: translate(
+    clamp(0px, var(--x, 0px) + 32px, 100cqw - 340px),
+    calc(var(--y, 0px) - 50%)
+  );
+  transition: transform 500ms var(--site-ease-flight);
+  z-index: 2;
+}
+
+.layer > div {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 10%),
+    0 30px 60px -12px rgb(0 0 0 / 22%);
+  opacity: 0;
+  transform: scale(0.6);
+  transform-origin: 0 50%;
+  transition:
+    opacity 200ms var(--site-ease-standard),
+    transform 500ms var(--site-ease-flight);
+}
+
+@supports (corner-shape: squircle) {
+  .layer > div {
+    border-radius: 44px;
+    corner-shape: squircle;
+  }
+}
+
+.layer > div[data-on] {
+  opacity: 1;
+  transform: none;
+}
+
+.layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+@media (hover: none), (max-width: 48rem) {
+  .layer {
+    display: none;
+  }
+
+  .thumb {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-block-end: 32px;
+    border-radius: 20px;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 8%);
+  }
+
+  .row {
+    padding-block-end: 24px;
+  }
+
+  .frame[data-active] .item:not(:hover, :focus-within) {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .quiet,
+  .layer,
+  .layer > div {
+    transition: opacity 120ms linear;
+  }
+
+  .layer > div {
+    transform: none;
+  }
+}

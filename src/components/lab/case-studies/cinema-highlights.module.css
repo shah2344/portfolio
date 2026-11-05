@@ -1,0 +1,231 @@
+/* The homepage column: 724px with 24px gutters. */
+.root {
+  width: min(100%, 724px);
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+@media (max-width: 40rem) {
+  .root {
+    padding-inline: 24px;
+  }
+}
+
+.heading {
+  max-width: 20ch;
+  margin: 0 0 28px;
+  font-size: clamp(28px, 5.4vw, 40px);
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-display);
+  line-height: 1.1;
+  color: var(--editorial-ink);
+  text-wrap: balance;
+}
+
+/* A two-tone headline: the statement, then its quieter half. */
+.heading span {
+  color: #86868b;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 330 / 540;
+  border-radius: 28px;
+  background: #fcfbf9;
+  color: var(--editorial-ink);
+  transition: transform 400ms var(--site-ease-flight);
+}
+
+@supports (corner-shape: squircle) {
+  .card {
+    border-radius: 52px;
+    corner-shape: squircle;
+  }
+}
+
+.card[data-tone="dark"] {
+  background: #1a1108;
+  color: #ffffff;
+}
+
+.card:has(.link:hover) {
+  transform: scale(1.012);
+}
+
+/* --- AnyDay: the film at the foot ---------------------------------------- */
+
+/* Pinned to the card's floor and wider than it — the card is narrow, so the
+   product window needs the extra size more than the kitchen at its sides
+   does. On a layer beneath the copy (the card is isolated), which leaves the
+   copy unpositioned, so the heading link's overlay measures itself against
+   the card, not the copy block. */
+.card .film {
+  position: absolute;
+  right: -9%;
+  bottom: 0;
+  left: -9%;
+  width: auto;
+  z-index: -2;
+}
+
+/* Deepest behind the copy and gone before the product window, passing
+   through the film's join on the way rather than stopping at it. A faint
+   grain rides on the same box to dither the ramp and the blurred wall under
+   it, which both band in 8-bit; see the note on the C1 tile's shade. */
+.card[data-tone="dark"]::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 62%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 .045'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(
+      to bottom,
+      rgb(20 12 4 / 55%),
+      rgb(20 12 4 / 22%) 61.3%,
+      rgb(20 12 4 / 0%) 90.3%
+    );
+  background-size:
+    128px 128px,
+    100% 100%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* --- Humi: the illustration, centred on the floor -------------------------- */
+
+/* Wider than the card and centred on it, so all five figures stand on the
+   card's bottom edge with the illustration's own margins cropped away. */
+.illustration {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 140%;
+  max-width: none;
+  height: auto;
+  translate: -50% 0;
+  z-index: -1;
+  transform-origin: 50% 100%;
+  transition: scale 700ms var(--site-ease-flight);
+}
+
+.card:has(.link:hover) .illustration {
+  scale: 1.03;
+}
+
+/* --- Copy, top-left ---------------------------------------------------------- */
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 28px 28px 0;
+}
+
+.copy > :first-child {
+  margin-block-end: 14px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 590;
+  line-height: 16px;
+  color: var(--editorial-muted);
+}
+
+.card[data-tone="dark"] .eyebrow {
+  color: rgb(255 255 255 / 72%);
+}
+
+.name {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-display);
+  line-height: 1.1;
+}
+
+.tagline {
+  max-width: 17ch;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 590;
+  font-family: var(--site-font-display);
+  font-variation-settings: var(--site-font-display-axes);
+  letter-spacing: var(--site-tracking-display-20);
+  line-height: 1.21;
+  color: var(--editorial-muted);
+  text-wrap: balance;
+}
+
+.card[data-tone="dark"] .tagline {
+  color: rgb(255 255 255 / 72%);
+}
+
+/* The heading's link covers the card, so the whole card is one target. */
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.link:focus-visible {
+  outline: none;
+  animation: none;
+}
+
+.card:has(.link:focus-visible) {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
+  animation: var(--site-focus-animation);
+}
+
+@media (max-width: 40rem) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card {
+    aspect-ratio: 4 / 5;
+  }
+
+  .illustration {
+    width: 120%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .illustration {
+    transition: none;
+  }
+
+  .card:has(.link:hover) {
+    transform: none;
+  }
+
+  .card:has(.link:hover) .illustration {
+    scale: none;
+  }
+}

@@ -1,0 +1,112 @@
+@reference "../../../app/globals.css";
+
+.anchor {
+  --glass-fill:
+    linear-gradient(0deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 6%)),
+    rgb(28 28 30 / 60%);
+  --glass-rim-top: rgb(255 255 255 / 48%);
+  --glass-rim-bottom: rgb(255 255 255 / 24%);
+  --glass-inset-side: 0.32;
+  --glass-inset-bottom: 0.02;
+  --glass-inset-around: 0.04;
+  --glass-shadow: 0 8px 24px -6px rgb(0 0 0 / 18%);
+  --tooltip-ink: #ffffff;
+  --tooltip-key-fill: rgb(255 255 255 / 16%);
+  position: fixed;
+  z-index: calc(var(--site-layer-chrome) + 4);
+  top: 0;
+  left: 0;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+  @variant dark {
+    --glass-fill:
+      linear-gradient(0deg, rgb(0 0 0 / 4%), rgb(0 0 0 / 4%)),
+      rgb(252 252 252 / 88%);
+    --glass-rim-top: #ffffff;
+    --glass-rim-bottom: rgb(255 255 255 / 70%);
+    --glass-inset-side: 0.24;
+    --glass-inset-bottom: 0.08;
+    --glass-inset-around: 0.24;
+    --glass-shadow: 0 8px 24px -6px rgb(0 0 0 / 6%);
+    --tooltip-ink: #171717;
+    --tooltip-key-fill: rgb(0 0 0 / 9%);
+  }
+}
+
+.weightedPill {
+  display: block;
+  transform: translate(-50%, -100%);
+}
+
+.pill {
+  position: relative;
+  display: block;
+  height: calc(1.5em + 0.75rem);
+  border-radius: 0.9375rem;
+  isolation: isolate;
+  color: var(--tooltip-ink);
+  font-size: var(--site-text-tooltip);
+  font-weight: 500;
+  line-height: var(--site-leading-tooltip);
+  white-space: nowrap;
+  transform-origin: 50% 65%;
+  /* Keep the script-driven scale/tilt on a stable composited surface.
+     Opacity must stay on the leaves so the fill can sample the page. */
+  will-change: transform;
+}
+
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-fill);
+  box-shadow: var(--glass-shadow);
+  opacity: var(--glass-opacity, 1);
+}
+
+.pill[data-glass-material-ready="true"]::before {
+  background: none;
+}
+
+.contentFade {
+  position: absolute;
+  inset: 0;
+}
+
+.content,
+.measure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.content {
+  position: absolute;
+  inset: 0.375rem 0.625rem;
+}
+
+.text {
+  /* Keep Scritto's rolling glyphs visible beyond the resting text box. */
+  display: block;
+  flex: none;
+  width: max-content;
+}
+
+.key {
+  flex: none;
+  padding-inline: 3px;
+  border-radius: 4px;
+  background: var(--tooltip-key-fill);
+  font: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.4545454545;
+}
+
+.measure {
+  position: absolute;
+  width: max-content;
+  visibility: hidden;
+}

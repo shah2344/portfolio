@@ -1,0 +1,21 @@
+import { HumiCaseStudy } from "@/components/work/humi/case-study";
+import { defineProjectMetadata } from "./project";
+
+export const metadata = defineProjectMetadata({
+  slug: "humi",
+  title: "Humi V2 — One system for the work behind work",
+  summary:
+    "An end-to-end redesign that connected HR, payroll, benefits, and insurance into one scalable platform for Canadian businesses.",
+  year: 2019,
+  role: "Sole product designer",
+  disciplines: ["Product design", "Research", "Design systems", "Prototyping"],
+  cover: {
+    src: "/media/humi/people-directory.jpg",
+    alt: "The redesigned Humi people directory, listing employees by role, status, and department",
+  },
+  featured: true,
+  order: 1,
+  status: "published",
+});
+
+<HumiCaseStudy />

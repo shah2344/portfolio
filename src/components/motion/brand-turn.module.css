@@ -1,0 +1,57 @@
+.frame {
+  position: relative;
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  vertical-align: middle;
+}
+
+.content {
+  display: grid;
+  width: 44px;
+  height: 44px;
+}
+
+/* Only while handing off: the live mark rises over the departing copy. */
+.frame[data-turning] {
+  isolation: isolate;
+}
+
+.frame[data-turning] > .content {
+  position: relative;
+  z-index: 1;
+}
+
+/* The reel's window reaches as far as the character's diffusion (16 of its
+   58 viewBox units ≈ 15px), so the faces' soft edges are never cut. */
+.frame[data-turning][data-handoff="slot"] {
+  clip-path: inset(-15px);
+}
+
+.stage {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+/* The SVG geometry is already sampled in its live pose; keep its outer frame still. */
+.face > * {
+  animation: none !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    display: none;
+  }
+}

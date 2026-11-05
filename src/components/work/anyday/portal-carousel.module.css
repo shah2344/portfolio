@@ -1,0 +1,191 @@
+.carousel {
+  width: 100%;
+}
+
+/* The shared story frame: one card, the clips stacked inside it. */
+.card {
+  --lisse-radius: var(--anyday-radius);
+  --lisse-border-width: 1px;
+  --lisse-border-color: var(--case-study-border);
+
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: var(--anyday-card-aspect, 1.8);
+  border-radius: var(--anyday-radius);
+  background: var(--anyday-plate);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: opacity, filter, transform;
+}
+
+.slide[data-active] {
+  pointer-events: auto;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Above the clips, below the controller. */
+.blur {
+  z-index: 1;
+}
+
+.wash {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 40%;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--clip-ground) 0%, transparent),
+    color-mix(in srgb, var(--clip-ground) 70%, transparent) 55%,
+    var(--clip-ground)
+  );
+  pointer-events: none;
+}
+
+/* The footage keeps its light grey in both themes, so the controller keeps
+   light-theme ink on it. */
+.controller {
+  --clip-progress: 0;
+  --anyday-ink: #2b2f29;
+  --anyday-muted: rgb(43 47 41 / 62%);
+
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  padding: 1rem 1.25rem 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* Outranks the story's own paragraph rules, which this sits inside. */
+.controller > p.caption {
+  min-width: 0;
+  margin: 0;
+  color: var(--anyday-muted);
+  font-size: 14px;
+  letter-spacing: var(--site-tracking-body);
+  line-height: 1.3;
+}
+
+.captionText {
+  display: block;
+  text-wrap: pretty;
+}
+
+.pills {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 0.25rem;
+}
+
+/* A 24px row around a 6px capsule; the hit area grows to 44px tall below. */
+.pill {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 1.5rem;
+  padding: 0 0.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: -0.625rem 0;
+}
+
+.pill[data-state="active"] {
+  width: 3.5rem;
+}
+
+/* Lisse's capsule: a smoothed rectangle whose radius is half its height. */
+.track {
+  --lisse-radius: 3px;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--anyday-ink) 10%, transparent);
+  transition-property: background-color, scale;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-out;
+}
+
+.pill:active .track {
+  scale: 0.96;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--anyday-ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.pill[data-state="done"] .fill {
+  transform: scaleX(1);
+}
+
+.pill[data-state="active"] .fill {
+  transform: scaleX(var(--clip-progress));
+}
+
+@media (hover: hover) {
+  .pill:hover .track {
+    background: color-mix(in srgb, var(--anyday-ink) 18%, transparent);
+  }
+}
+
+.pill:focus-visible {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
+}
+
+@media (max-width: 40rem) {
+  .controller {
+    padding: 0.75rem 0.875rem 0.625rem;
+  }
+
+  .controller > p.caption {
+    font-size: 13px;
+  }
+
+  .pill {
+    width: 1.5rem;
+  }
+
+  .pill[data-state="active"] {
+    width: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .track {
+    transition: none;
+  }
+}

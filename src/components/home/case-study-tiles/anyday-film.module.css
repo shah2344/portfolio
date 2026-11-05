@@ -1,0 +1,110 @@
+.stage {
+  position: relative;
+  width: 100%;
+}
+
+/*
+ * The stand-in: two film heights, the film's frame below and its reflection
+ * above, stood so the frame fills the stage. It holds the reflection's alpha
+ * fade into the tile, so it sits on whatever ground the card has.
+ */
+.still {
+  position: absolute;
+  top: -100%;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.film {
+  position: relative;
+}
+
+/* Positioned so it paints over the tile's waiting ground rather than under
+   it. `--tile-reveal` is the tile's; the fallback is for the film on its own. */
+.film video {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Reveal the still's baked haze at the join, then blend into the film
+     before the product window. The ramp is eased (smoothstep) rather than
+     linear, so when the film zooms and the white product window rises into
+     the join it melts away without a visible edge where the fade ends. */
+  --film-join: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(0 0 0 / 4.3%) 1.75%,
+    rgb(0 0 0 / 15.6%) 3.5%,
+    rgb(0 0 0 / 31.6%) 5.25%,
+    rgb(0 0 0 / 50%) 7%,
+    rgb(0 0 0 / 68.4%) 8.75%,
+    rgb(0 0 0 / 84.4%) 10.5%,
+    rgb(0 0 0 / 95.7%) 12.25%,
+    #000 14%
+  );
+  -webkit-mask-image: var(--film-join);
+  mask-image: var(--film-join);
+  transition: opacity var(--tile-reveal, 720ms ease-out);
+}
+
+/* A progressive blur over the same strip: whatever the film carries into the
+   join softens as it fades, so a zoomed product window dissolves into the
+   haze instead of fading out sharp. It clears before the window's resting
+   position, and the wall it covers at rest is already soft. */
+.film::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 14%;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000,
+    #000 25%,
+    rgb(0 0 0 / 50%) 62%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000,
+    #000 25%,
+    rgb(0 0 0 / 50%) 62%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Before the first frame lands, the film waits hidden over its stand-in,
+   then simply fades in. The still is its first frame, framed and graded as
+   the film has it, so nothing moves, sharpens or steps as it takes over.
+   The baked reflection stays visible above the film throughout playback. */
+.film video[data-waiting] {
+  opacity: 0;
+}
+
+/* Without script nothing marks the film loaded, so it is simply shown. */
+@media (scripting: none) {
+  .film video[data-waiting] {
+    opacity: 1;
+  }
+}
+
+/* Dim the reflected white product window behind the brand at every width.
+   Only the reflection half fades; the product frame stays fully opaque. */
+.still {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(0 0 0 / 12%) 40%,
+    #000 50%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(0 0 0 / 12%) 40%,
+    #000 50%
+  );
+}

@@ -1,0 +1,8 @@
+.next
+.agents
+.claude/skills
+.superpowers
+node_modules
+playwright-report
+test-results
+bun.lock

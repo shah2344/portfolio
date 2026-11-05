@@ -1,0 +1,248 @@
+.root {
+  --character-surface: var(--site-background);
+  --character-eye-outline: white;
+  /* Glass lighting. On a light page the rim only has to hold its own against
+     white; on the dark page any white edge glows, so every light dims. */
+  --character-glass-shade: 0.3;
+  --character-glass-grain: 0.4;
+  --character-glass-caustic: 0.5;
+  --character-glass-sheen: 0.28;
+  --character-glass-hotspot: 0.8;
+  --character-glass-edge: 0.1;
+  --character-glass-glow: 0.62;
+  --character-glass-specular: 0.95;
+  --character-eye-bloom: 0.85;
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  color: var(--site-ink);
+  vertical-align: middle;
+}
+:global(:root[data-theme="dark"]) .root {
+  --character-diffusion-middle: 0.92;
+  --character-diffusion-lower: 0.78;
+  --character-diffusion-bottom: 0.5;
+  --character-eye-outline: black;
+  --character-glass-shade: 0.4;
+  --character-glass-grain: 0.28;
+  --character-glass-caustic: 0.36;
+  --character-glass-sheen: 0.18;
+  --character-glass-hotspot: 0.6;
+  --character-glass-edge: 0.16;
+  --character-glass-glow: 0.32;
+  --character-glass-specular: 0.62;
+  --character-eye-bloom: 0.55;
+}
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme])) .root {
+    --character-diffusion-middle: 0.92;
+    --character-diffusion-lower: 0.78;
+    --character-diffusion-bottom: 0.5;
+    --character-eye-outline: black;
+    --character-glass-shade: 0.4;
+    --character-glass-grain: 0.28;
+    --character-glass-caustic: 0.36;
+    --character-glass-sheen: 0.18;
+    --character-glass-hotspot: 0.6;
+    --character-glass-edge: 0.16;
+    --character-glass-glow: 0.32;
+    --character-glass-specular: 0.62;
+    --character-eye-bloom: 0.55;
+  }
+}
+/* `--character-glass-energy` (0–1) is set each frame from how fast the head is
+   travelling: the rim and the focused light flare with movement, as light
+   catches a moving orb, then settle. It rests at zero when the orb is still. */
+.glassShade {
+  opacity: var(--character-glass-shade);
+}
+/* Overlay grain: mid-grey noise leaves the colour's average alone and only
+   frosts it. One tile pixel per device pixel, kept sharp. */
+.glass {
+  isolation: isolate;
+}
+.glassGrain {
+  mix-blend-mode: overlay;
+  opacity: var(--character-glass-grain);
+}
+.grainTile {
+  image-rendering: pixelated;
+}
+.glassGrain[data-grain="2x"] {
+  display: none;
+}
+@media (min-resolution: 1.5dppx) {
+  .glassGrain[data-grain="1x"] {
+    display: none;
+  }
+  .glassGrain[data-grain="2x"] {
+    display: inline;
+  }
+}
+.glassCaustic {
+  opacity: calc(
+    var(--character-glass-caustic) *
+      (1 + 0.9 * var(--character-glass-energy, 0))
+  );
+}
+.glassSheen {
+  opacity: var(--character-glass-sheen);
+}
+.glassHotspot {
+  opacity: calc(
+    var(--character-glass-hotspot) *
+      (1 + 0.3 * var(--character-glass-energy, 0))
+  );
+}
+.glassEdge {
+  opacity: var(--character-glass-edge);
+}
+.glassGlow {
+  opacity: calc(
+    var(--character-glass-glow) * (1 + 0.8 * var(--character-glass-energy, 0))
+  );
+}
+.glassSpecular {
+  opacity: calc(
+    var(--character-glass-specular) *
+      (1 + 0.3 * var(--character-glass-energy, 0))
+  );
+}
+.play {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.character {
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  overflow: hidden;
+  color: inherit;
+}
+.shell {
+  display: none;
+  fill: var(--character-surface);
+}
+.pupil {
+  fill: var(--character-surface);
+}
+.root[data-treatment="outline"] .shell,
+.root[data-treatment="filled"] .character {
+  overflow: visible;
+}
+.root[data-treatment="filled"] .shell {
+  display: block;
+}
+.root[data-treatment="filled"] {
+  --character-surface: var(--site-ink);
+}
+.root[data-treatment="filled"] .character {
+  overflow: visible;
+}
+.root[data-treatment="filled"] .shell {
+  stroke: none;
+}
+.root[data-treatment="filled"] [data-head] {
+  color: #191b23;
+}
+/* Crisp shapes over the glass: the gradient shows through as a faint tint,
+   which every engine renders the same (no filter or <use> copy involved). */
+.root[data-treatment="filled"] [data-eye-fill] {
+  fill: #fff;
+  opacity: 0.92;
+}
+/* Shining rim outside the translucent eye, brightest at the upper-right and
+   lower-left corners, with a soft bloom that spreads from them. The mask hides
+   most of the inner half
+   of the stroke; 1.32 units is a 1px stroke at 44px. The
+   mask's 1.2-unit white stroke lets the rim tuck 0.6 units under the fill, so
+   the two anti-aliased edges never leave a seam between them. */
+.eyeRim,
+.eyeBloom {
+  display: none;
+}
+.root[data-treatment="filled"] :is(.eyeRim, .eyeBloom) {
+  display: block;
+}
+.eyeBloom {
+  opacity: var(--character-eye-bloom);
+}
+.root[data-treatment="filled"] .pupil {
+  fill: #191b23;
+}
+.root[data-treatment="filled"] [data-eye-outline],
+.root[data-treatment="filled"] [data-upper],
+.root[data-treatment="filled"] [data-lower] {
+  stroke: none;
+}
+.root[data-treatment="filled"] [data-mouth] {
+  color: #fff;
+  stroke: currentColor;
+  opacity: 1;
+}
+/* The material carries emotion as well as the face: it dims into a nap,
+   flares on surprise, warms when happy and swims while dizzy. */
+@media (prefers-reduced-motion: no-preference) {
+  .root:not([data-reduced="true"]) [data-character-background] {
+    transition: filter 600ms ease;
+  }
+  .root:not([data-reduced="true"])[data-performance="nap"]
+    [data-character-background] {
+    filter: saturate(0.55) brightness(0.88);
+    transition-duration: 1600ms;
+  }
+  .root:not([data-reduced="true"])[data-performance="doubleTake"]
+    [data-character-background] {
+    filter: saturate(1.25) brightness(1.12);
+    transition-duration: 160ms;
+  }
+  .root:not([data-reduced="true"]):is(
+      [data-performance="happy"],
+      [data-performance="greeting"],
+      [data-performance="nod"]
+    )
+    [data-character-background] {
+    filter: saturate(1.18) brightness(1.05) hue-rotate(-10deg);
+  }
+  .root:not([data-reduced="true"])[data-performance="dizzy"]
+    [data-character-background] {
+    animation: material-swim 900ms linear 2;
+  }
+}
+@keyframes material-swim {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+.play:focus-visible {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
+}
+
+.root[data-grab-motion="true"] {
+  z-index: 10;
+}
+.root[data-grabbing="true"] .play {
+  cursor: grabbing;
+}
+.root[data-reduced="true"] .play,
+.root[data-paused="true"] .play {
+  cursor: pointer;
+  touch-action: manipulation;
+}

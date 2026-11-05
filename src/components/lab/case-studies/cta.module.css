@@ -1,0 +1,70 @@
+/*
+ * Two calls to action, in the portfolio's own blue: a filled pill for the
+ * primary action and a text link with a chevron for the secondary one. Both
+ * switch to a brighter blue on dark grounds.
+ */
+
+.primary,
+.more {
+  --cta-blue: var(--editorial-accent);
+  --cta-link: #0066cc;
+}
+
+:global([data-tone="dark"]) .primary,
+:global([data-tone="dark"]) .more {
+  --cta-link: #2997ff;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 11px 22px;
+  border-radius: var(--r-pill);
+  background: var(--cta-blue);
+  color: #ffffff;
+  font-size: 18px;
+  letter-spacing: var(--site-tracking-17);
+  font-weight: 400;
+  line-height: 1.1765;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--site-duration-fast)
+    var(--site-ease-standard);
+}
+
+.primary:hover {
+  background: #0077ed;
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--cta-link);
+  font-size: 18px;
+  letter-spacing: var(--site-tracking-17);
+  font-weight: 400;
+  line-height: 1.1765;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.more::after {
+  content: "›";
+  font-size: 1.15em;
+  line-height: 1;
+  translate: 0 -0.04em;
+}
+
+.more:hover {
+  text-decoration: underline;
+}
+
+.primary:focus-visible,
+.more:focus-visible {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
+  animation: var(--site-focus-animation);
+}

@@ -1,0 +1,26 @@
+import { AnyDayCaseStudy } from "@/components/work/anyday/case-study";
+import { defineProjectMetadata } from "./project";
+
+export const metadata = defineProjectMetadata({
+  slug: "anyday",
+  title: "AnyDay — Today app and employer portal",
+  summary:
+    "Leading design across the Today employee app and the AnyDay employer portal, through tip automation, savings, and support.",
+  year: 2026,
+  role: "Senior product designer",
+  disciplines: [
+    "Product design",
+    "Interaction design",
+    "Prototyping",
+    "Product systems",
+  ],
+  cover: {
+    src: "/media/anyday/admin-overview.jpeg",
+    alt: "AnyDay employer portal showing wallet balances, payments, and recent activity",
+  },
+  featured: true,
+  order: 0,
+  status: "published",
+});
+
+<AnyDayCaseStudy />

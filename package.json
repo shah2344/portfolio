@@ -1,0 +1,59 @@
+{
+  "name": "muhammad-shahid-portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "bun": ">=1.3.14 <2"
+  },
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build --webpack",
+    "start": "bun --bun next start",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "bun --bun next typegen && tsc --noEmit",
+    "test:unit": "bun test tests/unit",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:unit && bun run build"
+  },
+  "dependencies": {
+    "@blossom-carousel/react": "^1.5.2",
+    "@lisse/core": "^0.7.3",
+    "@lisse/react": "^0.7.3",
+    "@mdx-js/loader": "3.1.1",
+    "@next/mdx": "16.4.3",
+    "@outpacelabs/avatars": "^0.6.0",
+    "@scritto/react": "^0.1.0",
+    "@vercel/analytics": "2.0.1",
+    "@vercel/speed-insights": "2.0.0",
+    "clsx": "^2.1.1",
+    "drawesome": "^0.1.1",
+    "motion": "^13.1.0",
+    "next": "16.4.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remixicon": "^4.9.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/bun": "1.3.14",
+    "@types/mdx": "2.0.14",
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "agentation": "^3.0.2",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.3",
+    "playwright": "1.62.1",
+    "postcss": "8.5.26",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "sharp": "^0.35.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3"
+  }
+}

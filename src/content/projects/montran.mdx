@@ -1,0 +1,26 @@
+import { MontranCaseStudy } from "@/components/work/montran/case-study";
+import { defineProjectMetadata } from "./project";
+
+export const metadata = defineProjectMetadata({
+  slug: "montran",
+  title: "Montran — Building a global financial infrastructure brand",
+  summary:
+    "The variables, foundations, and components behind Montran's marketing site — built for India first, then extended to the global business.",
+  year: 2018,
+  role: "Contract product designer",
+  disciplines: [
+    "Design systems",
+    "Design tokens",
+    "Web design",
+    "Documentation",
+  ],
+  cover: {
+    src: "/media/montran/dos.jpg",
+    alt: "An abstract green network field representing Montran's global banking infrastructure",
+  },
+  featured: true,
+  order: 2,
+  status: "published",
+});
+
+<MontranCaseStudy />
