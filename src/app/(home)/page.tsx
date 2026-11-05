@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { EditorialHome } from "@/components/home/editorial-home";
+import { HomeContent } from "@/components/home/home-content";
 import { siteConfig } from "@/config/site";
 
 // Set here rather than in the layout, which every route inherits from.
@@ -36,7 +36,7 @@ export default function HomePage() {
         }}
         type="application/ld+json"
       />
-      <EditorialHome />
+      <HomeContent />
     </>
   );
 }

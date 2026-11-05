@@ -90,7 +90,7 @@ const enterDelay = (index: number) =>
     "--home-enter-delay": `calc(var(--home-character-content-delay, ${HOME_CHARACTER_TIMING.contentDelayMs}ms) + ${entranceDelayMs(index)}ms)`,
   }) as CSSProperties;
 
-export function EditorialHome() {
+export function HomeContent() {
   return (
     <div className="editorial-page">
       <HomeEntranceRoot />

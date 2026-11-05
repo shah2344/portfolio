@@ -6,11 +6,11 @@ This is Muhammad Shahid's product-design and AI-assisted design-engineering
 portfolio. Optimize for hiring teams: semantic content, accessibility,
 performance, and clarity come before visual spectacle.
 
-The editorial homepage features AnyDay and Humi case-study cards, Experience,
+The homepage features AnyDay and Humi case-study cards, Experience,
 the Feed of recent snippets, and a contact footer. AnyDay, Humi, and Montran
-have case-study routes at the same level as the homepage, with immediate
-navigation and brief grouped entrances; Montran is not currently featured on
-the homepage.
+have case-study routes at the same level as the homepage, with a one-snapshot
+CSS zoom from the homepage cards and brief grouped entrances; Montran is not
+currently featured on the homepage.
 
 Keep edits within the requested scope. Preserve supplied copy, artwork, and
 unrelated layout or behavior unless the task calls for changing them.
@@ -50,8 +50,8 @@ narrow widths in the browser preview, including relevant keyboard and
 reduced-motion behavior. There is no automated end-to-end suite. Report what
 was verified and any blocked checks without claiming unobserved results.
 
-Use `README.md` for setup, commands, content entrypoints, and deployment details
-when those topics are relevant. Use skills for a concrete workflow need;
+Use `docs/maintaining.md` for setup, commands, content entrypoints, and
+deployment details when those topics are relevant. Use skills for a concrete workflow need;
 repository guidance does not require a blanket set of skills.
 
 <!-- BEGIN:nextjs-agent-rules -->
