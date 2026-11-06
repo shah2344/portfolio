@@ -21,7 +21,7 @@ const profiles: readonly {
   {
     id: "email",
     label: "Email",
-    href: "mailto:shahrozm1@gmail.com",
+    href: "mailto:hello@muhammad.design",
     icon: mailIcon,
     ariaLabel: "Email",
   },

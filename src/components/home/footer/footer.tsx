@@ -18,8 +18,8 @@ export function HomeFooter({
       <div className="home-contact">
         <p>
           For new roles or collaborations, reach me at{" "}
-          <ContactLink href="mailto:shahrozm1@gmail.com">
-            shahrozm1@gmail.com
+          <ContactLink href="mailto:hello@muhammad.design">
+            hello@muhammad.design
           </ContactLink>
           .
         </p>
