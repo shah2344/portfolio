@@ -3622,6 +3622,7 @@ html[data-page-wipe]
      for whatever happens to come next. */
   --home-section-gap: 72px;
   --home-heading-gap: 16px;
+  --home-sheet-edge-gap: 64px;
   --home-page-end: 48px;
 
   /* The column itself: its width, gutters, and the space above the masthead
@@ -3654,8 +3655,8 @@ html[data-page-wipe]
 
 /* The feed and the sections after it, on a full-width sheet that scrolls up
    over the footer. Its padding gives the column back, and the space above the
-   feed is split evenly across its edge, two thirds of a section gap on the
-   page and on the sheet. Captions fade into the sheet rather than the page. */
+   feed is split evenly across its edge, the same edge gap on the page and on
+   the sheet. Captions fade into the sheet rather than the page. */
 .home-sheet {
   --editorial-surface: var(--home-sheet);
 
@@ -3666,7 +3667,7 @@ html[data-page-wipe]
   gap: var(--home-section-gap);
   margin-inline: calc(50% - 50vw);
   padding: var(--home-section-gap) calc(50vw - 50%);
-  padding-block-start: calc(var(--home-section-gap) * 2 / 3);
+  padding-block-start: var(--home-sheet-edge-gap);
   border-block: 1px solid var(--home-sheet-line);
   background: var(--home-sheet);
 }
@@ -3679,7 +3680,9 @@ html[data-page-wipe]
   display: flex;
   flex-direction: column;
   gap: 64px;
-  margin-block-start: calc(var(--home-section-gap) / -3);
+  margin-block-start: calc(
+    var(--home-sheet-edge-gap) - var(--home-section-gap)
+  );
 }
 
 .home-reveal > .home-footer {
