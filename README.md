@@ -1,41 +1,104 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/preview-dark.png">
-  <img alt="The portfolio homepage: a soft, glassy character with large eyes above a short introduction." src=".github/assets/preview-light.png">
+  <img alt="The portfolio homepage: a soft, glassy avatar with large eyes above a short introduction." src=".github/assets/preview-light.png">
 </picture>
 
-# Portfolio
+This is my personal portfolio website, built with Next.js, React, and Motion. It's where I
+share my experience, case studies, and recent work.
 
-I'm Muhammad, a product designer from Toronto, and this is the code for my
-portfolio. I built it with AI. If you've already clicked around the site, here are
-a few small things you might have missed.
+## Features
 
-There's a little character at the top of the homepage. It doesn't do anything
-useful, I just like that the page notices you. It watches your cursor. Spin around
-it and it gets dizzy. Click somewhere empty and it looks over, puzzled. Pet it and
-it warms up to you. Ignore it and it gets bored and falls asleep. It's in your
-browser tab too: switch away and it dozes off, come back and it says hello.
-([code](src/components/home/character))
+### Avatar
 
-The note in the footer tells you when I'll actually reply, based on the time in
-Toronto. At 3am it says I'm probably asleep. On a Saturday it says I'm back Monday.
-([code](src/components/home/footer/toronto-time.ts))
+My avatar is the site's logo and its loading state.
 
-The experience list shows whether a role was full-time or a contract, because
-that's the first thing you wonder when you see a short stint on a resume.
-([code](src/content/experience.ts))
+- **[Loading](src/components/home/character/background.tsx)**: It shows up first as bare
+  glass while the page loads, shuffles through colors until it lands on one, then moves
+  into place.
+- **[Attention](src/components/home/character/director.ts)**: Its eyes follow your cursor.
+  Tap it and it reacts. Ignore it and it finds something to do, like taking a nap.
+- **[Chasing](src/components/home/character/grab.ts)**: Pull it and it springs back. Keep
+  chasing it and it dodges a few times, runs out of breath, and lets you catch it.
+- **[Dizziness](src/components/home/character/dizziness.ts)**: Circle your cursor around
+  it or whip it back and forth, and its eyes get dizzy from following you.
+- **[Glass](src/components/home/character/glass.ts)**: The highlights hold still, like
+  they're lit from somewhere in the room, while the color sloshes around inside.
 
-Each case study card gets its color from its own image, so the gradient melts into
-the picture. ([code](scripts/extract-card-colors.ts))
+### Motion
 
-Opening a case study took four tries. I built a card morph, then a diagonal wipe,
-then a logo handoff, and they all felt slow, especially in Safari. Now it's just a
-quick zoom. ([code](src/components/motion/page-wipe.ts)) Other things I tried and
-compared are in the [lab](src/components/lab).
+- **[Case study transition](src/components/motion/page-wipe.ts)**: Opening a case study
+  zooms in from its card. Real card morphs stuttered, mostly in Safari, so it uses one
+  snapshot of the page with a light scale, blur, and fade, all in CSS.
+- **[Line-by-line text](src/components/motion/case-study-line-ink.ts)**: Case study text
+  fades in a line at a time as you scroll. The CSS Custom Highlight API paints each line
+  without wrapping it in a span, so the text stays plain and can rewrap on any screen.
+- **[Signature](src/components/home/footer/signature.tsx)**: My signature draws itself
+  once the whole footer is on screen.
+- **[Reply note](src/components/home/footer/reply-note.tsx)**: The footer says when to
+  expect a reply based on the time in Toronto, with the clock rolling forward.
+- **[Feed](src/components/home/playground/snap.ts)**: On desktop the cards respond to your
+  pointer. On a phone, the card you've scrolled to takes over that job.
 
-## Working with AI
+### Surfaces
 
-[`AGENTS.md`](AGENTS.md) is the brief I give the agents. I check everything in the
-browser and point out what to fix with a tool called Agentation.
+- **[Progressive blur](src/components/ui/progressive-blur.tsx)**: Blurs fade in gradually,
+  like on iOS. CSS gives an area one blur amount, so I stack layers, each masked to its
+  own band and a little stronger than the last.
+- **[iOS-style corners](src/components/ui/smooth-surface.tsx)**: Every surface uses the
+  same smooth curve. Clipping to it also cuts off borders and shadows, so borders are drawn
+  along the curve and shadows sit on the parent.
 
-To run it yourself, see [`docs/maintaining.md`](docs/maintaining.md). The code is
-MIT licensed. My writing and media aren't, see [LICENSE](LICENSE).
+### Performance
+
+- **[Videos](src/components/work/video-loop-clock.ts)**: Clips pause off screen and work
+  out where they would have been when you come back, so nothing restarts.
+- **[Video formats](src/components/ui/video-sources.tsx)**: Clips offer AV1 and HEVC where
+  they exist, with H.264 as the fallback every browser can play.
+- **[Images](next.config.ts)**: Everything is WebP. AVIF files are smaller, but Safari took
+  longer to decode them than the smaller files saved.
+- **[Corners](src/components/ui/smooth-surface.tsx)**: Surfaces more than a screen away
+  keep plain CSS corners until they come near, so a page doesn't measure dozens at once.
+
+### Accessibility
+
+- **Reduced motion**: Animations respect the setting, and text that fades in falls back to
+  plain static text.
+- **[Keyboard](src/components/home/home-keyboard-focus.tsx)**: Tab moves through the
+  homepage in order, even with Safari's limited Tab mode.
+
+## How I work
+
+I review the site in the browser, mark up what's off with
+[Agentation](https://benji.org/agentation), and hand those notes to Claude.
+[`AGENTS.md`](AGENTS.md) is the brief it works from. It puts accessibility, performance,
+and clarity ahead of visual spectacle.
+
+## Tech stack
+
+- **Framework**: [Next.js](https://nextjs.org) and [React](https://react.dev), with
+  TypeScript
+- **Animation**: [Motion](https://motion.dev)
+- **Corners**: [Lisse](https://www.npmjs.com/package/@lisse/react)
+- **Rolling text**: [Scritto](https://scrit.to)
+- **Handwritten notes**: [Drawesome](https://benji.org/drawesome)
+- **Content**: MDX
+- **Typeface**: Timeless Sans
+
+## Project structure
+
+```
+src/
+├── app/                 Routes, global styles, and fonts
+├── components/
+│   ├── home/            Avatar, dock, experience, feed, and footer
+│   ├── motion/          Page transitions and scroll effects
+│   ├── ui/              Blur, corners, and shared pieces
+│   └── work/            Case studies
+└── content/projects/    Case study writing and metadata
+```
+
+To run it, see [`docs/maintaining.md`](docs/maintaining.md).
+
+## License
+
+The code is MIT licensed. My writing and media aren't, see [LICENSE](LICENSE).
