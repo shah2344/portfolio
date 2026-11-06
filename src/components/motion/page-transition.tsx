@@ -2,6 +2,7 @@
 
 import { type ReactNode, useLayoutEffect, useRef } from "react";
 
+import { currentWipe } from "./page-wipe";
 import { observeSectionEntrances } from "./section-entrances";
 import { observeCaseStudyLineInk } from "./case-study-line-ink";
 
@@ -46,7 +47,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
     const onReduced = () => {
       if (reduced.matches) settleArrival();
     };
-    if (reduced.matches || !openingMedia) settleArrival();
+    // The zoom is this page's entrance. A second one inside its picture left
+    // the screen nearly empty once the old page had gone.
+    if (reduced.matches || !openingMedia || currentWipe()) settleArrival();
     page.addEventListener("animationend", onEnd);
     reduced.addEventListener("change", onReduced);
     return () => {

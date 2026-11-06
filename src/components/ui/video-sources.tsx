@@ -33,9 +33,8 @@ const VARIANTS: Record<string, readonly { src: string; codecs: string }[]> = {
   "/media/anyday/ofac-alert-review.mp4": [
     { src: "/media/anyday/ofac-alert-review.av1.mp4", codecs: "av01.0.09M.10" },
   ],
-  "/media/anyday/payout.mp4": [
-    { src: "/media/anyday/payout.av1.mp4", codecs: "av01.0.09M.10" },
-  ],
+  // `payout.mp4` stays H.264 only. Seeking its AV1 encode to the loop start made
+  // Safari stall up to 1s, and capture the wrong frame, in a page transition.
   "/media/craft/app-launch.mp4": [
     { src: "/media/craft/app-launch.av1.mp4", codecs: "av01.0.09M.10" },
   ],

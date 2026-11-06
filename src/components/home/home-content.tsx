@@ -456,10 +456,7 @@ export function HomeContent() {
             </section>
           </div>
 
-          <HomeFooter
-            entrance
-            style={{ "--home-enter-delay": "150ms" } as CSSProperties}
-          />
+          <HomeFooter />
         </div>
       </main>
     </div>

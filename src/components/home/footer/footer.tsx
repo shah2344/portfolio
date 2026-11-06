@@ -1,5 +1,4 @@
-import type { CSSProperties } from "react";
-
+import { ContactLink } from "@/components/home/footer/contact-link";
 import { FooterSignature } from "@/components/home/footer/signature";
 import { HomeReplyNote } from "@/components/home/footer/reply-note";
 
@@ -9,26 +8,20 @@ import { HomeReplyNote } from "@/components/home/footer/reply-note";
  */
 export function HomeFooter({
   className,
-  entrance = false,
   contactOnly = false,
-  style,
 }: {
   className?: string;
-  entrance?: boolean;
   contactOnly?: boolean;
-  style?: CSSProperties;
 }) {
   return (
-    <footer
-      className={["home-footer", className].filter(Boolean).join(" ")}
-      data-home-enter={entrance ? "idle" : undefined}
-      data-home-enter-kind={entrance ? "surface" : undefined}
-      style={style}
-    >
+    <footer className={["home-footer", className].filter(Boolean).join(" ")}>
       <div className="home-contact">
         <p>
           For new roles or collaborations, reach me at{" "}
-          <a href="mailto:shahrozm1@gmail.com">shahrozm1@gmail.com</a>.
+          <ContactLink href="mailto:shahrozm1@gmail.com">
+            shahrozm1@gmail.com
+          </ContactLink>
+          .
         </p>
         <HomeReplyNote className="home-contact__reply" />
       </div>

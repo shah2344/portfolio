@@ -359,19 +359,17 @@ html[data-wipe-origin="button"]
 }
 
 /* --- Case-study page change --------------------------------------------- */
-/* One viewport-sized snapshot. The arriving page is the single focal point:
-   it carries the scale and the focus pull, while the leaving page only
-   recedes a touch and fades. Opening pushes forward (old grows, new arrives
-   from smaller), closing steps back. The leave builds momentum (ease-in);
-   the arrival lands fast and settles (ease-out), and both are done within
-   300ms of the click. Transform, opacity and one blur on two textures, so
-   the compositor carries it without per-frame script. */
+/* One viewport-sized snapshot. The arriving page is the single focal point: it
+   stays fully opaque beneath the old picture, so brightness moves straight from
+   one page to the other, and it carries the scale and the focus pull. The old
+   picture lifts away at once on an ease-out rather than the usual exit ease-in,
+   which would hold it over the arrival until the zoom had nearly finished.
+   Opening pushes forward (both grow) and closing steps back (both shrink), a
+   little faster because the page it returns to is already familiar. Transform,
+   opacity and one blur on two textures, with no per-frame script. */
 :root {
-  --page-zoom-leave: 180ms;
-  --page-zoom-arrive: 260ms;
-  --page-zoom-overlap: 40ms;
-  --page-zoom-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --page-zoom-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --page-zoom-leave: 150ms;
+  --page-zoom-arrive: 360ms;
 }
 
 html[data-page-zoom]::view-transition-old(root),
@@ -381,26 +379,27 @@ html[data-page-zoom]::view-transition-new(root) {
 
 html[data-page-zoom]::view-transition-old(root) {
   will-change: transform, opacity;
-  animation: page-zoom-leave var(--page-zoom-leave) var(--page-zoom-ease-in)
+  animation: page-zoom-leave var(--page-zoom-leave) var(--site-ease-standard)
     both;
 }
 
 html[data-page-zoom]::view-transition-new(root) {
-  will-change: transform, opacity, filter;
-  animation: page-zoom-arrive var(--page-zoom-arrive) var(--page-zoom-ease-out)
-    var(--page-zoom-overlap) both;
+  will-change: transform, filter;
+  animation: page-zoom-arrive var(--page-zoom-arrive) var(--site-ease-flight)
+    both;
 }
 
-/* The arriving page travels further than the leaving one recedes, so the
-   eye follows it; both stay well inside a subtle 0.97–1.03. */
+/* The arriving page travels further than the leaving one, so the eye follows
+   it; both stay well inside a subtle 0.97–1.03. */
 html[data-page-zoom="open"] {
-  --page-zoom-from: 0.97;
-  --page-zoom-to: 1.015;
+  --page-zoom-from: 0.975;
+  --page-zoom-to: 1.01;
 }
 
 html[data-page-zoom="close"] {
-  --page-zoom-from: 1.03;
-  --page-zoom-to: 0.985;
+  --page-zoom-arrive: 300ms;
+  --page-zoom-from: 1.025;
+  --page-zoom-to: 0.99;
 }
 
 @keyframes page-zoom-leave {
@@ -412,8 +411,7 @@ html[data-page-zoom="close"] {
 
 @keyframes page-zoom-arrive {
   from {
-    opacity: 0;
-    filter: blur(4px);
+    filter: blur(2px);
     transform: scale(var(--page-zoom-from));
   }
 }
@@ -4365,39 +4363,52 @@ html[data-page-wipe]
   margin-block-end: 0;
 }
 
-/* The note comes into focus as the story lifts away to uncover it. The pinned
-   footer never moves itself, so the page's last stretch of scroll, about the
-   footer's height, drives it instead, from where the text starts to show
-   above the sheet's lifting edge. The note leads and the reply time
-   follows a step behind, each sharpening and settling up to full size from
-   the column's edge as the scroll runs out. */
-@keyframes case-study-footer-enter {
+/* The footer comes into focus as the sheet lifts away, all of it as one surface
+   settling forward from behind the sheet. The pinned footer never moves itself,
+   so the page's last stretch of scroll drives it, locked to the scroll with no
+   easing of its own. Each property keeps its own stretch: the scale runs the
+   whole way, the fade waits for the last 60%, and the blur clears just short of
+   the end, so the final pixels of travel are already sharp. The hold means the
+   sheet's edge only ever crosses soft, faded text and never slices a sharp line.
+   The name stays clear of the `home-` prefix: the entrance waits on every
+   `home-` animation to finish, and a scroll-linked one never would. */
+@keyframes footer-emerge {
   from {
     opacity: 0;
-    filter: blur(var(--footer-enter-blur, 12px));
-    scale: var(--footer-enter-scale, 0.96);
+    filter: blur(12px);
+    scale: 0.94;
+  }
+
+  40% {
+    opacity: 0;
+  }
+
+  92% {
+    filter: none;
   }
 }
 
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
-    /* The note's larger type needs a heavier blur and scale to read as the
-       same change, and holds it until most of its lines are uncovered. */
-    .case-study-footer > .home-contact > * {
-      --footer-enter-blur: 16px;
-      --footer-enter-scale: 0.94;
-
-      transform-origin: 0 100%;
-      animation: case-study-footer-enter cubic-bezier(0.2, 0, 0, 1) both;
+    /* The travel is set from the page's end, where the note's top line clears
+       the sheet at a fixed distance, so taller footers on a narrow window land
+       the same way. It ends a pixel short because the furthest scroll can land
+       a fraction shy of 100%, which would strand the type just under full size.
+       The case study animates its note alone: the footer box carries the sheet
+       colour, which has to stay put. */
+    .home-reveal > .home-footer,
+    .case-study-footer > .home-contact {
+      animation: footer-emerge linear both;
       animation-timeline: scroll(root block);
-      animation-range: calc(100% - 140px) calc(100% - 8px);
+      animation-range: calc(100% - var(--footer-emerge-travel)) calc(100% - 1px);
     }
 
-    .case-study-footer > .home-contact > .home-contact__reply {
-      --footer-enter-blur: 12px;
-      --footer-enter-scale: 0.96;
+    .home-reveal > .home-footer {
+      --footer-emerge-travel: 220px;
+    }
 
-      animation-range: calc(100% - 100px) 100%;
+    .case-study-footer > .home-contact {
+      --footer-emerge-travel: 125px;
     }
   }
 }

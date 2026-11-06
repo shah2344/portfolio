@@ -7,7 +7,8 @@ import { M_STROKE, S_DOT, S_FLOURISH, S_LOOP } from "./signature-paths";
 /**
  * Signs the footer once all of it is on screen. On the homepage the footer
  * waits pinned under the feed's sheet, so being inside the viewport is not
- * enough: the sheet has to have lifted clear of its top edge too.
+ * enough: the sheet has to have lifted clear of its top edge, and the footer
+ * to have nearly come into focus behind it.
  */
 export function FooterSignature() {
   const ref = useRef<SVGSVGElement>(null);
@@ -31,7 +32,10 @@ export function FooterSignature() {
         (box.top >= -1 || box.height > window.innerHeight);
       const uncovered =
         !cover || cover.getBoundingClientRect().bottom <= box.top + 1;
-      if (!inView || !uncovered) return;
+      // The footer fades in as the sheet lifts, so wait until it has nearly
+      // resolved: the first stroke shouldn't be drawn in soft, faded ink.
+      const resolved = Number(getComputedStyle(footer).opacity) >= 0.9;
+      if (!inView || !uncovered || !resolved) return;
       signature.dataset.signed = "true";
       stop();
     };
