@@ -1,7 +1,6 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/preview-dark.png">
-  <img alt="The portfolio homepage: a soft, glassy avatar with large eyes above a short introduction." src=".github/assets/preview-light.png">
-</picture>
+![The portfolio homepage in dark mode: a glassy orange avatar with large eyes above a short introduction, contact links, and the start of the selected work cards.](.github/assets/preview.webp)
+
+<br>
 
 This is my personal portfolio website, built with Next.js, React, and Motion. It's where I
 share my experience, case studies, and recent work.

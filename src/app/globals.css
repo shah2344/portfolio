@@ -2928,6 +2928,12 @@ html[data-page-wipe]
     clip-path: inset(0);
     display: block;
     height: min(48dvh, 24rem);
+    /* Names the colour Safari carries into the safe area while the drawer is
+       open, so it never guesses from a screenshot of the fade's first frame.
+       Clipped to text, of which there is none, so this box paints nothing. */
+    background-color: var(--site-background);
+    -webkit-background-clip: text;
+    background-clip: text;
     pointer-events: none;
     visibility: hidden;
     transition: visibility 0s var(--toc-backdrop-exit);
@@ -2943,7 +2949,8 @@ html[data-page-wipe]
     --progressive-blur-override: none;
   }
 
-  /* Keep the black tint above the progressive blur without flattening it. */
+  /* Blends over the progressive blur to the full page colour at the screen's
+     edge, the same colour Safari carries on through the safe area. */
   .mobile-toc-backdrop::after {
     position: absolute;
     z-index: 11;
@@ -2951,33 +2958,11 @@ html[data-page-wipe]
     background: linear-gradient(
       to bottom,
       transparent,
-      color-mix(in srgb, var(--site-surface) 25%, transparent) 35%,
-      color-mix(in srgb, var(--site-surface) 75%, transparent) 70%,
-      color-mix(in srgb, var(--site-surface) 100%, transparent)
+      color-mix(in srgb, var(--site-background) 25%, transparent) 35%,
+      color-mix(in srgb, var(--site-background) 75%, transparent) 70%,
+      var(--site-background)
     );
     content: "";
-  }
-
-  :root[data-theme="dark"] .mobile-toc-backdrop::after {
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(0 0 0 / 20%) 35%,
-      rgb(0 0 0 / 40%) 70%,
-      var(--site-background) 100%
-    );
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .mobile-toc-backdrop::after {
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        rgb(0 0 0 / 20%) 35%,
-        rgb(0 0 0 / 40%) 70%,
-        var(--site-background) 100%
-      );
-    }
   }
 
   .mobile-toc-backdrop > div > div,
@@ -4949,22 +4934,30 @@ html[data-page-wipe]
 /* Pinned to the foot of the viewport beneath the sheet, and uncovered as the
    page runs out. The sheet colour bleeds to the
    window's edges without widening the column (the page clips the overflow).
-   The contact note sits centred, 64px clear of the sheet and of the page end. */
+   The contact note sits centred, 64px clear of the sheet and of the page end.
+
+   Safari tints its bottom safe area from any full-width pinned element 4px above
+   the viewport's edge, even one the story covers, so a footer flush with that
+   edge would tint it for the whole read. The lift stands the box clear of that
+   point; the margin, padding and fill give the same space back, so it still
+   reads as flush. */
 .case-study-footer {
   --editorial-ink: var(--site-ink);
   --home-secondary: var(--palette-secondary-label);
+  --case-study-footer-lift: 8px;
 
   position: sticky;
-  bottom: 0;
+  bottom: var(--case-study-footer-lift);
   width: min(100%, 724px);
   margin-inline: auto;
+  margin-block-end: var(--case-study-footer-lift);
   padding-inline: 24px;
-  padding-block: 64px;
+  padding-block: 64px calc(64px - var(--case-study-footer-lift));
   border-image: linear-gradient(
       var(--case-study-sheet),
       var(--case-study-sheet)
     )
-    fill 0 / 0 / 0 100vmax;
+    fill 0 / 0 / 0 100vmax var(--case-study-footer-lift);
 }
 
 .home-footer__row {
