@@ -1,19 +1,12 @@
 # Repository guidance
 
-## Purpose and scope
-
-This is Muhammad Shahid's product-design and AI-assisted design-engineering
-portfolio. Optimize for hiring teams: semantic content, accessibility,
-performance, and clarity come before visual spectacle.
-
-The homepage features AnyDay and Humi case-study cards, Experience,
-the Feed of recent snippets, and a contact footer. AnyDay, Humi, and Montran
-have case-study routes at the same level as the homepage, with a one-snapshot
-CSS zoom from the homepage cards and brief grouped entrances; Montran is not
-currently featured on the homepage.
+Accessibility, performance, and clarity come before visual spectacle.
 
 Keep edits within the requested scope. Preserve supplied copy, artwork, and
 unrelated layout or behavior unless the task calls for changing them.
+
+`docs/maintaining.md` covers setup, commands, routes, content entrypoints,
+motion, adding a project, and deployment.
 
 ## Implementation constraints
 
@@ -34,25 +27,17 @@ unrelated layout or behavior unless the task calls for changing them.
   and keep drafts out of production. Interactive MDX imports must be
   deliberate and project-specific.
 
-## Completion and verification
-
-Carry the requested change through implementation and relevant verification;
-fix failures caused by the change before reporting completion. Routine local
-edits and checks within the agreed scope do not need repeated confirmation.
+## Verification
 
 Use focused checks while iterating. Run `bun run check` for application changes
-before completion; it covers formatting, lint, types, unit tests, and build.
-For Markdown-only guidance edits, formatting and diff checks are sufficient.
-Once checks pass, repeat them only for new changes or unresolved failures.
+before completion, and fix failures the change caused. For Markdown-only edits,
+formatting and diff checks are enough. Once checks pass, repeat them only for
+new changes or unresolved failures.
 
 For visual or interaction changes, inspect the affected UI at desktop and
 narrow widths in the browser preview, including relevant keyboard and
 reduced-motion behavior. There is no automated end-to-end suite. Report what
 was verified and any blocked checks without claiming unobserved results.
-
-Use `docs/maintaining.md` for setup, commands, content entrypoints, and
-deployment details when those topics are relevant. Use skills for a concrete workflow need;
-repository guidance does not require a blanket set of skills.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
