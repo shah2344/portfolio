@@ -65,7 +65,6 @@ My avatar is the site's logo and its loading state.
 - **[Keyboard](src/components/home/home-keyboard-focus.tsx)**: Tab moves through the
   homepage in order, even with Safari's limited Tab mode.
 
-
 ## Tech stack
 
 - **Framework**: [Next.js](https://nextjs.org) and [React](https://react.dev), with
