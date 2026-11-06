@@ -65,12 +65,6 @@ My avatar is the site's logo and its loading state.
 - **[Keyboard](src/components/home/home-keyboard-focus.tsx)**: Tab moves through the
   homepage in order, even with Safari's limited Tab mode.
 
-## How I work
-
-I review the site in the browser, mark up what's off with
-[Agentation](https://benji.org/agentation), and hand those notes to Claude.
-[`AGENTS.md`](AGENTS.md) is the brief it works from. It puts accessibility, performance,
-and clarity ahead of visual spectacle.
 
 ## Tech stack
 
