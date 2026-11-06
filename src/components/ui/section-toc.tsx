@@ -809,22 +809,27 @@ function MobileSectionToc({
       if (!landing.getClientRects().length) return;
       const shell = nav;
       const landingRect = landing.getBoundingClientRect();
+      // Measure where the row settles, not where its entrance has it right now:
+      // nothing re-measures when that lift ends, so a reading taken during it
+      // would leave the button docked a few pixels below the row.
+      const ending = landing.closest(".humi-story-ending");
+      const entranceLift = ending
+        ? new DOMMatrixReadOnly(getComputedStyle(ending).transform).m42
+        : 0;
+      const landingBottom = landingRect.bottom - entranceLift;
       // Read the resolved fixed inset above the viewport edge.
       // Once docked, bottom is auto; retain the last viewport inset.
       if (shell.dataset.docked !== "true") {
         restingBottom = Number.parseFloat(getComputedStyle(shell).bottom) || 16;
       }
-      const docked = landingRect.bottom <= window.innerHeight - restingBottom;
+      const docked = landingBottom <= window.innerHeight - restingBottom;
       shell.dataset.docked = String(docked);
       if (docked) {
         const parent = shell.offsetParent as HTMLElement | null;
         const parentRect = parent?.getBoundingClientRect();
         shell.style.setProperty(
           "--toc-docked-top",
-          landingRect.bottom -
-            (parentRect?.top ?? 0) -
-            shell.offsetHeight +
-            "px",
+          landingBottom - (parentRect?.top ?? 0) - shell.offsetHeight + "px",
         );
         shell.style.setProperty(
           "--toc-docked-left",
@@ -838,8 +843,7 @@ function MobileSectionToc({
           ? window.scrollY
           : Math.max(0, window.scrollY - maxScroll);
       shell.style.setProperty("--toc-overscroll-y", -overscroll + "px");
-      const endingTop =
-        landing.closest(".humi-story-ending")?.getBoundingClientRect().top ?? 0;
+      const endingTop = ending?.getBoundingClientRect().top ?? 0;
       const distance = endingTop - window.innerHeight;
       shell.dataset.ending = String(distance <= 0);
       shell.style.setProperty(

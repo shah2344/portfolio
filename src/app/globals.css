@@ -411,7 +411,7 @@ html[data-page-zoom="close"] {
 
 @keyframes page-zoom-arrive {
   from {
-    filter: blur(2px);
+    filter: blur(8px);
     transform: scale(var(--page-zoom-from));
   }
 }
@@ -1134,6 +1134,16 @@ html:has(.case-study-page) {
 
 #discovery-findings .anyday-figure__frame {
   border: 0;
+}
+
+/* The taller mobile frame crops these wide portal screens, so each keeps the
+   side that carries its content instead of the centre. */
+#portal-onboarding .anyday-figure__frame img {
+  object-position: left;
+}
+
+#billing .anyday-figure__frame img {
+  object-position: right;
 }
 
 /* The card's 2px white stroke just inside its hairline, over the artwork, so

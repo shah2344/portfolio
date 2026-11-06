@@ -64,7 +64,8 @@ const OLD_PORTAL_MARKS: readonly CaseStudyAnnotation[] = [
 ];
 
 /** Phone exports run tall; landscape captures of the portal run wide. */
-const PHONE = "9 / 19.5";
+// Restore with the hidden "saving" card.
+// const PHONE = "9 / 19.5";
 const PORTAL = "2000 / 1075";
 
 /*
@@ -114,7 +115,7 @@ const OLD_APP_FLOW_MARKS: readonly CaseStudyAnnotation[] = [
   {
     mark: { x: 0.29, y: 0.18, h: 0.02 },
     note: { x: 0.2, y: 0.1, w: 0.19, tilt: -0.6 },
-    text: "Missing balances on open",
+    text: "Poor performance",
   },
   {
     mark: { x: 0.948, y: 0.42, h: 0.06 },
@@ -266,10 +267,10 @@ export function AnyDayCaseStudy() {
                 <AnyDayPhoneBoard
                   annotations={OLD_APP_FLOW_MARKS}
                   clips={OLD_APP_CLIPS}
-                  description="Information was hard to find, flows didn’t match how people actually worked, and problems surfaced too late to fix easily."
+                  description="Information was hard to find, performance had degraded, and errors surfaced too late to fix easily."
                   id="old-app-flows"
                   screen={OLD_PORTAL_CLIP}
-                  title="The product had become something people worked around."
+                  title="The products had become something users worked around."
                 />
               </CaseStudyCard>
               <CaseStudyCard id="old-portal">
@@ -289,8 +290,8 @@ export function AnyDayCaseStudy() {
               <CaseStudySection id="research">Discovery</CaseStudySection>
               <AnyDayStoryCard
                 id="member-research"
-                title="Most of the payouts we processed to members’ cards were transferred out soon after."
-                description="We interviewed representative members to understand what it would take to earn a place in their everyday banking."
+                title="We interviewed representative workers."
+                description="Transfer-outs exceeded card spend, so we asked what it would take to earn a place in their everyday banking."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
@@ -306,8 +307,8 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="discovery-findings"
-                title="Every payout started in a manager’s spreadsheet."
-                description="Mapping the process with restaurant partners showed why: no two split tips the same way. Net sales or total tips, rules by role. Automation had to design for that variation from the start."
+                title="We mapped payouts with restaurant partners."
+                description="Tipping rules varied by restaurant and even by location. Automation only worked if any of them could easily set up their own rules exactly how they had it in their spreadsheets."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
@@ -325,8 +326,8 @@ export function AnyDayCaseStudy() {
               <CaseStudySection id="solution">Solution</CaseStudySection>
               <AnyDayStoryCard
                 id="foundation"
-                title="I took the new Today app from concept to launch."
-                description="The redesigned portal and shared design systems gave us a foundation for what followed."
+                title="I designed the new app to keep members in our ecosystem after payday."
+                description="Savings, rewards, and budgeting gave them a reason to make AnyDay their primary account, in a simpler, cleaner UI."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -343,8 +344,8 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="portal-system"
-                title="A portal redesigned for confidence, not double-checking."
-                description="Precise filtering, pinned locations, and proactive funding alerts put what mattered to each role up front, even on the aging hardware restaurants relied on."
+                title="I designed a simpler, faster portal focused on each manager’s role."
+                description="Precise filtering, pinned locations, and proactive funding alerts put what mattered up front, and it ran 6x faster on the aging hardware restaurants relied on."
               >
                 <AnyDayFigureRow width="full">
                   <figure className="anyday-figure">
@@ -361,16 +362,16 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="portal-onboarding"
-                title="Restaurants could set themselves up."
-                description="A guided flow connected their POS and shaped the setup around their own services and tip rules, without a call to support."
+                title="Restaurants could now onboard themselves."
+                description="I designed a guided checklist that took managers from connecting their POS to setting their tip rules, with each step building on the last, so they didn’t need to call support."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
-                    alt="Portal onboarding step “Connect your POS system”, with Lightspeed selected and a Connect to Lightspeed button under Integration status."
+                    alt="Two angled portal screens: the Oakville setup checklist on the Payments page, running from data collection to a first tip rule, and the “Connect your POS system” step with Lightspeed selected."
                     aspect={PORTAL}
                     ground="#f2f2f2"
-                    height={2065}
-                    label="Portal onboarding — connect a POS"
+                    height={2064}
+                    label="Portal onboarding — setup checklist and POS connection"
                     src="/media/anyday/portal-onboarding.webp"
                     unoptimized
                     width={3840}
@@ -419,6 +420,7 @@ export function AnyDayCaseStudy() {
                   </figure>
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
+              {/* Hidden for now.
               <AnyDayStoryCard
                 id="roles"
                 title="Every role could see what it was allowed to do."
@@ -431,6 +433,7 @@ export function AnyDayCaseStudy() {
                   />
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
+              */}
               <AnyDayStoryCard
                 id="billing"
                 title="I designed billing for AnyDay’s move to SaaS."
@@ -449,6 +452,7 @@ export function AnyDayCaseStudy() {
                   />
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
+              {/* Hidden for now.
               <AnyDayStoryCard
                 id="saving"
                 title="Set money aside with every payout."
@@ -467,6 +471,7 @@ export function AnyDayCaseStudy() {
                   />
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
+              */}
               {showPayoutChoice && (
                 <AnyDayStoryCard
                   id="choice"
