@@ -343,16 +343,16 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="saving"
                 title="Set money aside with every payout."
-                description="I designed auto-save to split earnings between spending and savings goals. In its first two months, it accounted for 76% of all deposit value into accounts."
+                description="I designed auto-save to split earnings between spending and savings goals. In its first two months, it accounted for 76% of all deposit value into Pockets."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
-                    alt="Two Today app screens: a Trip to Italy goal 55% saved with auto-save on, and “Set up auto-save” splitting each employer payout 70% to Spendable, 0% to Trip to Italy, and 20% to Emergency, with 10% remaining."
+                    alt="Two Today app screens: “Set up auto-save” splitting each employer payout between Spendable, Trip to Italy, and Emergency, and a Trip to Italy goal 55% saved with auto-save on."
                     aspect="3840 / 2560"
                     ground="#f3f3f3"
                     height={2560}
-                    label="Auto-save — goal progress and payout split"
-                    src="/media/anyday/auto-save-goal-split.webp"
+                    label="Auto-save — payout split and goal progress"
+                    src="/media/anyday/auto-save-split-goal.webp"
                     unoptimized
                     width={3840}
                   />
