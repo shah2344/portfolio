@@ -63,9 +63,7 @@ const OLD_PORTAL_MARKS: readonly CaseStudyAnnotation[] = [
   },
 ];
 
-/** Phone exports run tall; landscape captures of the portal run wide. */
-// Restore with the hidden "saving" card.
-// const PHONE = "9 / 19.5";
+/** Landscape captures of the portal run wide. */
 const PORTAL = "2000 / 1075";
 
 /*
@@ -343,6 +341,24 @@ export function AnyDayCaseStudy() {
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
               <AnyDayStoryCard
+                id="saving"
+                title="Set money aside with every payout."
+                description="I designed auto-save to split earnings between spending and savings goals. In its first two months, it accounted for 76% of all deposit value into accounts."
+              >
+                <AnyDayFigureRow width="wide">
+                  <AnyDayFigure
+                    alt="Two Today app screens: a Trip to Italy goal 55% saved with auto-save on, and “Set up auto-save” splitting each employer payout 70% to Spendable, 0% to Trip to Italy, and 20% to Emergency, with 10% remaining."
+                    aspect="3840 / 2560"
+                    ground="#f3f3f3"
+                    height={2560}
+                    label="Auto-save — goal progress and payout split"
+                    src="/media/anyday/auto-save-goal-split.webp"
+                    unoptimized
+                    width={3840}
+                  />
+                </AnyDayFigureRow>
+              </AnyDayStoryCard>
+              <AnyDayStoryCard
                 id="portal-system"
                 title="I designed the portal around how managers work."
                 description="Precise filtering and pinned locations cut the digging, and proactive funding alerts cut the surprises. It all ran 6x faster on slower networks and devices."
@@ -430,26 +446,6 @@ export function AnyDayCaseStudy() {
                   <AnyDayFigure
                     aspect={PORTAL}
                     label="Roles and permissions chart"
-                  />
-                </AnyDayFigureRow>
-              </AnyDayStoryCard>
-              */}
-              {/* Hidden for now.
-              <AnyDayStoryCard
-                id="saving"
-                title="Set money aside with every payout."
-                description="I designed auto-save to split earnings between spending and savings goals; members saved $3 million in its first two months."
-              >
-                <AnyDayFigureRow width="column">
-                  <AnyDayFigure
-                    aspect={PHONE}
-                    label="Auto-save allocation"
-                    sizes="(min-width: 45rem) 332px, calc((100vw - 3rem) / 2)"
-                  />
-                  <AnyDayFigure
-                    aspect={PHONE}
-                    label="Savings goal progress"
-                    sizes="(min-width: 45rem) 332px, calc((100vw - 3rem) / 2)"
                   />
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
