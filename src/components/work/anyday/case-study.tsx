@@ -307,8 +307,8 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="discovery-findings"
-                title="We mapped payouts with restaurant partners."
-                description="Tipping rules varied by restaurant and even by location. Automation only worked if any of them could easily set up their own rules exactly how they had it in their spreadsheets."
+                title="We mapped payout journeys with restaurant partners."
+                description="Tipping rules varied by restaurant and even by location. Automation only worked if any location could easily set up their own rules exactly how they had it in their spreadsheets."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
@@ -327,7 +327,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="foundation"
                 title="I designed the new app to keep members in our ecosystem after payday."
-                description="Savings, rewards, and budgeting gave them a reason to make AnyDay their primary account, in a simpler, cleaner UI."
+                description="Savings, rewards, and budgeting gave members reasons to make AnyDay their primary account, in a simpler, cleaner UI."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -344,8 +344,8 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="portal-system"
-                title="I designed a simpler, faster portal focused on each manager’s role."
-                description="Precise filtering, pinned locations, and proactive funding alerts put what mattered up front, and it ran 6x faster on the aging hardware restaurants relied on."
+                title="I designed the portal around how managers work."
+                description="Precise filtering and pinned locations cut the digging, and proactive funding alerts cut the surprises. It all ran 6x faster on slower networks and devices."
               >
                 <AnyDayFigureRow width="full">
                   <figure className="anyday-figure">
@@ -362,16 +362,16 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="portal-onboarding"
-                title="Restaurants could now onboard themselves."
-                description="I designed a guided checklist that took managers from connecting their POS to setting their tip rules, with each step building on the last, so they didn’t need to call support."
+                title="I designed a self-guided onboarding flow."
+                description="A step-by-step checklist took managers from connecting their POS to setting their tip rules, without a call to support."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
-                    alt="Two angled portal screens: the Oakville setup checklist on the Payments page, running from data collection to a first tip rule, and the “Connect your POS system” step with Lightspeed selected."
+                    alt="Two angled portal screens: the Oakville setup checklist on the Payments page, running from data collection to a first tip rule, and the “Review tip rule” step summarizing contributors, receivers, payout frequency, and services."
                     aspect={PORTAL}
                     ground="#f2f2f2"
                     height={2064}
-                    label="Portal onboarding — setup checklist and POS connection"
+                    label="Portal onboarding — setup checklist and tip rule review"
                     src="/media/anyday/portal-onboarding.webp"
                     unoptimized
                     width={3840}
@@ -434,24 +434,6 @@ export function AnyDayCaseStudy() {
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
               */}
-              <AnyDayStoryCard
-                id="billing"
-                title="I designed billing for AnyDay’s move to SaaS."
-                description="Finance teams could now download invoices and update payment details in the portal, taking pressure off our support team."
-              >
-                <AnyDayFigureRow width="wide">
-                  <AnyDayFigure
-                    alt="Portal billing settings: Payments and Tip calculator subscriptions with next billing dates, a default Mastercard payment method, and an invoices table with export."
-                    aspect={PORTAL}
-                    ground="#f2f2f2"
-                    height={2065}
-                    label="Portal billing settings"
-                    src="/media/anyday/portal-billing.webp"
-                    unoptimized
-                    width={3840}
-                  />
-                </AnyDayFigureRow>
-              </AnyDayStoryCard>
               {/* Hidden for now.
               <AnyDayStoryCard
                 id="saving"

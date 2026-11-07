@@ -1136,16 +1136,6 @@ html:has(.case-study-page) {
   border: 0;
 }
 
-/* The taller mobile frame crops these wide portal screens, so each keeps the
-   side that carries its content instead of the centre. */
-#portal-onboarding .anyday-figure__frame img {
-  object-position: left;
-}
-
-#billing .anyday-figure__frame img {
-  object-position: right;
-}
-
 /* The card's 2px white stroke just inside its hairline, over the artwork, so
    the lead frame is drawn the way its card is — as a border, for the reason
    given at `.tileLink::after`. */
