@@ -90,12 +90,6 @@
   }
 }
 
-.tile,
-.surface,
-.edge,
-.tileLink {
-}
-
 /* #1e1103 is the shadow brown in the top of the kitchen photograph — the
    darkest of its wall — so the ground the reflection fades into is the room's
    own dark, not a neutral one. */
@@ -334,9 +328,8 @@
 }
 
 /* A small lift on hover, composed with the scroll-driven settle. The ease is
-   an even ease-out, not the page's steep flight curve: that covered most of
-   the distance in its first tenth of a second, so the lift read as a snap.
-   It rises slowly and settles back a little quicker. The shadow deepens with
+   an even ease-out, not the page's steep flight curve, which covered most of
+   the distance in its first beat and read as a snap. The shadow deepens with
    it, so the lift reads as elevation rather than the card simply growing. It
    has the same four layers as `--site-shadow-media`, so each one
    interpolates instead of popping. */
@@ -346,7 +339,7 @@
   }
 
   .tile {
-    transition: box-shadow 380ms var(--tile-hover-ease);
+    transition: box-shadow 220ms var(--tile-hover-ease);
   }
 
   .panel:hover .tile {
@@ -355,26 +348,55 @@
       0 28px 18px -8px #0000000c,
       0 12px 8px -2px #0000000c,
       0 2px 2px 0 #00000008;
-    transition-duration: 600ms;
+  }
+
+  /* Pressed, the card comes back down onto the page: the shadow returns to
+     rest with the scale, so the press reads as contact, not shrinking. */
+  .panel:has(.tileLink:active) .tile {
+    box-shadow: var(--site-shadow-media);
+    transition-duration: 140ms;
   }
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .panel {
-    transition: scale 380ms var(--tile-hover-ease);
+    transition: scale 220ms var(--tile-hover-ease);
   }
 
   .panel:hover {
     scale: 1.01;
-    transition-duration: 600ms;
   }
 }
 
-/* Pressing gives way at once, before the click lands and the page changes. */
+/* Pressing gives way at once, before the click lands and the page changes.
+   The card is a large surface, so the press is sized in pixels rather than
+   the small-control 0.96: about 5px across, measured from wherever the card
+   stood. With a pointer it gives back the hover lift and a little more; on
+   touch, where nothing lifted, it dips the same distance from rest. */
 @media (prefers-reduced-motion: no-preference) {
   .panel:has(.tileLink:active) {
-    scale: 0.98;
-    transition: scale 120ms var(--site-ease-standard);
+    scale: 0.986;
+    transition: scale 140ms var(--site-ease-standard);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .panel:has(.tileLink:active) {
+    scale: 0.996;
+  }
+}
+
+/* A touch that starts a scroll on the card also matches `:active` for a
+   moment. The short delay lets the scroll cancel it before the card moves,
+   so swiping through the column doesn't make each card flinch. Released or
+   cancelled, it eases back rather than snapping to rest. */
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  .panel {
+    transition: scale 220ms var(--site-ease-standard);
+  }
+
+  .panel:has(.tileLink:active) {
+    transition-delay: 70ms;
   }
 }
 
@@ -460,17 +482,6 @@
     color: #2a2a2a;
   }
 }
-@media (hover: hover) {
-  .tile,
-  .panel {
-    transition-duration: 220ms;
-  }
-  .panel:hover,
-  .panel:hover .tile {
-    transition-duration: 220ms;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .panel,
   .tile,

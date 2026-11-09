@@ -2,6 +2,17 @@
 
 import { SmoothSurface } from "@/components/ui/smooth-surface";
 import { requestMeasure } from "@lisse/core";
+import {
+  PULL_LOCK_DISTANCE,
+  PULL_VELOCITY_SAMPLES,
+  pullAxis,
+  pullTransform,
+  pullTravel,
+  pullVelocity,
+  shouldDismiss,
+  springEasing,
+  type PullSample,
+} from "./pull";
 
 import {
   useCallback,
@@ -47,6 +58,14 @@ const OPEN_MAX_SCALE = 3.2;
  */
 const FLIGHT_DURATION = 520;
 
+/** How long a released pull takes to spring back. Kept in step with the
+ *  `[data-pg-snap]` transition in globals.css. */
+const SNAP_DURATION = 300;
+
+/** Only pointer samples this recent count towards a release flick, in ms, so
+ *  a pull held still before letting go reads as still. */
+const FLICK_WINDOW = 100;
+
 /**
  * How big this card can be shown, given the window it has to fit inside. The
  * card keeps its own proportions — it is the same frame, nearer, not a
@@ -59,12 +78,15 @@ function enlargedScale(
   captionAllowance: number,
   maxScale: number,
   marginX: number,
+  compact: boolean,
 ) {
-  const insetX = Math.min(64, Math.max(OPEN_INSET_X, window.innerWidth * 0.04));
-  const insetY = Math.min(
-    64,
-    Math.max(OPEN_INSET_Y, window.innerHeight * 0.05),
-  );
+  /* A feed card opens image-only, so it can afford a tighter frame. */
+  const insetX = compact
+    ? Math.min(48, Math.max(12, window.innerWidth * 0.03))
+    : Math.min(64, Math.max(OPEN_INSET_X, window.innerWidth * 0.04));
+  const insetY = compact
+    ? Math.min(48, Math.max(24, window.innerHeight * 0.03))
+    : Math.min(64, Math.max(OPEN_INSET_Y, window.innerHeight * 0.05));
   const room = Math.min(
     (window.innerWidth - insetX * 2) / (from.width * (1 + marginX * 2)),
     (window.innerHeight - insetY * 2 - captionAllowance) / from.height,
@@ -162,6 +184,16 @@ export function PlaygroundTile({
   const returnFrame = useRef<number | undefined>(undefined);
   const settleTimer = useRef<number | undefined>(undefined);
   const stopEdges = useRef<() => void>(undefined);
+  /** Where the opened card rests, so a pull can be measured from it and
+   *  spring back to it. */
+  const pose = useRef<{
+    left: number;
+    scale: number;
+    top: number;
+    x: number;
+    y: number;
+  }>(undefined);
+  const closeRef = useRef<() => void>(undefined);
   const [enlarged, setEnlarged] = useState(false);
 
   useEffect(() => {
@@ -207,9 +239,13 @@ export function PlaygroundTile({
        * a caption reserves nothing.
        */
       const figcaption = frame.querySelector<HTMLElement>("figcaption");
-      const captionAllowance = figcaption
-        ? CAPTION_GAP + figcaption.offsetHeight * CAPTION_SCALE
-        : 0;
+      /* Feed cards drop their caption once opened (see `.pg-grid--feed` in
+         globals.css), so they reserve no room for it. */
+      const imageOnly = figure.closest(".pg-grid--feed") !== null;
+      const captionAllowance =
+        figcaption && !imageOnly
+          ? CAPTION_GAP + figcaption.offsetHeight * CAPTION_SCALE
+          : 0;
 
       frame.style.left = `${from.left}px`;
       frame.style.top = `${from.top}px`;
@@ -245,6 +281,7 @@ export function PlaygroundTile({
         captionAllowance,
         maxScale,
         openMarginX,
+        imageOnly,
       );
       const flightX = window.innerWidth / 2 - (from.left + from.width / 2);
       /*
@@ -268,6 +305,13 @@ export function PlaygroundTile({
       frame.style.setProperty("--pg-open-scale", scale.toFixed(3));
       frame.style.scale = scale.toFixed(3);
       frame.style.translate = `${Math.round(flightX)}px ${Math.round(flightY)}px`;
+      pose.current = {
+        left: from.left,
+        top: from.top,
+        scale: Number(scale.toFixed(3)),
+        x: Math.round(flightX),
+        y: Math.round(flightY),
+      };
       stopEdges.current?.();
       stopEdges.current = followEdges(frame);
       setEnlarged(true);
@@ -321,6 +365,309 @@ export function PlaygroundTile({
       onOpenChange?.(false);
     }, FLIGHT_DURATION);
   }, [onOpenChange]);
+
+  useEffect(() => {
+    closeRef.current = close;
+  }, [close]);
+
+  /*
+   * Pull to dismiss. An opened card can be dragged up or down: while the
+   * pointer is down it is the pointer, following with resistance, shrinking a
+   * little and thinning the scrim in step. On release a spring seeded with the
+   * pointer's speed either carries it home through the usual `close` flight —
+   * pulled far enough, or flicked — or snaps it back to rest. The card can be
+   * caught mid-flight (opening, springing back or flying home) and dragged
+   * from wherever it is. Escape, the scrim and the card itself still close it,
+   * so the gesture is a shortcut, never the only way out.
+   */
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    let drag:
+      | {
+          axis: ReturnType<typeof pullAxis>;
+          /** Where the card was, relative to rest, when the pointer took it. */
+          base: { scale: number; x: number; y: number };
+          /** Raw travel that position already counts as. */
+          travel: number;
+          dy: number;
+          id: number;
+          samples: PullSample[];
+          x0: number;
+          y0: number;
+        }
+      | undefined;
+    let swallowClick = false;
+    let swallowTimer = 0;
+    let snapTimer = 0;
+    const springs = CSS.supports("transition-timing-function", "linear(0, 1)");
+
+    /* Transform writes only: no inherited custom property changes per move,
+       so a drag never restyles the card's contents. */
+    const pin = (scale: number, x: number, y: number) => {
+      frame.style.scale = scale.toFixed(3);
+      frame.style.translate = `${Math.round(x)}px ${Math.round(y)}px`;
+    };
+
+    /** Where the card is drawn right now, mid-transition included,
+     *  relative to where it rests open. */
+    const drawnAt = (rest: NonNullable<typeof pose.current>) => {
+      const style = getComputedStyle(frame);
+      const [tx = 0, ty = 0] =
+        style.translate === "none"
+          ? []
+          : style.translate.split(" ").map(parseFloat);
+      const scale =
+        style.scale === "none" ? 1 : parseFloat(style.scale.split(" ")[0]!);
+      return {
+        scale,
+        x: parseFloat(frame.style.left) + tx - rest.left - rest.x,
+        y: parseFloat(frame.style.top) + ty - rest.top - rest.y,
+      };
+    };
+
+    const inFlight = () =>
+      frame
+        .getAnimations()
+        .some(
+          (animation) =>
+            "transitionProperty" in animation &&
+            (animation.transitionProperty === "translate" ||
+              animation.transitionProperty === "scale"),
+        );
+
+    const engage = (id: number) => {
+      window.clearTimeout(snapTimer);
+      delete frame.dataset.pgSnap;
+      frame.style.removeProperty("transition-timing-function");
+      frame.dataset.pgPulling = "";
+      try {
+        frame.setPointerCapture(id);
+      } catch {
+        // The pointer is already gone; the pull still ends on its pointerup.
+      }
+    };
+
+    const onDown = (event: PointerEvent) => {
+      if (drag && event.pointerId !== drag.id) {
+        // A second finger means a pinch, not a pull: put the card back.
+        release(event, true);
+        return;
+      }
+      swallowClick = false;
+      const rest = pose.current;
+      if (
+        !event.isPrimary ||
+        event.button !== 0 ||
+        !rest ||
+        !frame.open ||
+        !frame.hasAttribute("data-pg-enlarged")
+      )
+        return;
+      const target = event.target as Element;
+      if (
+        target.closest("a, input, select, textarea, [data-pg-no-pull]") ||
+        (target.closest("button") && !target.closest(".pg-open"))
+      )
+        return;
+
+      const opened = frame.hasAttribute("data-pg-open");
+      const moving = inFlight();
+      if (!opened && !moving) return;
+
+      const base = moving ? drawnAt(rest) : { scale: rest.scale, x: 0, y: 0 };
+      drag = {
+        axis: moving ? "vertical" : "none",
+        base,
+        travel: pullTravel(base.y),
+        dy: 0,
+        id: event.pointerId,
+        samples: [{ t: event.timeStamp, y: event.clientY }],
+        x0: event.clientX,
+        y0: event.clientY,
+      };
+      if (!moving) return;
+
+      /*
+       * Caught mid-flight: freeze it where it is drawn and hand it straight to
+       * the pointer. A card caught flying home is taken back out of that
+       * flight, so letting go short of dismissing returns it to rest.
+       */
+      engage(event.pointerId);
+      if (!opened) {
+        window.clearTimeout(settleTimer.current);
+        if (returnFrame.current !== undefined)
+          cancelAnimationFrame(returnFrame.current);
+        returnFrame.current = undefined;
+        frame.style.left = `${rest.left}px`;
+        frame.style.top = `${rest.top}px`;
+        frame.dataset.pgOpen = "";
+        setEnlarged(true);
+      }
+      pin(base.scale, rest.x + base.x, rest.y + base.y);
+      frame.style.setProperty(
+        "--pg-pull",
+        pullTransform(0, drag.travel).progress.toFixed(3),
+      );
+    };
+
+    const onMove = (event: PointerEvent) => {
+      const rest = pose.current;
+      if (!drag || event.pointerId !== drag.id || !rest) return;
+      const dx = event.clientX - drag.x0;
+      const dy = event.clientY - drag.y0;
+
+      if (drag.axis === "none") {
+        drag.axis = pullAxis(dx, dy);
+        if (drag.axis === "none") return;
+        // A sideways drag belongs to the media, such as a carousel.
+        if (drag.axis === "horizontal") {
+          drag = undefined;
+          return;
+        }
+        engage(event.pointerId);
+      }
+
+      event.preventDefault();
+      drag.dy = dy;
+      drag.samples.push({ t: event.timeStamp, y: event.clientY });
+      if (drag.samples.length > PULL_VELOCITY_SAMPLES) drag.samples.shift();
+
+      const { base } = drag;
+      const pull = pullTransform(dx, dy);
+      pin(
+        base.scale * pull.scale,
+        rest.x + base.x + pull.x,
+        rest.y + base.y + pull.y,
+      );
+      // The scrim reads the same progress, so it is always exactly as faded
+      // as the card is pulled — including when the pointer reverses.
+      frame.style.setProperty(
+        "--pg-pull",
+        pullTransform(0, drag.travel + dy).progress.toFixed(3),
+      );
+    };
+
+    /** A spring easing that leaves at `speed` (px/s) towards a target
+     *  `distance` px away, over `duration` ms. */
+    const seeded = (
+      speed: number,
+      distance: number,
+      duration: number,
+      damping: number,
+      floor: number,
+    ) => {
+      const velocity = (speed * duration) / 1000 / Math.max(distance, 1);
+      return springEasing(Math.min(Math.max(velocity, floor), 4), damping);
+    };
+
+    function release(event: PointerEvent, cancelled: boolean) {
+      const rest = pose.current;
+      if (!drag || !frame || !rest) return;
+      const { axis, dy, id, samples, travel } = drag;
+      drag = undefined;
+      if (axis !== "vertical") return;
+
+      // The pointer lifting off the card would otherwise read as a click on
+      // it, and close the card the pull just put back.
+      swallowClick = true;
+      window.clearTimeout(swallowTimer);
+      swallowTimer = window.setTimeout(() => {
+        swallowClick = false;
+      }, 300);
+
+      if (frame.hasPointerCapture(id)) frame.releasePointerCapture(id);
+      const at = drawnAt(rest);
+      delete frame.dataset.pgPulling;
+      frame.style.removeProperty("--pg-pull");
+
+      /* A caught card skips the axis lock, so a few pixels of jitter between
+         two close events could read as a fast flick. A flick has to travel. */
+      const velocity =
+        Math.abs(dy) < PULL_LOCK_DISTANCE
+          ? 0
+          : pullVelocity(
+              samples.filter(
+                (sample) => event.timeStamp - sample.t <= FLICK_WINDOW,
+              ),
+            );
+
+      if (!cancelled && shouldDismiss(travel + dy, velocity)) {
+        /*
+         * Home is the slot it came from. The flight leaves at the speed the
+         * pointer did when it was already heading that way, and lands without
+         * a bounce: it is settling into the grid, not hitting a wall.
+         */
+        const slot = figureRef.current?.getBoundingClientRect();
+        const card = frame.getBoundingClientRect();
+        if (springs && slot) {
+          const gapX =
+            slot.left + slot.width / 2 - (card.left + card.width / 2);
+          const gapY =
+            slot.top + slot.height / 2 - (card.top + card.height / 2);
+          const gap = Math.hypot(gapX, gapY);
+          if (gap > 1 && velocity * gapY > 0)
+            frame.style.transitionTimingFunction = seeded(
+              (velocity * gapY) / gap,
+              gap,
+              FLIGHT_DURATION,
+              1,
+              0,
+            );
+        }
+        closeRef.current?.();
+        return;
+      }
+
+      /* Snapping back is quick and keeps the release speed, with the small
+         bounce a drag has earned. */
+      frame.dataset.pgSnap = "";
+      if (springs) {
+        const gap = Math.hypot(at.x, at.y);
+        frame.style.transitionTimingFunction = seeded(
+          gap > 1 ? (-velocity * at.y) / gap : 0,
+          gap,
+          SNAP_DURATION,
+          0.8,
+          -1,
+        );
+      }
+      pin(rest.scale, rest.x, rest.y);
+      snapTimer = window.setTimeout(() => {
+        delete frame.dataset.pgSnap;
+        frame.style.removeProperty("transition-timing-function");
+      }, SNAP_DURATION);
+    }
+
+    const onUp = (event: PointerEvent) => {
+      if (drag && event.pointerId === drag.id) release(event, false);
+    };
+    const onCancel = (event: PointerEvent) => {
+      if (drag && event.pointerId === drag.id) release(event, true);
+    };
+    const onClick = (event: Event) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    frame.addEventListener("pointerdown", onDown);
+    frame.addEventListener("pointermove", onMove);
+    frame.addEventListener("pointerup", onUp);
+    frame.addEventListener("pointercancel", onCancel);
+    frame.addEventListener("click", onClick, true);
+    return () => {
+      frame.removeEventListener("pointerdown", onDown);
+      frame.removeEventListener("pointermove", onMove);
+      frame.removeEventListener("pointerup", onUp);
+      frame.removeEventListener("pointercancel", onCancel);
+      frame.removeEventListener("click", onClick, true);
+      window.clearTimeout(swallowTimer);
+      window.clearTimeout(snapTimer);
+    };
+  }, []);
 
   const openLabel = label ?? caption ?? "this playground detail";
   const Clip = className.includes("anyday-shots__zoom") ? "div" : SmoothSurface;

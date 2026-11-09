@@ -4864,6 +4864,44 @@ html[data-page-wipe]
 }
 
 /*
+ * Pull to dismiss (see `PlaygroundTile`). Vertical pans belong to the pull
+ * once the card is open; sideways pans and pinches stay with the browser and
+ * the media. While pulled, the card tracks the pointer directly and the scrim
+ * thins with the distance; let go short of dismissing and it springs back.
+ */
+.pg-frame[data-pg-open] {
+  touch-action: pan-x pinch-zoom;
+}
+
+.pg-frame[data-pg-pulling][data-pg-enlarged] {
+  transition: none;
+}
+
+.pg-frame[data-pg-pulling][data-pg-enlarged] .pg-open {
+  cursor: grabbing;
+}
+
+/* `::backdrop` may not inherit `--pg-pull` in older engines; the fallback
+   leaves the scrim as it was rather than clearing it. */
+.pg-frame[data-pg-pulling]::backdrop {
+  opacity: calc(1 - var(--pg-pull, 0) * 0.5);
+  transition: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Kept in step with SNAP_DURATION in `playground/tile`. */
+  .pg-frame[data-pg-snap][data-pg-enlarged] {
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  /* The scrim returns on the card's clock, so the two read as one thing. */
+  .pg-frame[data-pg-snap]::backdrop {
+    transition-duration: 300ms;
+  }
+}
+
+/*
  * The whole card is the control: it opens the card in the grid and closes it
  * again once open, which is what a pointer expects of something showing a
  * zoom cursor. It reaches back over the frame's padding so the padded tiles
@@ -5829,6 +5867,25 @@ html[data-page-wipe]
 }
 
 /*
+ * Opened, a feed card is the image alone. The caption fades out as the card
+ * takes off, and fades back in only as it lands, so it never rides the flight.
+ */
+.pg-grid--feed .pg-frame[data-pg-enlarged] figcaption {
+  transition:
+    scale var(--pg-flight) var(--site-ease-flight),
+    margin-block-start var(--pg-flight) var(--site-ease-flight),
+    opacity 200ms var(--site-ease-standard) calc(var(--pg-flight) - 200ms);
+}
+
+.pg-grid--feed .pg-frame[data-pg-open] figcaption {
+  opacity: 0;
+  transition:
+    scale var(--pg-flight) var(--site-ease-flight),
+    margin-block-start var(--pg-flight) var(--site-ease-flight),
+    opacity 160ms var(--site-ease-standard);
+}
+
+/*
  * On the way out the feed is pinned by its bottom edge, so the last card holds
  * still and everything above it is lifted by the spread the cards take. The
  * heading is off screen by then, so its own offsets are left at full size,
@@ -6011,7 +6068,7 @@ html[data-page-wipe]
        portrait tablets read one card at a time, so each gets a clear break
        from the caption above it. */
     --pg-feed-room: 88px;
-    --pg-feed-gap: 64px;
+    --pg-feed-gap: 40px;
   }
 
   .pg-grid--feed {
