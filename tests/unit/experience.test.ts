@@ -14,9 +14,9 @@ describe("experience list", () => {
     const roles = buildExperienceList();
 
     expect(roles.map((role) => `${role.company} — ${role.title}`)).toEqual([
-      "Montran — Contract designer",
+      "Montran — Design Consultant",
       "AnyDay — Sr. Product Designer",
-      "Batch — Founding Designer",
+      "Batch — Product Designer",
       "Humi — Product Designer",
       "Humi — Design Intern",
     ]);
@@ -71,9 +71,9 @@ describe("experience list", () => {
       roles.map((role) => [`${role.company} — ${role.title}`, role.employment]),
     );
 
-    expect(byTitle["Montran — Contract designer"]).toBe("Contract");
+    expect(byTitle["Montran — Design Consultant"]).toBe("Contract");
     expect(byTitle["AnyDay — Sr. Product Designer"]).toBe("Full-time");
-    expect(byTitle["Batch — Founding Designer"]).toBe("Full-time");
+    expect(byTitle["Batch — Product Designer"]).toBe("Full-time");
     expect(byTitle["Humi — Product Designer"]).toBe("Full-time");
     expect(byTitle["Humi — Design Intern"]).toBe("Part-time");
   });
@@ -103,9 +103,9 @@ describe("experience groups", () => {
           `${group.company}: ${group.roles.map((role) => role.title).join(", ")}`,
       ),
     ).toEqual([
-      "Montran: Contract designer",
+      "Montran: Design Consultant",
       "AnyDay: Sr. Product Designer",
-      "Batch: Founding Designer",
+      "Batch: Product Designer",
       "Humi: Product Designer, Design Intern",
     ]);
   });
