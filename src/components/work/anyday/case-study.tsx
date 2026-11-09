@@ -289,7 +289,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="member-research"
                 title="We interviewed representative workers."
-                description="Transfer-outs exceeded card spend, so we asked what it would take to earn a place in their everyday banking."
+                description="Most moved their pay straight out, so we set out to learn what it would take to earn a place in their everyday banking."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
@@ -305,7 +305,7 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="discovery-findings"
-                title="We mapped payout journeys with restaurant partners."
+                title="We mapped payout journeys with managers."
                 description="Tipping rules varied by restaurant and even by location. Automation only worked if any location could easily set up their own rules exactly how they had it in their spreadsheets."
               >
                 <AnyDayFigureRow width="full">
@@ -324,8 +324,8 @@ export function AnyDayCaseStudy() {
               <CaseStudySection id="solution">Solution</CaseStudySection>
               <AnyDayStoryCard
                 id="foundation"
-                title="I designed the new app to keep members in our ecosystem after payday."
-                description="Savings, rewards, and budgeting gave members reasons to make AnyDay their primary account, in a simpler, cleaner UI."
+                title="I designed the new app to give workers a reason to stay."
+                description="Savings, rewards, and budgeting made AnyDay worth keeping as a primary account."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -531,10 +531,14 @@ export function AnyDayCaseStudy() {
               <div className="humi-impact" id="outcomes">
                 <div className="humi-impact__intro">
                   <p className="humi-impact__lede">
-                    Over one summer, we moved roughly{" "}
-                    <strong>100k members</strong> and{" "}
-                    <strong>3,500 restaurants</strong> onto our new platform. We
-                    launched in batches, fixing issues before each next group.
+                    Over one summer, we moved{" "}
+                    <strong>
+                      <span aria-hidden="true">~</span>
+                      <span className="sr-only">about </span>200k members
+                    </strong>{" "}
+                    and <strong>3,500 restaurants</strong> onto our new
+                    platform. We launched in batches, fixing issues before each
+                    next group.
                   </p>
                   <p className="humi-impact__lede">
                     Restaurants got started faster and spent less time on

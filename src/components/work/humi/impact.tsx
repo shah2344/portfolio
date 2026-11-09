@@ -16,10 +16,6 @@ export function HumiImpact() {
           50 to 200 employees.
         </p>
         <p className="humi-impact__lede">
-          The company went on to raise <strong>$46M</strong> across its Series A
-          and B and was acquired by <strong>Employment Hero</strong>.
-        </p>
-        <p className="humi-impact__lede">
           When I joined AnyDay years later, my onboarding brought me back to
           Humi. The familiar screens reminded me how much I&rsquo;d cared about
           getting them right. It felt good to see them still in use, now helping

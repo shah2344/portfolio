@@ -104,7 +104,7 @@ export function HumiCaseStudy() {
       className="humi-case-study--flat"
       date="2018 – 2019 · Team of 30"
       heading="One system for the work behind work."
-      lede="I spent a year and a half at Humi, joining as a design intern and staying on as its first Product Designer, leading a redesign of the entire product"
+      lede="I spent a year and a half at Humi, joining as a design intern and staying on as its first Product Designer, leading a redesign of the entire product."
       mainId="humi-story"
       sections={HUMI_SECTIONS}
     >
@@ -127,7 +127,7 @@ export function HumiCaseStudy() {
           expandable
           tilt={false}
           alt="The redesigned Humi people directory"
-          description="Helping position it as the go-to platform for HR, payroll, and benefits in Canada."
+          description="The redesign positioned Humi as the go-to platform for HR, payroll, and benefits in Canada."
           eager
           ground="#fdfbf9"
           scrollScale

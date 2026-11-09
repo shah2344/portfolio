@@ -10,7 +10,6 @@ import currencySelectImage from "../../../public/media/craft/currency-select.png
 import houseOfDogeWaveMockup from "../../../public/media/craft/house-of-doge-wave-mockup.png";
 import appLaunchPoster from "../../../public/media/craft/app-launch-poster.jpg";
 import ewaOnboardingPoster from "../../../public/media/craft/ewa-onboarding-poster.jpg";
-import ofacScreeningPoster from "../../../public/media/craft/ofac-screening-poster.jpg";
 import retryPayoutPoster from "../../../public/media/craft/retry-payout-poster.jpg";
 import shotsMockups1080x60Poster from "../../../public/media/craft/shots-mockups-1080x60-poster.jpg";
 import shotsMockups1080x60v2Poster from "../../../public/media/craft/shots-mockups-1080x60-2-poster.jpg";
@@ -308,19 +307,6 @@ export function HomeContent() {
                       />
                     </PlaygroundTile>
                   )}
-
-                  <PlaygroundTile
-                    caption="OFAC screening"
-                    style={{ aspectRatio: "1620 / 1080" }}
-                    subtitle="XTM"
-                    year={2024}
-                  >
-                    <PlaygroundVideo
-                      alt="An operations flow for reviewing OFAC alerts"
-                      poster={ofacScreeningPoster}
-                      src="/media/anyday/ofac-alert-review.mp4"
-                    />
-                  </PlaygroundTile>
 
                   <PlaygroundTile
                     caption="iOS widgets"

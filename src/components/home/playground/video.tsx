@@ -14,6 +14,14 @@ import { VideoSources } from "@/components/ui/video-sources";
 const PREFETCH_MARGIN = "300px 0px";
 
 /**
+ * How far ahead the still starts fetching. Native lazy loading waits until the
+ * image is almost on screen in Safari, which left the blurred placeholder
+ * showing as each tile scrolled in. A still costs a fraction of its clip, so
+ * it can go much earlier and be sharp before the tile is read.
+ */
+const STILL_PREFETCH_MARGIN = "1500px 0px";
+
+/**
  * A playground clip that costs nothing until it is nearly on screen.
  *
  * The element renders with no source at all, so the page's first load fetches
@@ -25,8 +33,8 @@ const PREFETCH_MARGIN = "300px 0px";
  * The still is an image under the clip rather than the clip's `poster`: a
  * poster is fetched as soon as the element exists, at full size, so the grid
  * several screens down downloaded every one of its stills with the first
- * screen. As an image it loads lazily, at the width its tile is drawn, and
- * holds a blurred preview from the first paint. The clip has nothing to draw
+ * screen. As an image it loads ahead of its tile, at the width the tile is
+ * drawn, and holds a blurred preview from the first paint. The clip has nothing to draw
  * until its first frame, so the still shows through until then.
  */
 export function PlaygroundVideo({
@@ -43,9 +51,26 @@ export function PlaygroundVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
   const onScreen = useRef(false);
   const [attached, setAttached] = useState(false);
+  const [stillNear, setStillNear] = useState(false);
   // Nothing is fetched or decoded under a theme reveal; see `useAfterWipe`.
   const settled = useAfterWipe();
   const sourced = attached && settled;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setStillNear(true);
+        observer.disconnect();
+      },
+      { rootMargin: STILL_PREFETCH_MARGIN },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -98,6 +123,7 @@ export function PlaygroundVideo({
         alt=""
         className="pg-media"
         fill
+        loading={stillNear ? "eager" : "lazy"}
         placeholder="blur"
         sizes={sizes}
         src={poster}

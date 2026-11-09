@@ -47,7 +47,7 @@ export function resolveSiteUrl(environment: SiteEnvironment): URL {
 
 export const siteConfig: SiteConfig = {
   name: "Muhammad Shahid",
-  title: "Muhammad Shahid — Product Designer & AI-Assisted Design Engineer",
+  title: "Muhammad Shahid — Product Designer",
   description:
     "Product designer and AI-assisted design engineer creating thoughtful digital products and expressive interactive experiences.",
   locale: "en-CA",
