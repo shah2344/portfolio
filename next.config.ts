@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   poweredByHeader: false,
   experimental: {
+    agentUpgrade: "security",
     // How long the router keeps a prerendered page it has prefetched or
     // visited. Next's default is five minutes, after which going back to a
     // page — the close button, a card, a "Next case study" link — waited on
