@@ -1,6 +1,7 @@
 .next
 .agents
 .claude/skills
+.claude/worktrees
 .superpowers
 node_modules
 playwright-report

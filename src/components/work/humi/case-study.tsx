@@ -44,16 +44,25 @@ const HUMI_SECTIONS: readonly TocSection[] = [
  * in white space or the gutter beside the panel, running past the frame's edge
  * when it must rather than over the screen's content. The left margin is kept
  * narrow enough to clear the section rail.
+ *
+ * Below the wide breakpoint there is no gutter, so a note that hung in it is
+ * moved to the nearest white space inside the screen.
  */
 const TIME_OFF_MARKS: readonly CaseStudyAnnotation[] = [
   {
     mark: { x: 0.775, y: 0.322, h: 0.104, shape: "chevron" },
     note: { x: 0.792, w: 0.112, tilt: 1 },
+    narrow: { note: { x: 0.79, w: 0.15, tilt: 1 } },
     text: "Important information has weak hierarchy.",
   },
   {
     mark: { x: 0.903, y: 0.605, h: 0.16, shape: "chevron" },
     note: { x: 0.926, w: 0.17, tilt: -0.8 },
+    /* Under the sidebar, pointing across at where the prose begins. */
+    narrow: {
+      mark: { x: 0.385, y: 0.66, h: 0.08, arrowDirection: "right" },
+      note: { x: 0.09, y: 0.9, w: 0.25, tilt: -0.8, align: "end" },
+    },
     text: "Policy rules were compressed into prose.",
   },
 ];
@@ -62,6 +71,11 @@ const PAYROLL_MARKS: readonly CaseStudyAnnotation[] = [
   {
     mark: { x: 0.905, y: 0.315, h: 0.08, shape: "chevron" },
     note: { x: 0.926, w: 0.17, tilt: -1 },
+    /* Beside "Hide finished tasks", hooking up to the external system. */
+    narrow: {
+      mark: { x: 0.9, y: 0.36, h: 0, leave: "side" },
+      note: { x: 0.64, y: 0.485, w: 0.2, tilt: -1, align: "end" },
+    },
     text: "Payroll ran somewhere else.",
   },
   {
@@ -75,11 +89,42 @@ const EMPLOYEES_MARKS: readonly CaseStudyAnnotation[] = [
   {
     mark: { x: 0.904, y: 0.291, h: 0.096, shape: "chevron" },
     note: { x: 0.926, w: 0.19, tilt: -0.7 },
+    /* In the empty run of the header bar, dropping to the table's corner. */
+    narrow: {
+      mark: { x: 0.8, y: 0.235, h: 0 },
+      note: {
+        x: 0.26,
+        y: 0.095,
+        w: 0.52,
+        tilt: -0.7,
+        align: "end",
+        lines: 2,
+      },
+    },
     text: "Understanding or managing an employee required moving between disconnected areas.",
   },
   {
     mark: { x: 0.088, y: 0.585, h: 0.295, side: "left", shape: "chevron" },
     note: { x: -0.12, w: 0.19, tilt: -1 },
+    /* Above the button grid, with the bracket turned to lie along its top. */
+    narrow: {
+      mark: {
+        x: 0.209,
+        y: 0.353,
+        h: 0.44,
+        side: "left",
+        shape: "chevron",
+        tilt: 90,
+      },
+      note: {
+        x: 0.055,
+        y: 0.437,
+        w: 0.31,
+        tilt: -1,
+        align: "center",
+        backdrop: true,
+      },
+    },
     text: "As functionality grew, new actions were added beside existing ones instead of fitting into a clear hierarchy.",
   },
 ];

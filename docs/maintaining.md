@@ -51,8 +51,7 @@ The canonical URL resolves in this order:
 - Career details live in `src/content/experience.ts`.
 - Project metadata and MDX entrypoints live in `src/content/projects`. Case-study
   components live in `src/components/work`.
-- `/work/anyday`, `/work/humi`, and `/work/montran` are ordinary pages. Montran
-  remains available by route without a homepage card.
+- `/work/anyday` and `/work/humi` are ordinary pages.
 - `/lab/*` pages are development studies and return 404 in production.
 
 ## Motion

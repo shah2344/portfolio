@@ -47,6 +47,8 @@ const OLD_PORTAL_MARKS: readonly CaseStudyAnnotation[] = [
        switched to. */
     mark: { x: 0.625, y: 0.28, h: 0.02 },
     note: { x: 0.7, y: 0.2, w: 0.2, tilt: 1 },
+    /* The same spot, given the width to stay on one line. */
+    narrow: { note: { x: 0.69, y: 0.19, w: 0.3, tilt: 1 } },
     text: "Disconnected tools",
   },
   {
@@ -59,6 +61,7 @@ const OLD_PORTAL_MARKS: readonly CaseStudyAnnotation[] = [
       tilt: -5,
     },
     note: { x: 0.29, y: 0.085, w: 0.2, tilt: -2 },
+    narrow: { note: { x: 0.17, y: 0.085, w: 0.32, tilt: -2 } },
     text: "Confusing tip pools",
   },
 ];
@@ -101,23 +104,38 @@ const OLD_PORTAL_CLIP: AnyDayScreenClip = {
  * On the board two phones and the portal share one row height inside a 6cqw
  * margin: phones span x 0.06–0.20 and 0.22–0.36, the portal 0.39–0.94, and
  * every screen runs y 0.21–0.79. Arrows stop just outside the screen they
- * name. The side notes hang past the plate, into a column margin wide enough
- * for them from 64rem.
+ * name. The side notes hang past the plate, into the column's margin; where
+ * there is none, they move onto the plate's own grey, above and below the
+ * screens, which is deepest on a phone.
  */
 const OLD_APP_FLOW_MARKS: readonly CaseStudyAnnotation[] = [
   {
     mark: { x: 0.052, y: 0.33, h: 0.06, side: "left" },
     note: { x: -0.135, y: 0.36, w: 0.12, tilt: -1 },
+    /* Under the phones, hooking up to the sheet at the foot of the first. */
+    narrow: {
+      mark: { x: 0.13, y: 0.83, h: 0, leave: "side" },
+      note: { x: 0.2, y: 0.955, w: 0.4, tilt: -1, align: "start" },
+    },
     text: "Fees and limits buried in a sheet",
   },
   {
     mark: { x: 0.29, y: 0.18, h: 0.02 },
     note: { x: 0.2, y: 0.1, w: 0.19, tilt: -0.6 },
+    narrow: {
+      mark: { x: 0.29, y: 0.185, h: 0 },
+      note: { x: 0.17, y: 0.03, w: 0.24, tilt: -0.6, align: "center" },
+    },
     text: "Poor performance",
   },
   {
     mark: { x: 0.948, y: 0.42, h: 0.06 },
     note: { x: 1.015, y: 0.45, w: 0.12, tilt: 0.8 },
+    /* Over the portal, where the errors come back. */
+    narrow: {
+      mark: { x: 0.72, y: 0.185, h: 0 },
+      note: { x: 0.55, y: 0.03, w: 0.36, tilt: 0.8, align: "center" },
+    },
     text: "Errors surface too late",
   },
 ];
@@ -378,8 +396,8 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="portal-onboarding"
-                title="I designed a self-guided onboarding flow."
-                description="A step-by-step checklist took managers from connecting their POS to setting their tip rules, without a call to support."
+                title="I chose a rule builder over presets."
+                description="Presets would have been easier to build, but only a builder let every location match how it already split tips. Setup took longer, so I added a checklist that guides managers through it without a call to support."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -548,10 +566,9 @@ export function AnyDayCaseStudy() {
                     <strong>30 minutes</strong>.
                   </p>
                   <p className="humi-impact__lede">
-                    In its first two months, Autosave became the main way
-                    members saved, accounting for <strong>76%</strong> of all
-                    deposit value. Over the same period, the app’s rating rose
-                    from 2.4 to <strong>4.6 stars</strong>.
+                    Auto-save became the main way members saved within two
+                    months of launch. Over the same period, the app’s rating
+                    rose from 2.4 to <strong>4.6 stars</strong>.
                   </p>
                 </div>
               </div>

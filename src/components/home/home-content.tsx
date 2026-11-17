@@ -210,7 +210,7 @@ export function HomeContent() {
                     <div className="pg-split">
                       <SmoothSurface as="div">
                         <PlaygroundVideo
-                          alt="A set of product mockups"
+                          alt="A Zelle transfer in the AnyDay app, from choosing a recipient to confirming delivery"
                           poster={shotsMockups874Poster}
                           sizes="(max-width: 780px) 50vw, 430px"
                           src="/media/craft/shots-mockups-874.mp4?v=4"
@@ -218,7 +218,7 @@ export function HomeContent() {
                       </SmoothSurface>
                       <SmoothSurface as="div">
                         <PlaygroundVideo
-                          alt="A set of product mockups"
+                          alt="The AnyDay support screen listing common questions above a start conversation button"
                           poster={shotsMockups1080x60Poster}
                           sizes="(max-width: 780px) 50vw, 430px"
                           src="/media/craft/shots-mockups-1080x60.mp4?v=4"
@@ -260,7 +260,7 @@ export function HomeContent() {
                     year={2025}
                   >
                     <PlaygroundVideo
-                      alt="A set of product mockups"
+                      alt="Scrolling through KOHO benefits offered to AnyDay members, including cash back and cash advances"
                       poster={shotsMockups1080x60v3Poster}
                       src="/media/craft/shots-mockups-1080x60-3.mp4?v=4"
                     />

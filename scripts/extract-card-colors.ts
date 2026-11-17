@@ -59,7 +59,7 @@ type Rgb = { r: number; g: number; b: number };
 const CARDS: readonly ({ id: string } & ({ file: string } | { ink: Rgb }))[] = [
   { id: "anyday", file: "public/media/anyday/anyday-card-bg.jpg" },
   { id: "humi", ink: { r: 24, g: 32, b: 39 } },
-  { id: "montran", file: "public/media/montran/dos.png" },
+  { id: "montran", file: "scripts/source/montran-dos.png" },
 ];
 
 /** The source rect `object-fit: cover` actually shows behind the scrim. */

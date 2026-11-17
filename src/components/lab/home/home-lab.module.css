@@ -1,0 +1,327 @@
+/*
+ * The lab's shell and the stand-in parts every study shares. Sizes and tones
+ * follow the homepage: a 724px column, 72px between sections, 22px narrative
+ * type, and the editorial tokens, so each study reads as the real page with
+ * one thing changed.
+ */
+
+.page {
+  --lab-column: 724px;
+  --lab-gutter: 24px;
+  --lab-gap: 72px;
+  --lab-ink: var(--editorial-ink);
+  --lab-muted: var(--editorial-muted);
+  --lab-faint: var(--palette-tertiary-label);
+  --lab-line: var(--editorial-line);
+  --lab-wash: var(--editorial-surface-subtle);
+  /* The Experience rows and section labels read these from the homepage. */
+  --home-rule: var(--editorial-line);
+  --section-heading-space: 0;
+
+  min-height: 100vh;
+  /* Room for the switcher, which floats over the foot of the page. */
+  padding-block-end: 96px;
+}
+
+.note {
+  width: min(100%, var(--lab-column));
+  margin: 0 auto;
+  padding: 20px var(--lab-gutter) 0;
+  color: var(--lab-faint);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.note span {
+  font-family: var(--site-font-mono);
+  font-size: 12px;
+}
+
+/* --- Switcher ------------------------------------------------------------ */
+
+.switcher {
+  position: fixed;
+  inset-block-end: 16px;
+  inset-inline-start: 50%;
+  z-index: var(--site-layer-chrome);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  max-width: calc(100vw - 24px);
+  padding: 4px;
+  transform: translateX(-50%);
+  border: 1px solid var(--lab-line);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--editorial-page) 82%, transparent);
+  box-shadow: var(--site-shadow-raised);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
+.switcher ol {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.switcher a {
+  display: grid;
+  min-width: 32px;
+  height: 32px;
+  padding-inline: 6px;
+  place-items: center;
+  border-radius: var(--r-pill);
+  color: var(--lab-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 510;
+  text-decoration: none;
+}
+
+.switcher a:hover {
+  color: var(--lab-ink);
+}
+
+.switcher a[aria-current="page"] {
+  background: var(--lab-ink);
+  color: var(--editorial-page);
+}
+
+/* --- Page column --------------------------------------------------------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-gap);
+  width: min(100%, var(--lab-column));
+  margin-inline: auto;
+  padding: 72px var(--lab-gutter) 48px;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-margin-top: 24px;
+}
+
+.character {
+  display: block;
+  color: var(--site-icon-color);
+}
+
+.ink {
+  color: var(--lab-ink);
+  font-weight: 510;
+}
+
+.intro {
+  max-width: 600px;
+  color: var(--lab-muted);
+  font-size: var(--site-text-narrative);
+  letter-spacing: var(--site-tracking-body);
+  line-height: var(--site-leading-narrative);
+}
+
+.intro p {
+  margin: 0 0 12px;
+}
+
+.intro p:last-child {
+  margin-block-end: 0;
+}
+
+/* --- Profile links ------------------------------------------------------- */
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 1.0625rem;
+  letter-spacing: var(--site-tracking-17);
+}
+
+.links a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+  color: var(--lab-muted);
+  text-decoration: none;
+  transition: color var(--site-duration-fast) var(--site-ease-standard);
+}
+
+.links a:hover {
+  color: var(--lab-ink);
+}
+
+.links a > span {
+  font-size: 1.125rem;
+}
+
+/* --- Case-study cards ---------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--case-study-card-radius);
+  background: #fcfbf9;
+  box-shadow: inset 0 0 0 1px var(--lab-line);
+  color: #2a2a2a;
+  text-decoration: none;
+  transition: transform var(--site-duration-medium) var(--site-ease-standard);
+}
+
+.card[data-tone="dark"] {
+  background: #261907;
+  color: #ffffff;
+}
+
+.card:active {
+  transform: scale(0.985);
+}
+
+.cardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  padding: 28px 24px 20px;
+  text-align: center;
+}
+
+.cardTagline {
+  max-width: 13em;
+  font-size: 1.5rem;
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-display);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.cardMedia {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.cardMedia img {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.card[data-project="humi"] .cardMedia img {
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+/* --- Feed ---------------------------------------------------------------- */
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.tileMedia {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: var(--lab-wash);
+  box-shadow: inset 0 0 0 1px var(--lab-line);
+}
+
+.tileMedia img {
+  object-fit: cover;
+}
+
+/* Artwork over the image keeps its own shape, centred at widget scale. */
+.tileMedia .tileOverlay {
+  position: absolute;
+  inset: 0;
+  width: 62%;
+  height: auto;
+  margin: auto;
+  object-fit: contain;
+}
+
+.tile figcaption {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  line-height: 1.375;
+}
+
+.tileTitle {
+  color: var(--lab-ink);
+  font-weight: 510;
+}
+
+.tileSub {
+  color: var(--lab-muted);
+}
+
+/* --- Contact ------------------------------------------------------------- */
+
+.contact {
+  padding-block-start: 32px;
+  border-block-start: 0.5px solid var(--lab-line);
+  color: var(--lab-muted);
+  font-size: var(--site-text-narrative);
+  letter-spacing: var(--site-tracking-body);
+  line-height: var(--site-leading-narrative);
+}
+
+.contact p {
+  max-width: 22em;
+  margin: 0;
+}
+
+.contact a {
+  color: var(--lab-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--lab-faint);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 40rem) {
+  .main {
+    padding-block-start: 40px;
+  }
+
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cardTagline {
+    font-size: 1.625rem;
+  }
+}

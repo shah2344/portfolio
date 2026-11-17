@@ -1,7 +1,6 @@
 import { metadata as templateMetadata } from "./_template.mdx";
 import { metadata as anydayMetadata } from "./anyday.mdx";
 import { metadata as humiMetadata } from "./humi.mdx";
-import { metadata as montranMetadata } from "./montran.mdx";
 import {
   selectProjects,
   type ProjectEntry,
@@ -28,10 +27,6 @@ const projectRegistry = [
   {
     metadata: humiMetadata,
     load: () => import("./humi.mdx"),
-  },
-  {
-    metadata: montranMetadata,
-    load: () => import("./montran.mdx"),
   },
   {
     metadata: templateMetadata,

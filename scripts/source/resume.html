@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="utf-8" />
+    <title>Muhammad Shahid — Resume</title>
+    <!--
+      Source for public/Muhammad-Shahid-Resume.pdf. Dates and metrics follow
+      src/content/experience.ts and the case studies; change them there first.
+      Rebuild with: bun run scripts/build-resume.ts
+    -->
+    <style>
+      @font-face {
+        font-family: "Timeless Sans";
+        src: url("../../src/app/fonts/TimelessSansVF.woff2") format("woff2");
+        font-weight: 300 800;
+      }
+      @page {
+        size: A4;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        font-family: "Timeless Sans", sans-serif;
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 21.5px;
+        color: #1a1a1a;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        width: 210mm;
+        height: 297mm;
+        padding: 66px 64px 0;
+      }
+      .muted {
+        color: #7d7d7d;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 500;
+        line-height: 28px;
+      }
+      .summary {
+        margin-top: 9px;
+        font-size: 15px;
+        line-height: 22px;
+      }
+      .contact {
+        margin-top: 11px;
+        font-size: 14.5px;
+      }
+      .contact a {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        text-decoration-thickness: 1px;
+      }
+      .contact span {
+        margin: 0 6px;
+      }
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 62px;
+        font-size: 12.5px;
+        font-weight: 400;
+        line-height: 16px;
+        color: #7d7d7d;
+      }
+      h2::after {
+        flex: 1;
+        height: 1px;
+        background: #dcdcdc;
+        content: "";
+      }
+      .role {
+        display: grid;
+        grid-template-columns: 243px 1fr;
+        margin-top: 37px;
+      }
+      h2 + .role {
+        margin-top: 30px;
+      }
+      .role h3 {
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 21.5px;
+      }
+      .role .meta {
+        margin-top: 5px;
+        font-size: 12.5px;
+        line-height: 17px;
+      }
+      .role > div:last-child {
+        font-size: 15.6px;
+      }
+      .role ul {
+        margin-top: 8px;
+        padding-left: 21px;
+        list-style: disc;
+      }
+      .role li {
+        margin-top: 6px;
+      }
+      .role li::marker {
+        color: #7d7d7d;
+        font-size: 10px;
+      }
+      .skills {
+        margin-top: 19px;
+        font-size: 13px;
+        line-height: 19px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Muhammad Shahid</h1>
+    <p class="summary muted">
+      Toronto-based product designer with 7 years designing fintech and HR
+      products used by hundreds of thousands of people. Now focused on AI-native
+      design and engineering.
+    </p>
+    <p class="contact">
+      <a href="https://muhammad.design">muhammad.design</a
+      ><span class="muted">•</span>hello@muhammad.design
+    </p>
+
+    <h2>Experience</h2>
+
+    <section class="role">
+      <div>
+        <h3>Montran</h3>
+        <p>Design Consultant</p>
+        <p class="meta muted">Apr 2026 – Present<br />Contract</p>
+      </div>
+      <div>
+        <p>
+          Developing a unified design system for the redesign of Montran’s
+          global and regional sites, establishing reusable components and
+          standards to scale consistent UI across 90+ countries.
+        </p>
+      </div>
+    </section>
+
+    <section class="role">
+      <div>
+        <h3>AnyDay</h3>
+        <p>Senior Product Designer</p>
+        <p class="meta muted">Apr 2022 – Mar 2026<br />Full time</p>
+      </div>
+      <div>
+        <p>
+          Designed and shipped the employer portal and member app for AnyDay, a
+          restaurant tip payout and wallet platform, later building in code.
+          Helped migrate 200k members and 3,500 restaurants to the new product.
+        </p>
+        <ul>
+          <li>
+            Cut restaurant onboarding from 7 to 3 days with a
+            <span style="white-space: nowrap">self-serve</span> setup.
+          </li>
+          <li>
+            Designed AI support flows, which resolved 70% of inquiries as CSAT
+            rose from 50% to 87.7%.
+          </li>
+          <li>Helped lift the app’s rating from 2.4 to 4.6 stars.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="role">
+      <div>
+        <h3>Batch</h3>
+        <p>Product Designer</p>
+        <p class="meta muted">Jan 2020 – June 2020<br />Full time</p>
+      </div>
+      <div>
+        <p>
+          Created the foundational brand, website, and user experience for
+          Batch, a next-generation applicant tracking system, taking it from
+          0→1.
+        </p>
+      </div>
+    </section>
+
+    <section class="role">
+      <div>
+        <h3>Humi</h3>
+        <p>Product Designer</p>
+        <p class="meta muted">May 2018 – Oct 2019<br />Full time</p>
+      </div>
+      <div>
+        <p>
+          Joined as a design intern and became Humi’s first product designer,
+          leading a full product redesign that connected HR, payroll, and
+          benefits in one platform for Canadian businesses.
+        </p>
+        <ul>
+          <li>
+            Shipped V2 to all customers as Humi grew from 1,400 to 4,000+
+            businesses.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <h2>Skills</h2>
+    <p class="skills muted">
+      Multidisciplinary skills and expertise in digital products &amp;
+      experiences / Design strategy / Product strategy / Design systems /
+      Interaction design / Visual design / Visual mapping / Wireframing /
+      Prototyping / User research &amp; interviews / Front-end / Figma / HTML
+      &amp; CSS / JavaScript / React / Next.js / the latest frontier AI models,
+      Claude Code, Codex, v0, Linear, Notion, and all of the other modern tools
+      we all use.
+    </p>
+  </body>
+</html>

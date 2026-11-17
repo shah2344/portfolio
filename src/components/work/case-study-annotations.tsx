@@ -11,9 +11,6 @@ import type { CSSProperties } from "react";
  */
 const BOARD = { w: 2000, h: 1000 };
 
-/* Pen width in board units. At the 800px media column this lands near 3px. */
-const PEN_SIZE = 5.5;
-
 /*
  * The brush takes its width from how fast the pen was moving, so a stroke is
  * shaped by where its points bunch up rather than by any width we set: dense
@@ -22,8 +19,17 @@ const PEN_SIZE = 5.5;
  */
 const PEN = "brush" as const;
 
-/* A taper keeps every brush stroke from ending like a plotted vector. */
-const SHAPE = { taper: 38, simulatePressure: true };
+/**
+ * One hand at two sizes, in board units. The board scales with the frame, so
+ * a pen that lands near 2px on the 800px column would be a hairline on a
+ * phone: below the wide breakpoint the same marks are drawn with a heavier
+ * pen and a longer head, and a thin screen-space outline (see
+ * `.humi-story-annotations__narrow` in globals.css) keeps them from
+ * fattening as the frame widens again.
+ */
+type Nib = { size: number; head: number; taper: number; chevron: number };
+const WIDE_NIB: Nib = { size: 5.5, head: 28, taper: 42, chevron: 7 };
+const NARROW_NIB: Nib = { size: 6.5, head: 46, taper: 56, chevron: 8 };
 
 /** The point in the screen the handwritten note is calling out. */
 type Mark = {
@@ -35,17 +41,45 @@ type Mark = {
   side?: "left" | "right";
   /** Optional horizontal direction at the arrowhead. */
   arrowDirection?: "left" | "right";
+  /** Leave from the end of the note's line even when the mark is mostly
+   *  above or below it, so the leader hooks round rather than dropping. */
+  leave?: "side";
   /** Match the angle of a rotated screen, in degrees. */
   tilt?: number;
   /** Use the earlier screen-edge spine and chevron instead of a leader arrow. */
   shape?: "arrow" | "chevron";
 };
 
+/** Frame-relative note placement; optional y moves the note vertically. */
+type Note = {
+  x: number;
+  y?: number;
+  w: number;
+  tilt?: number;
+  shiftX?: number;
+};
+
 export type CaseStudyAnnotation = {
   /** What the note is about, marked on the screen. */
   mark: Mark;
-  /** Frame-relative note placement; optional y moves the note vertically. */
-  note: { x: number; y?: number; w: number; tilt?: number; shiftX?: number };
+  note: Note;
+  /**
+   * The same note below the wide breakpoint, where there is no margin to hang
+   * it in: nudged into the nearest white space inside the frame, with its
+   * mark moved to suit. Without it the wide placement is pulled inside the
+   * frame as it stands.
+   */
+  narrow?: {
+    mark?: Mark;
+    note: Note & {
+      align?: "start" | "center" | "end";
+      /** Wash out the screen's own text behind the note with white. */
+      backdrop?: boolean;
+      /** How many lines the note wraps to, so a leader that leaves from
+       *  above or below it starts clear of the writing. */
+      lines?: number;
+    };
+  };
   /**
    * What is wrong, in the voice of someone reading over your shoulder. Only
    * the problem: the Solution section below answers these, and a margin note
@@ -67,11 +101,6 @@ const by = (y: number) => y * BOARD.h;
 const jitter = (n: number, phase: number) =>
   Math.sin(n * 12.9898 + phase * 78.233) * 0.5;
 
-const ARROW_HEAD_LENGTH = 26;
-/** Half the opening of the head, in radians: a little under 30°. */
-const ARROW_HEAD_SPREAD = 0.5;
-const CHEVRON_PEN_SIZE = 7;
-const CHEVRON_SHAPE = { taper: 26, simulatePressure: true };
 const CHEVRON_REACH = 15;
 const CHEVRON_RUN = 20;
 
@@ -113,6 +142,11 @@ type Vec = { x: number; y: number };
 const NOTE_GAP = 18;
 /** Roughly half a line of the hand: where a leader leaves from under a note. */
 const NOTE_HALF_LINE = 34;
+/** Half the opening of an arrowhead, in radians: a little under 30°. */
+const HEAD_SPREAD = 0.5;
+/** A line of the hand below the wide breakpoint, where it is set larger
+ *  against the screen. */
+const NARROW_LINE = 72;
 
 const cubicAt = (p0: Vec, p1: Vec, p2: Vec, p3: Vec, t: number): Vec => {
   const u = 1 - t;
@@ -130,16 +164,97 @@ const cubicAt = (p0: Vec, p1: Vec, p2: Vec, p3: Vec, t: number): Vec => {
   };
 };
 
+const unit = (x: number, y: number): Vec => {
+  const length = Math.hypot(x, y) || 1;
+  return { x: x / length, y: y / length };
+};
+
 /**
- * A leader from the writing to its mark: one unbroken arc and an open head.
+ * A leader: one unbroken arc and an open head.
  *
- * The leader leaves from wherever the writing faces its target — the end of
- * the line when the mark is beside it, under or over the words when the mark is
- * mostly below or above — so it always reads as coming out of the note. A mark
- * with `arrowDirection` is approached from that side, so the leader swings out
- * past it and hooks back in.
+ * The pen sets off along `leave` — out of the end of a line of writing, or
+ * straight down from under it — and comes round in a single curve, with no
+ * second bend, so the head lands pointing at what it calls out. Given
+ * `arrive`, it comes in along that direction instead and hooks into the mark.
  */
-function handDrawnArrow({ mark, note }: CaseStudyAnnotation) {
+function leader(start: Vec, leave: Vec, tip: Vec, nib: Nib, arrive?: Vec) {
+  const length = Math.hypot(tip.x - start.x, tip.y - start.y) || 1;
+  let c1: Vec = {
+    x: start.x + leave.x * length * 0.42,
+    y: start.y + leave.y * length * 0.42,
+  };
+  const chord = unit(tip.x - start.x, tip.y - start.y);
+  const along = chord.x * leave.x + chord.y * leave.y;
+  if (!arrive && along > 0.8) {
+    /* Setting off nearly straight at the target would rule a line. A hand
+       swings out a little first, further the straighter the shot, and to the
+       side it was already leaning; dead on, the side is fixed by where the
+       stroke sits, so the same mark always bows the same way. */
+    const lean = -chord.y * leave.x + chord.x * leave.y;
+    const side =
+      Math.abs(lean) > 0.03
+        ? Math.sign(lean)
+        : jitter(start.x + tip.y, 4) >= 0
+          ? 1
+          : -1;
+    const swing = length * 0.16 * ((along - 0.8) / 0.2) * side;
+    c1 = { x: c1.x - chord.y * swing, y: c1.y + chord.x * swing };
+  }
+  const into = arrive ?? unit(tip.x - c1.x, tip.y - c1.y);
+  const reach = length * (arrive ? 0.42 : 0.3);
+  const c2: Vec = { x: tip.x - into.x * reach, y: tip.y - into.y * reach };
+
+  /* Sampled densest at the start, so the brush reads a loaded, slow stroke
+     that quickens toward the head. */
+  const shaft: Point[] = Array.from({ length: 30 }, (_, index) => {
+    const t = (index / 29) ** 1.25;
+    const point = cubicAt(start, c1, c2, tip, t);
+    return [point.x, point.y, 0.48 + 0.2 * Math.sin(t * Math.PI)];
+  });
+
+  const back = unit(c2.x - tip.x, c2.y - tip.y);
+  const wing = (angle: number, reachOut: number): Vec => ({
+    x: tip.x + (back.x * Math.cos(angle) - back.y * Math.sin(angle)) * reachOut,
+    y: tip.y + (back.x * Math.sin(angle) + back.y * Math.cos(angle)) * reachOut,
+  });
+  /* One stroke in, one stroke out: a hand draws the head as a single "v",
+     and the second side usually comes out a little shorter than the first.
+     Each side bellies outward a touch, the way a quick flick does. */
+  const head: Point[] = [];
+  const side = (from: Vec, to: Vec, belly: number, skipFirst: boolean) => {
+    const normal = unit(-(to.y - from.y), to.x - from.x);
+    for (let index = skipFirst ? 1 : 0; index <= 8; index += 1) {
+      const t = index / 8;
+      const swell = Math.sin(t * Math.PI) * belly;
+      head.push([
+        from.x + (to.x - from.x) * t + normal.x * swell,
+        from.y + (to.y - from.y) * t + normal.y * swell,
+        0.5 + 0.14 * Math.sin(t * Math.PI),
+      ]);
+    }
+  };
+  const belly = nib.head * 0.06;
+  side(wing(HEAD_SPREAD, nib.head), tip, belly, false);
+  side(tip, wing(-HEAD_SPREAD, nib.head * 0.84), belly, true);
+
+  const shape = { taper: nib.taper, simulatePressure: true };
+  return [
+    strokePath(PEN, nib.size, shaft, true, shape),
+    strokePath(PEN, nib.size, head, true, {
+      ...shape,
+      taper: nib.taper * 0.5,
+    }),
+  ];
+}
+
+/**
+ * A note's leader. It leaves from wherever the writing faces its target —
+ * the end of the line when the mark is beside it, under or over the words
+ * when the mark is mostly below or above — so it always reads as coming out
+ * of the note. A mark with `arrowDirection` is approached from that side, so
+ * the leader swings out past it and hooks back in.
+ */
+function noteLeader(mark: Mark, note: Note, nib: Nib, halfHeight: number) {
   const target = { x: bx(mark.x), y: by(mark.y + mark.h / 2) };
   const noteY = by(note.y ?? mark.y + mark.h / 2);
   const noteLeft = bx(note.x);
@@ -148,93 +263,74 @@ function handDrawnArrow({ mark, note }: CaseStudyAnnotation) {
   const sideGap = toward > 0 ? target.x - noteRight : noteLeft - target.x;
   const drop = target.y - noteY;
   const fromSide =
-    mark.arrowDirection !== undefined || sideGap >= Math.abs(drop) * 0.8;
+    mark.leave === "side" ||
+    mark.arrowDirection !== undefined ||
+    sideGap >= Math.abs(drop) * 0.8;
 
   const start = fromSide
     ? { x: (toward > 0 ? noteRight : noteLeft) + toward * NOTE_GAP, y: noteY }
     : {
         x: Math.min(Math.max(target.x, noteLeft + 30), noteRight - 30),
-        y: noteY + Math.sign(drop) * NOTE_HALF_LINE,
+        y: noteY + Math.sign(drop) * halfHeight,
       };
+  const leave = fromSide ? { x: toward, y: 0 } : { x: 0, y: Math.sign(drop) };
 
-  let tip: Vec = target;
-  let c1: Vec;
-  let c2: Vec;
-  if (mark.arrowDirection) {
-    const heading = mark.arrowDirection === "left" ? -1 : 1;
-    tip = { x: target.x + heading * 16, y: target.y };
-    const reach = Math.min(110, Math.max(50, Math.abs(tip.y - start.y) * 0.45));
-    c1 = { x: start.x + toward * reach, y: start.y };
-    c2 = { x: tip.x - heading * reach, y: tip.y };
-  } else {
-    const vx = tip.x - start.x;
-    const vy = tip.y - start.y;
-    const length = Math.hypot(vx, vy) || 1;
-    /* Bow the arc the way the leader leaves the note, so it starts out along
-       the line of writing (or straight down from it) and straightens into
-       the mark: the head lands pointing at what it calls out. */
-    let nx = -vy / length;
-    let ny = vx / length;
-    const leave = fromSide ? { x: toward, y: 0 } : { x: 0, y: Math.sign(drop) };
-    if (nx * leave.x + ny * leave.y < 0) {
-      nx = -nx;
-      ny = -ny;
-    }
-    const bow = length * 0.2;
-    c1 = { x: start.x + vx / 3 + nx * bow, y: start.y + vy / 3 + ny * bow };
-    c2 = {
-      x: start.x + (vx * 2) / 3 + nx * bow * 0.4,
-      y: start.y + (vy * 2) / 3 + ny * bow * 0.4,
-    };
-  }
+  if (!mark.arrowDirection) return leader(start, leave, target, nib);
+  const heading = mark.arrowDirection === "left" ? -1 : 1;
+  return leader(
+    start,
+    leave,
+    { x: target.x + heading * 16, y: target.y },
+    nib,
+    { x: heading, y: 0 },
+  );
+}
 
-  /* Sampled densest at the start, so the brush reads a loaded, slow stroke
-     that quickens toward the head. */
-  const shaft: Point[] = Array.from({ length: 26 }, (_, index) => {
-    const t = (index / 25) ** 1.2;
-    const point = cubicAt(start, c1, c2, tip, t);
-    return [
-      point.x + jitter(index, 5) * 0.8,
-      point.y + jitter(index, 6) * 0.8,
-      0.46 + 0.2 * Math.sin(t * Math.PI),
-    ];
-  });
-
-  const tangentLength = Math.hypot(tip.x - c2.x, tip.y - c2.y) || 1;
-  const backX = (c2.x - tip.x) / tangentLength;
-  const backY = (c2.y - tip.y) / tangentLength;
-  const wing = (angle: number, length: number): Vec => ({
-    x: tip.x + (backX * Math.cos(angle) - backY * Math.sin(angle)) * length,
-    y: tip.y + (backX * Math.sin(angle) + backY * Math.cos(angle)) * length,
-  });
-  /* One stroke in, one stroke out: a hand draws the head as a single "v",
-     and the second side usually comes out a little shorter than the first. */
-  const head: Point[] = [];
-  const line = (from: Vec, to: Vec, phase: number, skipFirst: boolean) => {
-    for (let index = skipFirst ? 1 : 0; index <= 7; index += 1) {
-      const t = index / 7;
-      head.push([
-        from.x + (to.x - from.x) * t + jitter(index, phase) * 0.6,
-        from.y + (to.y - from.y) * t + jitter(index, phase + 1) * 0.6,
-        0.5 + 0.12 * Math.sin(t * Math.PI),
-      ]);
-    }
-  };
-  line(wing(ARROW_HEAD_SPREAD, ARROW_HEAD_LENGTH), tip, 8, false);
-  line(tip, wing(-ARROW_HEAD_SPREAD, ARROW_HEAD_LENGTH * 0.86), 11, true);
-
-  return [
-    strokePath(PEN, PEN_SIZE, shaft, true, SHAPE),
-    strokePath(PEN, PEN_SIZE, head, true, SHAPE),
-  ];
+/** One placement's mark: a chevron on the screen's edge, or a leader. */
+function markGroup(
+  mark: Mark,
+  note: Note,
+  nib: Nib,
+  halfHeight: number,
+  layout: "wide" | "narrow",
+  key: string,
+) {
+  return (
+    <g
+      className={`humi-story-annotations__${layout}`}
+      key={key}
+      style={
+        mark.tilt
+          ? {
+              transform: `rotate(${mark.tilt}deg)`,
+              transformOrigin: `${mark.x * 100}% ${(mark.y + mark.h / 2) * 100}%`,
+            }
+          : undefined
+      }
+    >
+      {mark.shape === "chevron" ? (
+        <path
+          d={strokePath(PEN, nib.chevron, chevronStroke(mark), true, {
+            taper: 26,
+            simulatePressure: true,
+          })}
+        />
+      ) : (
+        noteLeader(mark, note, nib, halfHeight).map((d, index) => (
+          <path d={d} key={index} />
+        ))
+      )}
+    </g>
+  );
 }
 
 /**
- * The marks, laid over the screen inside the media frame. They carry no words:
- * the handwriting beside them is real text in the document, so nothing here
- * needs reading out.
+ * The marks, laid over the screen and out past its edges to the notes. They
+ * carry no words: the handwriting beside them is real text in the document,
+ * so nothing here needs reading out. Each is drawn twice, once per pen, and
+ * the layout shows the one that suits it.
  */
-export function CaseStudyAnnotationMarks({
+function AnnotationMarks({
   annotations,
 }: {
   annotations: readonly CaseStudyAnnotation[];
@@ -246,78 +342,79 @@ export function CaseStudyAnnotationMarks({
       preserveAspectRatio="none"
       viewBox={`0 0 ${BOARD.w} ${BOARD.h}`}
     >
-      {annotations.map((annotation) => (
-        <g
-          key={annotation.text}
-          style={
-            annotation.mark.tilt
-              ? {
-                  transform: `rotate(${annotation.mark.tilt}deg)`,
-                  transformOrigin: `${annotation.mark.x * 100}% ${(annotation.mark.y + annotation.mark.h / 2) * 100}%`,
-                }
-              : undefined
-          }
-        >
-          {annotation.mark.shape === "chevron" ? (
-            <path
-              className="humi-story-annotations__mark"
-              d={strokePath(
-                PEN,
-                CHEVRON_PEN_SIZE,
-                chevronStroke(annotation.mark),
-                true,
-                CHEVRON_SHAPE,
-              )}
-            />
-          ) : (
-            handDrawnArrow(annotation).map((d, index) => (
-              <path
-                className="humi-story-annotations__mark"
-                d={d}
-                key={index}
-              />
-            ))
-          )}
-        </g>
-      ))}
+      {annotations.map(({ mark, narrow, note, text }) => [
+        markGroup(mark, note, WIDE_NIB, NOTE_HALF_LINE, "wide", `${text}-w`),
+        markGroup(
+          narrow?.mark ?? mark,
+          narrow?.note ?? note,
+          NARROW_NIB,
+          ((narrow?.note.lines ?? 1) * NARROW_LINE) / 2 + 8,
+          "narrow",
+          `${text}-n`,
+        ),
+      ])}
     </svg>
   );
 }
 
 /**
- * The handwriting. Positioned over the screen on a wide viewport and stacked
- * under it on a narrow one, where a 340px screenshot is too small to annotate
- * and the notes are the only part still worth reading.
+ * The teardown over a screen: the marks, and the handwriting they lead from.
+ * It sits over the frame rather than inside it, because a note hangs in the
+ * margin on a wide viewport and its leader has to cross the frame's edge to
+ * reach it.
+ *
+ * The notes are real text, so they are still the account of what is wrong
+ * with each legacy screen for anyone reading with assistive technology.
  */
-export function CaseStudyAnnotationNotes({
+export function CaseStudyAnnotations({
   annotations,
 }: {
   annotations: readonly CaseStudyAnnotation[];
 }) {
   return (
     <div className="humi-story-annotations">
-      {annotations.map((annotation) => (
+      <AnnotationMarks annotations={annotations} />
+      {annotations.map(({ mark, narrow, note, text }) => (
         <p
           className={
-            annotation.mark.side === "left"
+            mark.side === "left"
               ? "humi-story-annotations__note humi-story-annotations__note--left"
               : "humi-story-annotations__note"
           }
-          key={annotation.text}
+          data-narrow-align={narrow?.note.align}
+          data-narrow-backdrop={narrow?.note.backdrop ? "" : undefined}
+          /* An opened card keeps room for whatever hangs past its frame. */
+          data-pg-overhang=""
+          key={text}
           style={
             {
-              "--note-tilt": `${annotation.note.tilt ?? 0}deg`,
-              "--note-w": `${annotation.note.w * 100}%`,
-              "--note-x": `${annotation.note.x * 100}%`,
-              "--note-shift-x": `${annotation.note.shiftX ?? 0}cqw`,
+              "--note-tilt": `${note.tilt ?? 0}deg`,
+              "--note-w": `${note.w * 100}%`,
+              "--note-x": `${note.x * 100}%`,
+              "--note-shift-x": `${note.shiftX ?? 0}cqw`,
               /* The note and its arrow share a vertical center. */
-              "--note-y": `${(annotation.note.y ?? annotation.mark.y + annotation.mark.h / 2) * 100}%`,
+              "--note-y": `${(note.y ?? mark.y + mark.h / 2) * 100}%`,
+              ...(narrow && narrowNoteStyle(narrow, mark)),
             } as CSSProperties
           }
         >
-          {annotation.text}
+          {text}
         </p>
       ))}
     </div>
   );
+}
+
+/** The narrow placement, read by the narrow media query in globals.css. */
+function narrowNoteStyle(
+  { mark, note }: NonNullable<CaseStudyAnnotation["narrow"]>,
+  wideMark: Mark,
+) {
+  const at = mark ?? wideMark;
+  return {
+    "--note-narrow-tilt": `${note.tilt ?? 0}deg`,
+    "--note-narrow-w": `${note.w * 100}%`,
+    "--note-narrow-x": `${note.x * 100}%`,
+    "--note-narrow-y": `${(note.y ?? at.y + at.h / 2) * 100}%`,
+  };
 }

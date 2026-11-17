@@ -77,7 +77,7 @@ function enlargedScale(
   from: DOMRect,
   captionAllowance: number,
   maxScale: number,
-  marginX: number,
+  margin: { x: number; y: number },
   compact: boolean,
 ) {
   /* A feed card opens image-only, so it can afford a tighter frame. */
@@ -88,11 +88,31 @@ function enlargedScale(
     ? Math.min(48, Math.max(24, window.innerHeight * 0.03))
     : Math.min(64, Math.max(OPEN_INSET_Y, window.innerHeight * 0.05));
   const room = Math.min(
-    (window.innerWidth - insetX * 2) / (from.width * (1 + marginX * 2)),
-    (window.innerHeight - insetY * 2 - captionAllowance) / from.height,
+    (window.innerWidth - insetX * 2) / (from.width * (1 + margin.x * 2)),
+    (window.innerHeight - insetY * 2 - captionAllowance) /
+      (from.height * (1 + margin.y * 2)),
   );
 
   return Math.max(0, Math.min(room, maxScale));
+}
+
+/**
+ * How far the card's content hangs past its edges, as fractions of its width
+ * and height. Anything marked `data-pg-overhang` — a case study's margin
+ * notes, say — is drawn outside the frame, and the opened card keeps that
+ * much room on each side so it stays in the window. Measured rather than
+ * declared, because where a note hangs changes with the layout.
+ */
+function overhang(frame: HTMLElement, from: DOMRect) {
+  let x = 0;
+  let y = 0;
+  frame.querySelectorAll<HTMLElement>("[data-pg-overhang]").forEach((item) => {
+    const box = item.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    x = Math.max(x, from.left - box.left, box.right - from.right);
+    y = Math.max(y, from.top - box.top, box.bottom - from.bottom);
+  });
+  return { x: x / from.width, y: y / from.height };
 }
 
 /**
@@ -114,10 +134,52 @@ function followEdges(frame: HTMLElement) {
 }
 
 /**
+ * The scrim behind an open card: one element on the body, shared by every
+ * card and created the first time one opens, outside the grid's transformed
+ * ancestors. It sits on the page rather than fixed to the window, so iOS
+ * Safari never turns its toolbars solid (see `.pg-scrim` in globals.css).
+ */
+function scrim() {
+  let element = document.querySelector<HTMLElement>("body > .pg-scrim");
+  if (!element) {
+    element = document.createElement("div");
+    element.className = "pg-scrim";
+    element.setAttribute("aria-hidden", "true");
+    element.hidden = true;
+    document.body.append(element);
+  }
+  return element;
+}
+
+/** Puts the scrim up behind `frame`, or takes it down. */
+function showScrim(frame: HTMLElement, open: boolean) {
+  const element = scrim();
+  if (!open) {
+    delete element.dataset.open;
+    return;
+  }
+  // Over the window the page is about to be held still in.
+  element.style.top = `${window.scrollY}px`;
+  if (element.hidden) {
+    element.hidden = false;
+    // Commit the faded-out state first, so the fade in is transitioned.
+    element.getBoundingClientRect();
+  }
+  element.dataset.open = "";
+  // AnyDay's shot reel drops the blur when motion is reduced.
+  element.toggleAttribute(
+    "data-flat",
+    frame.closest(".anyday-shots__zoom") !== null,
+  );
+}
+
+/**
  * Hands the card back to the grid: out of the top layer, out of its flight
  * geometry, and back into the slot it was always holding open.
  */
 function settle(frame: HTMLDialogElement) {
+  showScrim(frame, false);
+  scrim().hidden = true;
   frame.close();
   frame.removeAttribute("data-pg-enlarged");
   frame.removeAttribute("data-pg-open");
@@ -152,7 +214,6 @@ export function PlaygroundTile({
   label,
   interactiveContent = false,
   maxScale = OPEN_MAX_SCALE,
-  openMarginX = 0,
   onOpenChange,
   style,
   subtitle,
@@ -169,9 +230,6 @@ export function PlaygroundTile({
   interactiveContent?: boolean;
   /** Raise the enlargement limit for small, high-resolution thumbnails. */
   maxScale?: number;
-  /** Room kept beside the enlarged card for content that hangs past its
-   *  edges, such as margin notes, as a fraction of the card's width. */
-  openMarginX?: number;
   onOpenChange?: (open: boolean) => void;
   style?: CSSProperties;
   /** A second, quieter line under the caption, which then reads as a title. */
@@ -194,6 +252,9 @@ export function PlaygroundTile({
     y: number;
   }>(undefined);
   const closeRef = useRef<() => void>(undefined);
+  /** Set when a tap outside the card closes it, so the focus the dialog
+   *  hands back on landing can be let go rather than drawn as a ring. */
+  const closedByTap = useRef(false);
   const [enlarged, setEnlarged] = useState(false);
 
   useEffect(() => {
@@ -205,6 +266,10 @@ export function PlaygroundTile({
     frame.addEventListener("pointerdown", containPointer);
     return () => {
       frame.removeEventListener("pointerdown", containPointer);
+      if (frame.open) {
+        showScrim(frame, false);
+        scrim().hidden = true;
+      }
       window.clearTimeout(settleTimer.current);
       if (returnFrame.current !== undefined)
         cancelAnimationFrame(returnFrame.current);
@@ -280,7 +345,7 @@ export function PlaygroundTile({
         from,
         captionAllowance,
         maxScale,
-        openMarginX,
+        overhang(frame, from),
         imageOnly,
       );
       const flightX = window.innerWidth / 2 - (from.left + from.width / 2);
@@ -302,6 +367,7 @@ export function PlaygroundTile({
 
       figcaption?.style.removeProperty("transition");
       frame.dataset.pgOpen = "";
+      showScrim(frame, true);
       frame.style.setProperty("--pg-open-scale", scale.toFixed(3));
       frame.style.scale = scale.toFixed(3);
       frame.style.translate = `${Math.round(flightX)}px ${Math.round(flightY)}px`;
@@ -317,7 +383,7 @@ export function PlaygroundTile({
       setEnlarged(true);
       onOpenChange?.(true);
     },
-    [maxScale, onOpenChange, openMarginX],
+    [maxScale, onOpenChange],
   );
 
   const close = useCallback(() => {
@@ -340,6 +406,7 @@ export function PlaygroundTile({
     returnFrame.current = requestAnimationFrame(followSlot);
 
     frame.removeAttribute("data-pg-open");
+    showScrim(frame, false);
     frame.style.scale = "1";
     frame.style.translate = `${destination.left - originLeft}px ${destination.top - originTop}px`;
     stopEdges.current?.();
@@ -362,6 +429,23 @@ export function PlaygroundTile({
         cancelAnimationFrame(returnFrame.current);
       returnFrame.current = undefined;
       settle(frame);
+      if (closedByTap.current) {
+        /* The dialog hands focus back to the card's button as it closes,
+           and WebKit draws that focus as keyboard focus. A tap needs no
+           focus parked on the card, so let it go — now and once more on the
+           next frame, in case the hand-back lands late. */
+        const release = () => {
+          const active = document.activeElement;
+          if (
+            active instanceof HTMLElement &&
+            figureRef.current?.contains(active)
+          )
+            active.blur();
+        };
+        release();
+        requestAnimationFrame(release);
+      }
+      closedByTap.current = false;
       onOpenChange?.(false);
     }, FLIGHT_DURATION);
   }, [onOpenChange]);
@@ -410,6 +494,11 @@ export function PlaygroundTile({
       frame.style.translate = `${Math.round(x)}px ${Math.round(y)}px`;
     };
 
+    /** Thins the scrim with the pull, written straight to its opacity. */
+    const thin = (progress: number) => {
+      scrim().style.opacity = (1 - progress * 0.5).toFixed(3);
+    };
+
     /** Where the card is drawn right now, mid-transition included,
      *  relative to where it rests open. */
     const drawnAt = (rest: NonNullable<typeof pose.current>) => {
@@ -442,6 +531,9 @@ export function PlaygroundTile({
       delete frame.dataset.pgSnap;
       frame.style.removeProperty("transition-timing-function");
       frame.dataset.pgPulling = "";
+      const veil = scrim();
+      delete veil.dataset.snap;
+      veil.dataset.pulling = "";
       try {
         frame.setPointerCapture(id);
       } catch {
@@ -503,13 +595,11 @@ export function PlaygroundTile({
         frame.style.left = `${rest.left}px`;
         frame.style.top = `${rest.top}px`;
         frame.dataset.pgOpen = "";
+        showScrim(frame, true);
         setEnlarged(true);
       }
       pin(base.scale, rest.x + base.x, rest.y + base.y);
-      frame.style.setProperty(
-        "--pg-pull",
-        pullTransform(0, drag.travel).progress.toFixed(3),
-      );
+      thin(pullTransform(0, drag.travel).progress);
     };
 
     const onMove = (event: PointerEvent) => {
@@ -543,10 +633,7 @@ export function PlaygroundTile({
       );
       // The scrim reads the same progress, so it is always exactly as faded
       // as the card is pulled — including when the pointer reverses.
-      frame.style.setProperty(
-        "--pg-pull",
-        pullTransform(0, drag.travel + dy).progress.toFixed(3),
-      );
+      thin(pullTransform(0, drag.travel + dy).progress);
     };
 
     /** A spring easing that leaves at `speed` (px/s) towards a target
@@ -580,7 +667,9 @@ export function PlaygroundTile({
       if (frame.hasPointerCapture(id)) frame.releasePointerCapture(id);
       const at = drawnAt(rest);
       delete frame.dataset.pgPulling;
-      frame.style.removeProperty("--pg-pull");
+      const veil = scrim();
+      delete veil.dataset.pulling;
+      veil.style.removeProperty("opacity");
 
       /* A caught card skips the axis lock, so a few pixels of jitter between
          two close events could read as a fast flick. A flick has to travel. */
@@ -623,6 +712,7 @@ export function PlaygroundTile({
       /* Snapping back is quick and keeps the release speed, with the small
          bounce a drag has earned. */
       frame.dataset.pgSnap = "";
+      veil.dataset.snap = "";
       if (springs) {
         const gap = Math.hypot(at.x, at.y);
         frame.style.transitionTimingFunction = seeded(
@@ -636,6 +726,7 @@ export function PlaygroundTile({
       pin(rest.scale, rest.x, rest.y);
       snapTimer = window.setTimeout(() => {
         delete frame.dataset.pgSnap;
+        delete veil.dataset.snap;
         frame.style.removeProperty("transition-timing-function");
       }, SNAP_DURATION);
     }
@@ -652,13 +743,32 @@ export function PlaygroundTile({
       event.preventDefault();
       event.stopPropagation();
     };
+    /* With no backdrop, a tap outside the open card lands on the page, which
+       the dialog has made inert, and reaches the document. It closes the card
+       — unless it is the tail of a pull, which already decided. */
+    const onPageClick = (event: Event) => {
+      if (!frame.hasAttribute("data-pg-open")) return;
+      if (frame.contains(event.target as Node)) return;
+      if (swallowClick) {
+        swallowClick = false;
+        return;
+      }
+      /* Once the card lands, the focus the dialog hands back is let go, or
+         WebKit draws it as keyboard focus. */
+      // Keyboard activation targets the focused button inside the dialog, so
+      // a click out here is always a pointer.
+      closedByTap.current = true;
+      closeRef.current?.();
+    };
 
     frame.addEventListener("pointerdown", onDown);
     frame.addEventListener("pointermove", onMove);
     frame.addEventListener("pointerup", onUp);
     frame.addEventListener("pointercancel", onCancel);
     frame.addEventListener("click", onClick, true);
+    document.addEventListener("click", onPageClick);
     return () => {
+      document.removeEventListener("click", onPageClick);
       frame.removeEventListener("pointerdown", onDown);
       frame.removeEventListener("pointermove", onMove);
       frame.removeEventListener("pointerup", onUp);
@@ -696,10 +806,6 @@ export function PlaygroundTile({
           // Escape closes it, but through the flight rather than instantly.
           event.preventDefault();
           close();
-        }}
-        onClick={(event) => {
-          // A click that lands on the dialog itself came from the scrim.
-          if (event.target === frameRef.current) close();
         }}
         onKeyDown={(event) => {
           // Keep Escape scoped to this top-layer card when it is nested inside

@@ -14,8 +14,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { SectionToc, type TocSection } from "@/components/ui/section-toc";
 import {
   type CaseStudyAnnotation,
-  CaseStudyAnnotationMarks,
-  CaseStudyAnnotationNotes,
+  CaseStudyAnnotations,
 } from "@/components/work/case-study-annotations";
 import {
   CaseStudyPage,
@@ -203,9 +202,6 @@ function CaseStudyFrame({
           }
         />
       ) : null}
-      {annotations?.length ? (
-        <CaseStudyAnnotationMarks annotations={annotations} />
-      ) : null}
     </SmoothSurface>
   );
 
@@ -213,22 +209,10 @@ function CaseStudyFrame({
     <div className="humi-story-media__stage">
       {frame}
       {annotations?.length ? (
-        <CaseStudyAnnotationNotes annotations={annotations} />
+        <CaseStudyAnnotations annotations={annotations} />
       ) : null}
     </div>
   );
-}
-
-/** How far the furthest note hangs past either side of its frame, as a
- *  fraction of the frame's width, plus a little breathing room. */
-function noteOverhang(annotations?: readonly CaseStudyAnnotation[]) {
-  const overhang = Math.max(
-    0,
-    ...(annotations ?? []).map(({ note }) =>
-      Math.max(-note.x, note.x + note.w - 1),
-    ),
-  );
-  return overhang > 0 ? overhang + 0.02 : 0;
 }
 
 /**
@@ -314,8 +298,6 @@ export function CaseStudyMedia({
         asContainer
         className="humi-story-media__zoom"
         label={title ?? alt}
-        /* Margin notes stay on-screen when the frame is opened. */
-        openMarginX={noteOverhang(annotations)}
         style={{ aspectRatio: `${src.width} / ${src.height}` }}
       >
         {media}

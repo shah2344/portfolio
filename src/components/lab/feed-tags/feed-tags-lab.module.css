@@ -1,0 +1,779 @@
+.page {
+  --ink: var(--site-ink);
+  --muted: var(--site-text-muted);
+  --ground: var(--site-background);
+  --hairline: oklch(0 0 0 / 10%);
+  --wash: oklch(0 0 0 / 5%);
+
+  /* How a role's hue is turned into ink and into a wash, per appearance. */
+  --role-ink-l: 0.5;
+  --role-ink-c: 0.19;
+  --role-wash-a: 11%;
+
+  --card-radius: 24px;
+  --label: 550 0.8125rem / 1 var(--site-font-sans);
+
+  max-width: 1120px;
+  margin-inline: auto;
+  padding: 72px 20px 120px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+:global([data-theme="dark"]) .page {
+  --hairline: oklch(1 0 0 / 12%);
+  --wash: oklch(1 0 0 / 7%);
+  --role-ink-l: 0.82;
+  --role-ink-c: 0.13;
+  --role-wash-a: 20%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme])) .page {
+    --hairline: oklch(1 0 0 / 12%);
+    --wash: oklch(1 0 0 / 7%);
+    --role-ink-l: 0.82;
+    --role-ink-c: 0.13;
+    --role-wash-a: 20%;
+  }
+}
+
+/* One hue per role. Lightness moves with the hue so each reads equally
+   bright: orange and green sit higher than violet and blue. */
+.page [data-role] {
+  --role: oklch(var(--l) 0.2 var(--h));
+  --role-ink: oklch(var(--role-ink-l) var(--role-ink-c) var(--h));
+  --role-wash: oklch(var(--l) 0.2 var(--h) / var(--role-wash-a));
+}
+
+.page [data-role="design"] {
+  --h: 292;
+  --l: 0.62;
+  --solid-l: 0.56;
+}
+
+.page [data-role="build"] {
+  --h: 252;
+  --l: 0.66;
+  --solid-l: 0.58;
+}
+
+.page [data-role="prototype"] {
+  --h: 55;
+  --l: 0.74;
+  --solid-l: 0.68;
+}
+
+.page [data-role="research"] {
+  --h: 155;
+  --l: 0.72;
+  --solid-l: 0.6;
+}
+
+/* Page furniture */
+
+.intro h1 {
+  font-size: 1.375rem;
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-display-20);
+  text-wrap: balance;
+}
+
+.intro p {
+  max-width: 34rem;
+  margin-block-start: 8px;
+  color: var(--muted);
+  font-size: var(--site-text-label);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.intro .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-block-start: 20px;
+  color: var(--ink);
+}
+
+.group {
+  margin-block: 72px 28px;
+  padding-block-end: 12px;
+  box-shadow: 0 1px 0 var(--hairline);
+  font-size: 1.125rem;
+  font-weight: 590;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+  gap: 64px 40px;
+}
+
+.study {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.studyHead {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  align-items: baseline;
+}
+
+.studyIndex {
+  color: var(--muted);
+  font-family: var(--site-font-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.studyName {
+  font-size: 1rem;
+  font-weight: 590;
+}
+
+.studyNote {
+  grid-column: 2;
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+/* The tile: the feed's card and caption */
+
+.media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--card-radius);
+  background: var(--wash);
+}
+
+.media img {
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.media::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  content: "";
+  pointer-events: none;
+}
+
+.caption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: center;
+  margin-block-start: 16px;
+}
+
+.caption[data-align="start"] {
+  align-items: start;
+}
+
+.captionText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--site-text-label);
+  font-weight: 590;
+  letter-spacing: var(--site-tracking-17);
+  line-height: 22px;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: var(--site-text-caption);
+  line-height: 20px;
+}
+
+/* The shared unit: a 6px dot in the role's hue, then the role's name. */
+.dot {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font: var(--label);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+.dot::before {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--role);
+  content: "";
+}
+
+/* Positions inside the card. The inset and the pill's radius add up to the
+   card's, so the two corners stay concentric. */
+.pinBottomLeft,
+.pinTopLeft,
+.pinTopRight {
+  position: absolute;
+  z-index: 1;
+}
+
+.pinBottomLeft {
+  inset: auto auto 10px 10px;
+}
+
+.pinTopLeft {
+  inset: 12px auto auto 12px;
+}
+
+.pinTopRight {
+  inset: 12px 12px auto auto;
+}
+
+/* 01 and round one's 09: glass */
+.glass {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  height: 28px;
+  padding-inline: 10px 11px;
+  border-radius: 14px;
+  background: oklch(0.14 0 0 / 74%);
+  box-shadow:
+    inset 0 0 0 0.5px oklch(1 0 0 / 22%),
+    inset 0 1px 0 oklch(1 0 0 / 10%),
+    0 1px 2px oklch(0 0 0 / 16%),
+    0 6px 16px oklch(0 0 0 / 12%);
+  color: #fff;
+  backdrop-filter: blur(16px) saturate(1.8);
+}
+
+/* On glass the dots lift a step so they hold against the dark. */
+.glass .dot::before {
+  background: oklch(calc(var(--l) + 0.08) 0.17 var(--h));
+}
+
+.plain {
+  padding-inline: 1px;
+  font: var(--label);
+  letter-spacing: -0.005em;
+}
+
+/* 02 solid chips */
+.solids {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.solid {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 13px;
+  background: linear-gradient(
+    oklch(calc(var(--solid-l) + 0.05) 0.19 var(--h)),
+    oklch(var(--solid-l) 0.2 var(--h))
+  );
+  box-shadow:
+    inset 0 0 0 0.5px oklch(0 0 0 / 12%),
+    inset 0 1px 0 oklch(1 0 0 / 28%),
+    0 1px 2px oklch(var(--solid-l) 0.2 var(--h) / 30%),
+    0 6px 14px oklch(var(--solid-l) 0.2 var(--h) / 28%);
+  color: #fff;
+  font: var(--label);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* 03 coin stack */
+.coins {
+  display: inline-flex;
+}
+
+.coin {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(
+    oklch(calc(var(--solid-l) + 0.06) 0.19 var(--h)),
+    oklch(var(--solid-l) 0.2 var(--h))
+  );
+  box-shadow:
+    0 0 0 2px #fff,
+    inset 0 1px 0 oklch(1 0 0 / 30%),
+    0 3px 8px oklch(0 0 0 / 18%);
+  color: #fff;
+  place-items: center;
+}
+
+.coin + .coin {
+  margin-inline-start: -4px;
+}
+
+.coin:first-child {
+  z-index: 1;
+}
+
+.coin svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.75;
+}
+
+/* 04 frosted shelf. Inset 8, radius 16: concentric with the card's 24. */
+.shelf {
+  --ink: #161616;
+  --muted: oklch(0.2 0 0 / 62%);
+  --role-ink-l: 0.5;
+
+  position: absolute;
+  z-index: 1;
+  inset: auto 8px 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: center;
+  padding: 10px 14px 11px;
+  border-radius: 16px;
+  background: oklch(1 0 0 / 74%);
+  box-shadow:
+    inset 0 0 0 0.5px oklch(1 0 0 / 70%),
+    0 1px 2px oklch(0 0 0 / 8%),
+    0 10px 28px oklch(0 0 0 / 14%);
+  color: var(--ink);
+  backdrop-filter: blur(22px) saturate(1.8);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* 05 edge tabs: each tab is ringed in the page's ground, so it reads as cut
+   out of the card's edge rather than laid on it. */
+.tabs {
+  position: absolute;
+  z-index: 1;
+  inset: auto 16px -13px auto;
+  display: inline-flex;
+  gap: 7px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 13px;
+  background:
+    linear-gradient(var(--role-wash), var(--role-wash)), var(--ground);
+  box-shadow: 0 0 0 4px var(--ground);
+  color: var(--role-ink);
+  font: var(--label);
+  letter-spacing: -0.005em;
+}
+
+/* 06 tinted pills */
+.tints,
+.squircles {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.tint {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 13px;
+  background: var(--role-wash);
+  color: var(--role-ink);
+  font: var(--label);
+  letter-spacing: -0.005em;
+}
+
+/* 07 segmented capsule */
+.capsule {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.capsule .dot {
+  height: 100%;
+  padding-inline: 10px;
+}
+
+.capsule .dot:first-child {
+  padding-inline-start: 11px;
+}
+
+.capsule .dot:last-child {
+  padding-inline-end: 12px;
+}
+
+.capsule .dot + .dot {
+  box-shadow: -1px 0 0 var(--hairline);
+}
+
+/* 08 baseline pair: each row is as tall as the caption line beside it. */
+.pair {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pair .dot:first-child {
+  height: 22px;
+}
+
+.pair .dot:last-child {
+  height: 20px;
+  color: var(--muted);
+}
+
+/* 09 glyph squircles */
+.squircle {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--role-wash);
+  color: var(--role-ink);
+  place-items: center;
+}
+
+.squircle svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* 10 blend pill */
+.blend {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding-inline: 11px;
+  border-radius: 13px;
+  background: linear-gradient(
+    90deg in oklch,
+    oklch(0.64 0.2 var(--h1) / var(--role-wash-a)),
+    oklch(0.64 0.2 var(--h2) / var(--role-wash-a))
+  );
+  font: var(--label);
+  letter-spacing: -0.005em;
+}
+
+.blend span {
+  background: linear-gradient(
+    90deg in oklch,
+    oklch(var(--role-ink-l) var(--role-ink-c) var(--h1)),
+    oklch(var(--role-ink-l) var(--role-ink-c) var(--h2))
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+/* Round one, redrawn */
+.outline {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 13px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--muted);
+  font: var(--label);
+  letter-spacing: -0.005em;
+}
+
+.inline {
+  display: inline-flex;
+  gap: 14px;
+}
+
+/* Round three: one option at three card widths */
+
+.groupNote {
+  max-width: 36rem;
+  margin-block: -12px 32px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.sizeList {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+}
+
+.sizeStudy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.verdict {
+  margin-inline-start: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--wash);
+  color: var(--muted);
+  font: var(--label);
+  font-size: 0.75rem;
+  vertical-align: 1px;
+}
+
+.sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 24px;
+  align-items: flex-start;
+}
+
+.sizeCell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sizeName {
+  color: var(--muted);
+  font-family: var(--site-font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The figure is the container, so the card and its caption adapt together. */
+.sized {
+  max-width: 100%;
+  container-type: inline-size;
+}
+
+.sizedMedia {
+  /* The card's corner shrinks with the card, as the feed's does. */
+  --r: clamp(14px, 5.5cqi, 24px);
+
+  position: relative;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--r);
+  background: var(--wash);
+}
+
+.sizedMedia img {
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.sizedMedia::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  content: "";
+  pointer-events: none;
+}
+
+.sizedCaption {
+  display: flex;
+  flex-direction: column;
+  margin-block-start: 12px;
+}
+
+.sizedCaption .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: var(--site-text-caption);
+  line-height: 20px;
+}
+
+/* A dot whose name folds away on small cards; the name stays for screen
+   readers and in the tooltip. */
+.foldDot {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.foldDot::before {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--role);
+  content: "";
+}
+
+@container (width < 240px) {
+  .foldDot {
+    gap: 0;
+  }
+
+  .foldLabel {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* 11 adaptive mark. Inset plus the pill's radius equals the card's, so the
+   two corners stay concentric as the card shrinks. */
+.mark {
+  --pill: 26px;
+
+  position: absolute;
+  z-index: 1;
+  inset: auto auto max(8px, calc(var(--r) - var(--pill) / 2))
+    max(8px, calc(var(--r) - var(--pill) / 2));
+  display: inline-flex;
+  gap: 11px;
+  align-items: center;
+  height: var(--pill);
+  padding-inline: 9px 10px;
+  border-radius: calc(var(--pill) / 2);
+  background: oklch(1 0 0 / 86%);
+  box-shadow:
+    inset 0 0 0 0.5px oklch(0 0 0 / 8%),
+    0 1px 2px oklch(0 0 0 / 10%),
+    0 4px 14px oklch(0 0 0 / 10%);
+  color: #161616;
+  font: var(--label);
+  letter-spacing: -0.005em;
+  backdrop-filter: blur(20px) saturate(1.8);
+}
+
+/* On white the dots sit a step deeper, so they hold their hue. */
+.mark .foldDot::before {
+  background: oklch(calc(var(--l) - 0.04) 0.2 var(--h));
+}
+
+@container (width < 240px) {
+  .mark {
+    --pill: 18px;
+
+    gap: 4px;
+    padding-inline: 6px;
+  }
+
+  .mark .foldDot {
+    gap: 0;
+  }
+
+  .mark .foldDot::before {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* 12 letter coins: the same 20px at every size. */
+.letters {
+  position: absolute;
+  z-index: 1;
+  inset: max(8px, calc(var(--r) - 10px)) max(8px, calc(var(--r) - 10px)) auto
+    auto;
+  display: inline-flex;
+}
+
+.letter {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: oklch(var(--solid-l) 0.2 var(--h));
+  box-shadow:
+    0 0 0 1.5px #fff,
+    0 1px 3px oklch(0 0 0 / 22%);
+  color: #fff;
+  font: 650 0.6875rem / 1 var(--site-font-sans);
+  place-items: center;
+}
+
+.letter + .letter {
+  margin-inline-start: -3px;
+}
+
+.letter:first-child {
+  z-index: 1;
+}
+
+/* 13 photo credit */
+.scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  border-radius: 0 0 var(--r) var(--r);
+  background: linear-gradient(transparent, oklch(0 0 0 / 34%));
+  pointer-events: none;
+}
+
+.scrimMark {
+  --pad: clamp(10px, 4cqi, 16px);
+
+  position: absolute;
+  z-index: 1;
+  inset: auto auto var(--pad) var(--pad);
+  display: inline-flex;
+  gap: 12px;
+  color: #fff;
+  font: var(--label);
+  letter-spacing: -0.005em;
+  text-shadow: 0 1px 2px oklch(0 0 0 / 35%);
+}
+
+.scrimMark .foldDot::before {
+  background: oklch(calc(var(--l) + 0.08) 0.17 var(--h));
+  box-shadow: 0 0 0 1px oklch(0 0 0 / 15%);
+}
+
+@container (width < 240px) {
+  .scrimMark {
+    gap: 5px;
+  }
+}
+
+/* 14 meta line */
+.meta {
+  display: inline-flex;
+  gap: 10px;
+}
+
+.meta::before {
+  margin-inline-end: -2px;
+  content: "·";
+}
+
+@container (width < 240px) {
+  .meta {
+    gap: 4px;
+  }
+}

@@ -1106,21 +1106,6 @@ html:has(.case-study-page) {
   container-type: inline-size;
 }
 
-/* The story's paragraph size would otherwise set the notes under the wide
-   breakpoint. From 64rem they hang past the plate into the column's margin;
-   narrower, they are pulled back inside it, as on the portal. */
-@media (max-width: 77.9375rem) {
-  .humi-case-study .anyday-phone-board-stage .humi-story-annotations__note {
-    font-size: var(--note-size);
-  }
-}
-
-@media (min-width: 64rem) and (max-width: 77.9375rem) {
-  .humi-case-study .anyday-phone-board-stage .humi-story-annotations__note {
-    inset-inline-start: var(--note-x);
-  }
-}
-
 /* The white rim and lift are Lisse effects on the player (see
    work/anyday/phone-board.tsx), so no CSS stroke is drawn inside the clip. */
 .anyday-phone .anyday-video-player,
@@ -1231,13 +1216,28 @@ html:has(.case-study-page) {
   container-type: inline-size;
 }
 
+/*
+ * The teardown lies over the frame rather than inside it: a note hangs in the
+ * margin on a wide viewport, so its leader has to cross the frame's edge to
+ * reach it. The notes stay real
+ * text, so they are still the account of what is wrong with each legacy
+ * screen for anyone reading with assistive technology; the marks are
+ * `aria-hidden`.
+ */
+.humi-story-annotations {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  /* The marks belong to the screen underneath, not to the reader. */
+  pointer-events: none;
+}
+
 .humi-story-annotations__marks {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  /* The marks belong to the screen underneath, not to the reader. */
-  pointer-events: none;
+  overflow: visible;
 }
 
 .humi-story-annotations__marks path {
@@ -1245,13 +1245,28 @@ html:has(.case-study-page) {
 }
 
 .humi-story-annotations__note {
+  position: absolute;
+  /* Center notes on their arrow target, however many lines they wrap to. */
+  inset-block-start: var(--note-y);
+  inset-inline-start: var(--note-x);
+  width: var(--note-w);
   margin: 0;
+  translate: var(--note-shift-x, 0cqw) -50%;
+  rotate: var(--note-tilt);
   color: var(--humi-mark);
   font-family: var(--site-font-hand);
+  /* Against the frame, not the viewport: the hand keeps its size relative to
+     the screen it is marking however wide the column runs. */
+  --note-size: 1.8cqw;
+  font-size: var(--note-size);
   /* A hand carries further than a text weight at the same size. */
   font-weight: 650;
   line-height: 1.1;
   text-wrap: balance;
+}
+
+.humi-case-study .humi-story-annotations__note {
+  --note-size: 2.2cqw;
 }
 
 /* See `--humi-mark`: one stroke, dark where it crosses a screen and light
@@ -1264,39 +1279,6 @@ html:has(.case-study-page) {
   }
 }
 
-/*
- * Notes sit beside their marks at every width. The outer media/dialog can
- * overflow, so notes that run past the screen edge remain visible inline and
- * when expanded. The notes stay real text, so they are still the account of
- * what is wrong with each legacy screen for anyone reading with assistive
- * technology; the marks are `aria-hidden`.
- */
-.humi-story-annotations {
-  position: absolute;
-  inset: 0;
-  display: block;
-  margin: 0;
-  pointer-events: none;
-}
-
-.humi-story-annotations__note {
-  position: absolute;
-  /* Center notes on their arrow target, however many lines they wrap to. */
-  inset-block-start: var(--note-y);
-  inset-inline-start: var(--note-x);
-  width: var(--note-w);
-  translate: var(--note-shift-x, 0cqw) -50%;
-  rotate: var(--note-tilt);
-  /* Against the frame, not the viewport: the hand keeps its size relative to
-     the screen it is marking however wide the column runs. */
-  --note-size: 1.8cqw;
-  font-size: var(--note-size);
-}
-
-.humi-case-study .humi-story-annotations__note {
-  --note-size: 2cqw;
-}
-
 /* A note in the left margin is written towards the mark, so its ragged edge
    belongs on the far side: flush right, every line lands the same short
    distance from the arrow instead of each break opening its own gap. */
@@ -1306,17 +1288,86 @@ html:has(.case-study-page) {
 
 /*
  * Narrow: the frame runs close to the window's edges, so a note that hangs past
- * its frame is pulled back inside it rather than off-screen, and the hand gets
- * a floor so it still reads on a phone-width screen.
+ * its frame is pulled back inside it rather than off-screen, into the nearest
+ * white space to where it sits on a wide viewport, and the hand gets a floor
+ * so it still reads on a phone-width screen.
  */
 @media (max-width: 77.9375rem) {
   .humi-story-annotations__note {
-    inset-inline-start: clamp(0%, var(--note-x), calc(100% - var(--note-w)));
+    inset-inline-start: var(
+      --note-narrow-x,
+      clamp(0%, var(--note-x), calc(100% - var(--note-w)))
+    );
+    inset-block-start: var(--note-narrow-y, var(--note-y));
+    width: var(--note-narrow-w, var(--note-w));
+    translate: 0 -50%;
+    rotate: var(--note-narrow-tilt, var(--note-tilt));
     --note-size: max(1.8cqw, 9px);
   }
 
+  /* The screen is small here, so the hand is set larger against it. Every
+     note now sits on the screen's white, in either theme, so it is drawn in
+     the light pencil without the blend, and a glow of that white lifts it off
+     any of the screen's own text it has to cross. */
   .humi-case-study .humi-story-annotations__note {
-    --note-size: max(2cqw, 9px);
+    --note-size: max(2.4cqw, 10px);
+    color: #4a4a4a;
+    font-size: var(--note-size);
+    line-height: 1.05;
+    mix-blend-mode: normal;
+    text-shadow:
+      0 0 2px #ffffff,
+      0 0 4px #ffffff,
+      0 0 6px #ffffff;
+  }
+
+  /* A note that has to sit over the screen's own text gets a white wash
+     behind it, solid under the words and fading out at the edges, so the UI
+     underneath recedes instead of tangling with the hand. The note's rotate
+     makes it a stacking context, which keeps the wash under its text. */
+  .humi-story-annotations__note[data-narrow-backdrop]::before {
+    position: absolute;
+    z-index: -1;
+    inset: -0.7em -1.4em -0.1em;
+    background: radial-gradient(
+      closest-side,
+      #ffffff 70%,
+      rgb(255 255 255 / 0%)
+    );
+    content: "";
+  }
+
+  .humi-story-annotations__note[data-narrow-align="start"] {
+    text-align: start;
+  }
+
+  .humi-story-annotations__note[data-narrow-align="center"] {
+    text-align: center;
+  }
+
+  .humi-story-annotations__note[data-narrow-align="end"] {
+    text-align: end;
+  }
+
+  .humi-story-annotations__wide {
+    display: none;
+  }
+
+  /* The board scales with the frame, so a stroke that reads on a phone would
+     be a marker on a tablet. The narrow pen is cut fine and given a hairline
+     that holds its width on screen: most of the stroke on a phone, a rounded
+     edge on anything wider. */
+  .humi-story-annotations__narrow path {
+    stroke: var(--humi-mark);
+    stroke-width: 0.6px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+}
+
+@media (min-width: 78rem) {
+  .humi-story-annotations__narrow {
+    display: none;
   }
 }
 
@@ -1746,18 +1797,6 @@ html:has(.case-study-page) {
   }
 }
 
-/* Montran brand chrome: the mark in the case-study header, and the country
-   network shared by that story and the home page's Montran card. */
-.montran-logo--header {
-  --mark-size: 24px;
-}
-
-.montran-logo img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 /* AnyDay case study */
 /*
  * AnyDay departs from the Humi story layout: one long-form editorial article
@@ -1918,7 +1957,7 @@ html:has(.case-study-page) {
 
 /* Let the handwritten notes extend past the screenshot in both the page and
    the promoted dialog. The marked media frame still clips its own image. */
-.humi-story-media__zoom:has(.humi-story-media__frame--marked) .pg-frame__clip {
+.humi-story-media__zoom:has(.humi-story-annotations) .pg-frame__clip {
   overflow: visible;
   /* The smooth-corner path is written inline; the marked frame inside already
      carries the same rounded clip, so this one would only crop the notes. */
@@ -1927,14 +1966,14 @@ html:has(.case-study-page) {
 
 /* The edge stroke is drawn double-width for the clip to halve; with the clip
    lifted, draw it at its true width so the border keeps its weight. */
-.humi-story-media__zoom:has(.humi-story-media__frame--marked)
+.humi-story-media__zoom:has(.humi-story-annotations)
   .pg-frame__clip
   > .lisse-surface-edge
   .lisse-surface-edge__line {
   stroke-width: calc(var(--lisse-border-width) / var(--pg-edge-scale));
 }
 
-.humi-story-media__zoom:has(.humi-story-media__frame--marked)
+.humi-story-media__zoom:has(.humi-story-annotations)
   .pg-frame__clip
   > .lisse-surface-edge
   .lisse-surface-edge__accent {
@@ -1976,7 +2015,7 @@ html:has(.case-study-page) {
     --pg-flight: 0.01ms;
   }
 
-  .anyday-shots__zoom > .pg-frame::backdrop {
+  .pg-scrim[data-flat][data-open] {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -2017,6 +2056,19 @@ html:has(.case-study-page) {
   border-radius: var(--anyday-inner-radius, var(--anyday-radius));
 
   background: var(--anyday-plate);
+}
+
+/* While its card is lifted out into the dialog, the plate and its lift would
+   stay behind in the empty slot, showing through the scrim as a ghost of the
+   card. The card carries its own ground, so both stand down from take-off
+   until it has landed back over them. */
+.anyday-figure__lift:has(.pg-frame[data-pg-enlarged]) {
+  box-shadow: none;
+}
+
+.anyday-figure__lift:has(.pg-frame[data-pg-enlarged]) .anyday-figure__frame {
+  --lisse-border-width: 0px;
+  background: transparent;
 }
 
 .anyday-figure__frame img {
@@ -3581,8 +3633,7 @@ html[data-page-wipe]
   .pg-tile,
   .pg-tile figcaption,
   .pg-tile figcaption > span,
-  .pg-frame,
-  .pg-frame::backdrop {
+  .pg-frame {
     transition-duration: 0.01ms;
   }
 }
@@ -4832,35 +4883,97 @@ html[data-page-wipe]
     --pg-edge-scale var(--pg-flight) var(--site-ease-flight);
 }
 
+/*
+ * The dialog draws no backdrop. A `::backdrop` is a fixed layer the size of
+ * the window, and iOS Safari, on finding a fixed element along the screen's
+ * edges, turns the strips behind its status bar and toolbar solid — and keeps
+ * them solid after that element has gone, so a closed card left the page
+ * with opaque bars. A tap outside the card lands on the page instead, where
+ * `PlaygroundTile` catches it.
+ */
 .pg-frame::backdrop {
-  /* Written out rather than read from the page's token: `::backdrop` only
-     recently began inheriting custom properties. */
-  background: #fcfcfc;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  display: none;
+}
+
+/*
+ * The scrim behind an open card: one element on the body, shared by every
+ * card, under the top layer the card flies into. It is positioned on the
+ * page rather than fixed to the window, for the reason above; the page is
+ * held still while a card is open, so it covers the window all the same.
+ *
+ * Half strength at the top of the window, full by its middle and solid below,
+ * so the page still shows through above the card. The veil is the page
+ * colour rather than a grey wash, so it lightens the page away instead of
+ * dimming it, and the blur supplies the separation.
+ */
+.pg-scrim {
+  /* Kept in step with FLIGHT_DURATION in `playground/tile`. */
+  --pg-flight: 520ms;
+
+  position: absolute;
+  z-index: var(--site-layer-overlay);
+  /*
+   * `PlaygroundTile` moves it to the scroll position the card opens at. It
+   * runs a window's height past either edge of that window, so it also covers
+   * the strips iOS Safari draws page content into behind its status bar and
+   * toolbar, which sit outside the layout viewport. The middle third is the
+   * window itself: the gradient runs over its top half and holds its end
+   * colours beyond that.
+   * Parked with `hidden` once a card has landed, so the extra height never
+   * adds scroll room at the foot of the page.
+   */
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 300lvh;
+  translate: 0 -100lvh;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--site-background) 50%, transparent) 33.333%,
+    var(--site-background) 50%
+  );
+  -webkit-backdrop-filter: blur(0);
+  backdrop-filter: blur(0);
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transition:
     opacity var(--pg-flight) var(--site-ease-flight),
     -webkit-backdrop-filter var(--pg-flight) var(--site-ease-flight),
-    backdrop-filter var(--pg-flight) var(--site-ease-flight);
+    backdrop-filter var(--pg-flight) var(--site-ease-flight),
+    visibility 0s var(--pg-flight);
 }
 
-:root[data-theme="dark"] .pg-frame::backdrop {
-  background: #0f0f0f;
+.pg-scrim[data-open] {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .pg-frame::backdrop {
-    background: #0f0f0f;
+@media (prefers-reduced-motion: reduce) {
+  .pg-scrim {
+    transition-duration: 0.01ms;
+  }
+
+  .pg-scrim:not([data-open]) {
+    transition-delay: 0.01ms;
   }
 }
 
-/* Keep the page present behind the enlarged snippet instead of burying it in
-   the case-study-level dim. The veil is a near-white #fcfcfc rather than a grey
-   wash, so it lightens the grid away instead of dimming it, and the blur is
-   left to supply the separation. */
-.pg-frame[data-pg-open]::backdrop {
-  opacity: 1;
+/*
+ * An open card holds the page still behind it, from take-off until it has
+ * landed back in its slot. The reserved gutter keeps the scrollbar's room, so
+ * hiding it doesn't shift the page sideways. iOS Safari still pans a page
+ * whose root has `overflow: hidden`, so vertical panning is also withheld:
+ * sideways pans and pinches stay, for media inside the card, and the card's
+ * own pull runs on pointer events.
+ */
+html:has(.pg-frame[data-pg-enlarged]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+  scrollbar-gutter: stable;
+  touch-action: pan-x pinch-zoom;
 }
 
 /*
@@ -4881,10 +4994,8 @@ html[data-page-wipe]
   cursor: grabbing;
 }
 
-/* `::backdrop` may not inherit `--pg-pull` in older engines; the fallback
-   leaves the scrim as it was rather than clearing it. */
-.pg-frame[data-pg-pulling]::backdrop {
-  opacity: calc(1 - var(--pg-pull, 0) * 0.5);
+/* While pulled, `PlaygroundTile` writes the scrim's opacity directly. */
+.pg-scrim[data-pulling] {
   transition: none;
 }
 
@@ -4896,7 +5007,7 @@ html[data-page-wipe]
   }
 
   /* The scrim returns on the card's clock, so the two read as one thing. */
-  .pg-frame[data-pg-snap]::backdrop {
+  .pg-scrim[data-snap] {
     transition-duration: 300ms;
   }
 }

@@ -136,12 +136,7 @@
   height: 100%;
 }
 
-.story
-  :global(.humi-story-media__frame--marked)
-  > :global(.humi-story-annotations__marks),
-.story
-  :global(.humi-story-media__stage:has(> .humi-story-media__frame--marked))
-  > :global(.humi-story-annotations) {
+.story :global(.humi-story-media__stage) > :global(.humi-story-annotations) {
   inset-block: calc((100% - var(--anyday-marked-fill)) / 2);
   height: var(--anyday-marked-fill);
 }
@@ -149,12 +144,6 @@
 /* The phone board keeps its composition at every width, like the portal. */
 .story :global(.anyday-phone-board) {
   aspect-ratio: var(--anyday-card-aspect) !important;
-}
-
-.story :global(.anyday-phone-board) > :global(.humi-story-annotations__marks),
-.story :global(.anyday-phone-board-stage) > :global(.humi-story-annotations) {
-  inset-block: calc((100% - var(--anyday-marked-fill)) / 2);
-  height: var(--anyday-marked-fill);
 }
 
 /* Text-only findings keep the same caption edge, measure, and type as Humi. */

@@ -3,10 +3,10 @@ import type { EffectsConfig } from "@lisse/core";
 import { SmoothSurface } from "@/components/ui/smooth-surface";
 
 import { Tilt } from "@/components/motion-primitives/tilt";
+import { PlaygroundTile } from "@/components/home/playground/tile";
 import {
   type CaseStudyAnnotation,
-  CaseStudyAnnotationMarks,
-  CaseStudyAnnotationNotes,
+  CaseStudyAnnotations,
 } from "@/components/work/case-study-annotations";
 import { InlineDemoVideo } from "@/components/work/inline-demo-video";
 
@@ -59,6 +59,10 @@ export interface AnyDayScreenClip extends AnyDayPhoneClip {
  * side by side on its grey plate, each screen rounded like an iPhone's, with
  * the handwritten teardown over and beside them. A desktop recording can sit
  * to the right of the phones at their height.
+ *
+ * The board opens like the stills around it, so the whole plate is the
+ * control and the clips carry none of their own: they loop, as the opening
+ * film does.
  */
 export function AnyDayPhoneBoard({
   annotations,
@@ -77,53 +81,61 @@ export function AnyDayPhoneBoard({
 }) {
   return (
     <figure className="humi-story-media">
-      <Tilt className="humi-story-media__tilt" rotationFactor={3}>
-        <div className="humi-story-media__stage anyday-phone-board-stage">
-          <SmoothSurface
-            as="div"
-            className="humi-story-media__frame anyday-phone-board"
-          >
-            <div className="anyday-phone-board__phones">
-              {clips.map((clip, index) => (
-                <div className="anyday-phone" key={clip.src}>
-                  <InlineDemoVideo
-                    describedBy={`${id}-clip-${index}`}
-                    effects={CLIP_EFFECTS}
-                    flat
-                    ground="#ffffff"
-                    height={PHONE_CLIP.height}
-                    src={clip.src}
-                    title={clip.title}
-                    width={PHONE_CLIP.width}
-                  />
-                  <p className="sr-only" id={`${id}-clip-${index}`}>
-                    {clip.description}
-                  </p>
-                </div>
-              ))}
-              {screen ? (
-                <div className="anyday-phone-board__screen">
-                  <InlineDemoVideo
-                    describedBy={`${id}-screen`}
-                    effects={CLIP_EFFECTS}
-                    flat
-                    ground={screen.ground}
-                    height={screen.height}
-                    src={screen.src}
-                    title={screen.title}
-                    width={screen.width}
-                  />
-                  <p className="sr-only" id={`${id}-screen`}>
-                    {screen.description}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-            <CaseStudyAnnotationMarks annotations={annotations} />
-          </SmoothSurface>
-          <CaseStudyAnnotationNotes annotations={annotations} />
-        </div>
-      </Tilt>
+      <PlaygroundTile
+        asContainer
+        className="humi-story-media__zoom"
+        label={title}
+        style={{ aspectRatio: "2000 / 1075" }}
+      >
+        <Tilt className="humi-story-media__tilt" rotationFactor={3}>
+          <div className="humi-story-media__stage anyday-phone-board-stage">
+            <SmoothSurface
+              as="div"
+              className="humi-story-media__frame anyday-phone-board"
+            >
+              <div className="anyday-phone-board__phones">
+                {clips.map((clip, index) => (
+                  <div className="anyday-phone" key={clip.src}>
+                    <InlineDemoVideo
+                      controls={false}
+                      describedBy={`${id}-clip-${index}`}
+                      effects={CLIP_EFFECTS}
+                      flat
+                      ground="#ffffff"
+                      height={PHONE_CLIP.height}
+                      src={clip.src}
+                      title={clip.title}
+                      width={PHONE_CLIP.width}
+                    />
+                    <p className="sr-only" id={`${id}-clip-${index}`}>
+                      {clip.description}
+                    </p>
+                  </div>
+                ))}
+                {screen ? (
+                  <div className="anyday-phone-board__screen">
+                    <InlineDemoVideo
+                      controls={false}
+                      describedBy={`${id}-screen`}
+                      effects={CLIP_EFFECTS}
+                      flat
+                      ground={screen.ground}
+                      height={screen.height}
+                      src={screen.src}
+                      title={screen.title}
+                      width={screen.width}
+                    />
+                    <p className="sr-only" id={`${id}-screen`}>
+                      {screen.description}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            </SmoothSurface>
+            <CaseStudyAnnotations annotations={annotations} />
+          </div>
+        </Tilt>
+      </PlaygroundTile>
       <figcaption>
         <p>
           <strong>{title}</strong> <span>{description}</span>
