@@ -435,6 +435,12 @@ html[data-page-zoom="close"] {
 
 /* --- Case study page ------------------------------------------------------ */
 
+/* With a case study's sheet up, the black desk behind the homepage runs
+   under the status bar too, so Safari tints it black (`case-sheet.tsx`). */
+html[data-case-sheet-frozen] {
+  background: #000;
+}
+
 /* The story's own gutters for anchor jumps, now that the document scrolls. */
 html:has(.case-study-page) {
   scroll-padding-block: 6.5rem 7rem;

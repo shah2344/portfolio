@@ -32,6 +32,43 @@ const ABANDON = 2000;
 
 const FROZEN = styles.frozen as string;
 
+let themeColorWatch: MutationObserver | null = null;
+
+/** Sets each `theme-color` to black, or back to the colour it carried. */
+function paintThemeColors(frozen: boolean) {
+  for (const meta of document.querySelectorAll<HTMLMetaElement>(
+    'meta[name="theme-color"]',
+  )) {
+    if (frozen) {
+      if (meta.content === "#000") continue;
+      meta.dataset.caseSheetColor = meta.content;
+      meta.content = "#000";
+    } else if (meta.dataset.caseSheetColor !== undefined) {
+      meta.content = meta.dataset.caseSheetColor;
+      delete meta.dataset.caseSheetColor;
+    }
+  }
+}
+
+/** Paints the browser's status bar black over the frozen page, or hands it
+ *  back to the page's own ground. Safari 26 tints from the root's
+ *  background, earlier browsers from `theme-color`. The route change to the
+ *  story renders fresh `theme-color` tags, so those are painted as they
+ *  arrive. */
+function paintStatusBar(frozen: boolean) {
+  const root = document.documentElement;
+  themeColorWatch?.disconnect();
+  themeColorWatch = null;
+  paintThemeColors(frozen);
+  if (frozen) {
+    root.dataset.caseSheetFrozen = "";
+    themeColorWatch = new MutationObserver(() => paintThemeColors(true));
+    themeColorWatch.observe(document.head, { childList: true });
+  } else {
+    delete root.dataset.caseSheetFrozen;
+  }
+}
+
 /*
  * The intercepted route and the homepage are siblings, not parent and child,
  * so the route hands its story to the homepage's sheet here. The sheet keeps
@@ -188,6 +225,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         : null;
     homeScroll.current = window.scrollY;
     stage.classList.add(FROZEN);
+    paintStatusBar(true);
     content.style.top = `${-homeScroll.current}px`;
     // The page is behind the sheet now; its clips needn't keep decoding.
     pausedVideos.current = [...stage.querySelectorAll("video")].filter(
@@ -200,6 +238,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const releaseHome = useCallback(() => {
     if (openRef.current) return;
     stageRef.current?.classList.remove(FROZEN);
+    paintStatusBar(false);
     for (const ref of [cardRef, contentRef, cornersRef]) {
       ref.current?.removeAttribute("style");
     }
@@ -348,6 +387,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       window.clearTimeout(landTimer.current);
       cancelFrame.current();
       delete document.documentElement.dataset.caseSheetHeld;
+      paintStatusBar(false);
     },
     [],
   );
