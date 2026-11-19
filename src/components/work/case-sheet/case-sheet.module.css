@@ -4,10 +4,19 @@
    its content is shifted up to the reader's position instead, so the
    homepage's fixed dock, held by the card's transform, stays in place. */
 .frozen {
+  /* The desk. On the way out it takes the page's ground at once, so that
+     Safari, which tints its status bar from a fixed element at the top
+     edge, hands the bar back to the homepage as the sheet leaves. */
+  --case-sheet-desk: var(--site-background);
+
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: #000;
+  background: var(--case-sheet-desk);
+}
+
+:global(html[data-case-sheet-frozen]) .frozen {
+  --case-sheet-desk: #000;
 }
 
 .frozen > .card {
@@ -65,7 +74,7 @@
   background: radial-gradient(
     circle at 100% 100%,
     transparent calc(var(--corner) - 0.5px),
-    #000 var(--corner)
+    var(--case-sheet-desk) var(--corner)
   );
 }
 
@@ -75,7 +84,7 @@
   background: radial-gradient(
     circle at 0 100%,
     transparent calc(var(--corner) - 0.5px),
-    #000 var(--corner)
+    var(--case-sheet-desk) var(--corner)
   );
 }
 
@@ -108,6 +117,9 @@
      story's fixed header and contents bar are placed in. Vaul's slide and
      drag still apply theirs while they run. */
   will-change: auto;
+  /* Vaul's own moves set their transitions inline. Its standing one only
+     eased a dropped transform of zero to none, for nothing. */
+  transition: none;
   /* Vaul's `none` would stop a finger scrolling the page; only the handle
      drags. */
   touch-action: auto;
@@ -162,7 +174,12 @@
    paint over the desk above the sheet, and while the sheet moves, when they
    ride on it. Five backdrop filters resampled on every frame of a slide are
    also what Safari drops frames to. */
-.sheet:is(:not([data-scrolled]), :global(.vaul-dragging), [data-state="closed"])
+.sheet:is(
+    :not([data-scrolled]),
+    :global(.vaul-dragging),
+    [data-dragging],
+    [data-state="closed"]
+  )
   :is(:global(.case-study-page__blur), :global(.case-study-page__scrim)) {
   visibility: hidden;
 }

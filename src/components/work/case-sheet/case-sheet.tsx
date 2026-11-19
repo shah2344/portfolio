@@ -16,6 +16,7 @@ import { observeCaseStudyLineInk } from "@/components/motion/case-study-line-ink
 import { holdMedia } from "@/components/motion/page-wipe";
 
 import styles from "./case-sheet.module.css";
+import { trackSheetDrag } from "./sheet-gesture";
 
 type Story = { href: string; name: string; content: ReactNode };
 
@@ -184,6 +185,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const openRef = useRef(false);
   const timer = useRef(0);
   const landTimer = useRef(0);
+  const settleTimer = useRef(0);
   const cancelFrame = useRef(() => {});
   const pausedVideos = useRef<HTMLVideoElement[]>([]);
   const opener = useRef<HTMLElement | null>(null);
@@ -296,6 +298,9 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       window.clearTimeout(timer.current);
       window.clearTimeout(landTimer.current);
       freezeHome();
+      // Reopened on the way out, the page is still frozen but the bar was
+      // handed back.
+      paintStatusBar(true);
       openRef.current = true;
       // Only the story's first screen is laid out while the sheet rises. The
       // rest — most of its elements, clips and glass — joins once the sheet
@@ -336,6 +341,8 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     (fromHistory: boolean) => {
       if (!openRef.current) return;
       openRef.current = false;
+      // The status bar goes back to the homepage as the sheet leaves.
+      paintStatusBar(false);
       window.clearTimeout(landTimer.current);
       setOpen(false);
       // Once the sheet is gone the page is let go. Stepping back out of the
@@ -408,12 +415,71 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     () => () => {
       window.clearTimeout(timer.current);
       window.clearTimeout(landTimer.current);
+      window.clearTimeout(settleTimer.current);
       cancelFrame.current();
       delete document.documentElement.dataset.caseSheetHeld;
       paintStatusBar(false);
     },
     [],
   );
+
+  /** Once the sheet has eased back to rest, drops the transform of zero a
+   *  drag leaves on it, which would make the sheet the frame the story's
+   *  fixed header and contents bar are placed in. */
+  const settleSheet = useCallback(() => {
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(
+      () => {
+        if (
+          !openRef.current ||
+          !sheet ||
+          sheet.classList.contains("vaul-dragging") ||
+          sheet.hasAttribute("data-dragging")
+        ) {
+          return;
+        }
+        sheet.style.removeProperty("transform");
+        sheet.style.removeProperty("transition");
+      },
+      reducedMotion() ? 0 : DURATION,
+    );
+  }, [sheet]);
+
+  // A pull down from anywhere on the story, while it sits at its top, drags
+  // the sheet; see `sheet-gesture.ts`.
+  useEffect(() => {
+    if (!open || !sheet) return;
+    return trackSheetDrag(sheet, {
+      // Not while it slides in or out: those keyframes outrank the drag.
+      canStart: () =>
+        openRef.current &&
+        !sheet.getAnimations().some((motion) => motion instanceof CSSAnimation),
+      onMove: (offset) => {
+        window.clearTimeout(settleTimer.current);
+        sheet.setAttribute("data-dragging", "");
+        sheet.style.transition = "none";
+        sheet.style.transform = `translate3d(0, ${offset}px, 0)`;
+        paintHome(
+          1 - Math.min(1, Math.max(0, offset / window.innerHeight)),
+          false,
+        );
+      },
+      onEnd: (close) => {
+        sheet.removeAttribute("data-dragging");
+        if (close) {
+          // Vaul's exit slides on from where the finger left the sheet.
+          closeSheet(false);
+          return;
+        }
+        sheet.style.transition = reducedMotion()
+          ? "none"
+          : `transform ${DURATION}ms ${EASE}`;
+        sheet.style.transform = "translate3d(0, 0, 0)";
+        paintHome(1, true);
+        settleSheet();
+      },
+    });
+  }, [closeSheet, open, paintHome, settleSheet, sheet]);
 
   // The page scrolls the story, so its line ink, media arrivals and contents
   // bar hear the window as they do on the story's own page. This marks when
@@ -493,15 +559,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         onRelease={(_, stillOpen) => {
           if (!stillOpen || !openRef.current) return;
           paintHome(1, true);
-          // Vaul eases the sheet back to a transform of zero and leaves it
-          // there, which would make the sheet the frame the story's fixed
-          // header and contents bar are placed in.
-          window.setTimeout(() => {
-            if (!openRef.current || sheet?.classList.contains("vaul-dragging"))
-              return;
-            sheet?.style.removeProperty("transform");
-            sheet?.style.removeProperty("transition");
-          }, DURATION);
+          settleSheet();
         }}
         open={open}
         // The story scrolls the page, so the sheet is never resized for a
