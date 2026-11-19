@@ -178,7 +178,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const cornersRef = useRef<HTMLSpanElement>(null);
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const homeScroll = useRef(0);
   const scrollRestoration = useRef<ScrollRestoration | null>(null);
   const openRef = useRef(false);
@@ -199,7 +199,8 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     const card = cardRef.current;
     const content = contentRef.current;
     const corners = cornersRef.current;
-    if (!card || !content || !corners) return;
+    const overlay = overlayRef.current;
+    if (!card || !content || !corners || !overlay) return;
     const transition = animate && !reducedMotion();
     card.style.transition = transition
       ? `transform ${DURATION}ms ${EASE}`
@@ -217,6 +218,9 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       ? `opacity ${DURATION}ms ${EASE}`
       : "none";
     content.style.opacity = String(1 - progress);
+    // The dim over it, which Vaul would otherwise draw with a scroll lock.
+    overlay.style.transition = content.style.transition;
+    overlay.style.opacity = String(progress);
   }, []);
 
   /** Pins the homepage where the reader left it, still at rest. Done on the
@@ -385,7 +389,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       } else if (openRef.current) {
         setStory((shown) => {
           if (shown?.href !== next.href) {
-            scrollerRef.current?.scrollTo({ top: 0, behavior: "instant" });
+            window.scrollTo({ top: 0, behavior: "instant" });
           }
           return next;
         });
@@ -411,23 +415,24 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     [],
   );
 
-  // The story's line ink, media arrivals and phone contents bar listen for
-  // the window's scroll and measure against the viewport. Inside the sheet
-  // the scroll is the container's, so it is passed on to them. It also marks
-  // when the story has left the top, the only time the header blur has
-  // anything under it to blur.
+  // The page scrolls the story, so its line ink, media arrivals and contents
+  // bar hear the window as they do on the story's own page. This marks when
+  // the story has left the top, the only time its header blur and fade have
+  // anything under them; at the top they would paint over the desk.
   useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!open || !sheet || !scroller) return;
+    if (!open || !sheet) return;
     let scrolled = false;
-    const relay = () => {
-      window.dispatchEvent(new Event("scroll"));
-      if (scroller.scrollTop > 0 === scrolled) return;
+    const mark = () => {
+      if (window.scrollY > 0 === scrolled) return;
       scrolled = !scrolled;
       sheet.toggleAttribute("data-scrolled", scrolled);
     };
-    scroller.addEventListener("scroll", relay, { passive: true });
-    return () => scroller.removeEventListener("scroll", relay);
+    mark();
+    window.addEventListener("scroll", mark, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", mark);
+      sheet.removeAttribute("data-scrolled");
+    };
   }, [open, sheet]);
 
   return (
@@ -456,6 +461,10 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         </div>
       </div>
 
+      {/* The dim over the page behind, painted by `paintHome`. Vaul's own
+          overlay locks the document's scroll, which here is the story's. */}
+      <div aria-hidden="true" className={styles.overlay} ref={overlayRef} />
+
       <Drawer.Root
         // Vaul 1.1.2 reads this one inverted: `false` stops it holding the
         // document still on iOS, which the frozen homepage already does.
@@ -470,7 +479,11 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         // Under a finger the page behind follows the sheet at once, by the
         // share of it dragged away…
         onDrag={(_, dragged) => {
-          if (openRef.current) paintHome(1 - Math.min(1, dragged), false);
+          if (!openRef.current || !sheet) return;
+          // Vaul gives the share of the whole sheet, which runs the length
+          // of the story; the page behind follows the share of a screen.
+          const distance = dragged * sheet.getBoundingClientRect().height;
+          paintHome(1 - Math.min(1, distance / window.innerHeight), false);
         }}
         // …and eases back with it if it is let go short of closing. A close
         // goes through `onOpenChange`.
@@ -478,12 +491,24 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
           if (!next) closeSheet(false);
         }}
         onRelease={(_, stillOpen) => {
-          if (stillOpen && openRef.current) paintHome(1, true);
+          if (!stillOpen || !openRef.current) return;
+          paintHome(1, true);
+          // Vaul eases the sheet back to a transform of zero and leaves it
+          // there, which would make the sheet the frame the story's fixed
+          // header and contents bar are placed in.
+          window.setTimeout(() => {
+            if (!openRef.current || sheet?.classList.contains("vaul-dragging"))
+              return;
+            sheet?.style.removeProperty("transform");
+            sheet?.style.removeProperty("transition");
+          }, DURATION);
         }}
         open={open}
+        // The story scrolls the page, so the sheet is never resized for a
+        // keyboard.
+        repositionInputs={false}
       >
         <Drawer.Portal>
-          <Drawer.Overlay className={styles.overlay} />
           <Drawer.Content
             aria-describedby={undefined}
             className={styles.sheet}
@@ -529,32 +554,13 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
             }}
             ref={setSheet}
           >
-            {/* The story's own header blur and fade sit inside the scroller,
-                which has to clip to the sheet's corners, and Chromium drops
-                the blur's band masks under a rounded clip. So the sheet
-                draws them, above the scroller and below the story's sticky
-                controls; the story's copies are hidden. */}
-            <div aria-hidden="true" className={styles.chrome}>
-              <div className="case-study-page__blur">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="case-study-page__scrim" />
-            </div>
             <div className={styles.grabber}>
               <Drawer.Handle className={styles.handle} />
             </div>
             <Drawer.Title className="sr-only">
               {story ? `${story.name} case study` : "Case study"}
             </Drawer.Title>
-            <div
-              className={styles.scroller}
-              data-case-study-scroller=""
-              ref={scrollerRef}
-            >
+            <div className={styles.story}>
               {story ? (
                 <SheetStory key={story.href}>{story.content}</SheetStory>
               ) : null}
