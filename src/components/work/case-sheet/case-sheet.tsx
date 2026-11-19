@@ -161,7 +161,8 @@ export function CaseSheetEntry({
  * The homepage, with its case studies opening as a Vaul sheet over it.
  *
  * The page behind recedes the way an iOS sheet's does: it scales back, drops
- * below the safe area and rounds its top corners over a black desk, in step
+ * below the safe area, rounds its top corners over a black desk and fades
+ * its content to a blank card, in step
  * with the sheet on the way in, out, and under a drag. One function paints
  * it, from one number: 0 at rest, 1 fully behind the sheet.
  *
@@ -195,8 +196,9 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
    *  transform and opacity change, so the compositor runs it. */
   const paintHome = useCallback((progress: number, animate: boolean) => {
     const card = cardRef.current;
+    const content = contentRef.current;
     const corners = cornersRef.current;
-    if (!card || !corners) return;
+    if (!card || !content || !corners) return;
     const transition = animate && !reducedMotion();
     card.style.transition = transition
       ? `transform ${DURATION}ms ${EASE}`
@@ -208,6 +210,12 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       ? `transform ${DURATION}ms ${EASE}`
       : "none";
     corners.style.setProperty("--corner-progress", String(progress));
+    // Behind the sheet the card is a blank ground: its content fades out
+    // with the same progress, and back in as the sheet goes.
+    content.style.transition = transition
+      ? `opacity ${DURATION}ms ${EASE}`
+      : "none";
+    content.style.opacity = String(1 - progress);
   }, []);
 
   /** Pins the homepage where the reader left it, still at rest. Done on the

@@ -21,6 +21,7 @@
 
 .frozen .content {
   position: relative;
+  will-change: opacity;
 }
 
 /* The card's top corners, rounded to the sheet's radius. Animating
