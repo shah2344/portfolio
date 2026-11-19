@@ -4,19 +4,10 @@
    its content is shifted up to the reader's position instead, so the
    homepage's fixed dock, held by the card's transform, stays in place. */
 .frozen {
-  /* The desk. On the way out it takes the page's ground at once, so that
-     Safari, which tints its status bar from a fixed element at the top
-     edge, hands the bar back to the homepage as the sheet leaves. */
-  --case-sheet-desk: var(--site-background);
-
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: var(--case-sheet-desk);
-}
-
-:global(html[data-case-sheet-frozen]) .frozen {
-  --case-sheet-desk: #000;
+  background: #000;
 }
 
 .frozen > .card {
@@ -74,7 +65,7 @@
   background: radial-gradient(
     circle at 100% 100%,
     transparent calc(var(--corner) - 0.5px),
-    var(--case-sheet-desk) var(--corner)
+    #000 var(--corner)
   );
 }
 
@@ -84,66 +75,51 @@
   background: radial-gradient(
     circle at 0 100%,
     transparent calc(var(--corner) - 0.5px),
-    var(--case-sheet-desk) var(--corner)
+    #000 var(--corner)
   );
 }
 
-/* Doubled to out-rank the rules Vaul injects on `[data-vaul-drawer]`.
-
-   The sheet sits in the page, not over it: the story scrolls the document,
-   so Safari collapses its toolbars as the reader scrolls and keeps them
-   clear glass, as on the story's own page. A fixed sheet reaching the
-   bottom edge read to Safari as a bar of its own and kept them solid. */
+/* Doubled to out-rank the rules Vaul injects on `[data-vaul-drawer]`. */
 .sheet.sheet {
   /* Keep in step with `--corner` on `.corners`. */
   --case-sheet-radius: 24px;
-  --case-sheet-top: calc(env(safe-area-inset-top) + 1.75rem);
-  /* Vaul slides by the sheet's height, which here is the story's length; a
-     screen's travel is what clears it. */
-  --initial-transform: 100lvh;
 
-  position: absolute;
+  position: fixed;
   z-index: var(--site-layer-overlay);
-  inset-block-start: var(--case-sheet-top);
+  inset-block: calc(env(safe-area-inset-top) + 1.75rem) 0;
   inset-inline: 0;
-  min-height: calc(100lvh - var(--case-sheet-top));
-  overflow: clip;
+  display: flex;
+  flex-direction: column;
   border-start-start-radius: var(--case-sheet-radius);
   border-start-end-radius: var(--case-sheet-radius);
   background: var(--site-background);
   outline: none;
   user-select: auto;
-  /* Any transform, or the promise of one, makes the sheet the frame the
-     story's fixed header and contents bar are placed in. Vaul's slide and
-     drag still apply theirs while they run. */
-  will-change: auto;
-  /* Vaul's own moves set their transitions inline. Its standing one only
-     eased a dropped transform of zero to none, for nothing. */
-  transition: none;
-  /* Vaul's `none` would stop a finger scrolling the page; only the handle
-     drags. */
-  touch-action: auto;
 }
 
-/* Over the page behind and its black desk: the dim. `paintHome` fades it in
-   and out, and with the drag. Outside the dialog, so it takes its own
-   pointer; a tap on it closes the sheet. */
+/* Over the page behind and its black desk: the dim. Vaul fades it in and
+   out, and with the drag. */
 .overlay {
   position: fixed;
   z-index: calc(var(--site-layer-overlay) - 1);
   inset: 0;
-  opacity: 0;
   background: rgb(0 0 0 / 40%);
-  pointer-events: none;
 }
 
-:global(html[data-case-sheet-frozen]) .overlay {
-  pointer-events: auto;
+/* The story scrolls here, so the sheet itself never moves with it. */
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: inherit;
 }
 
 /* The story's own grounds stand down: the sheet paints that colour behind
-   them, under its rounded corners. */
-.story :global(:is(.case-study-page, .humi-case-study, .case-study-sheet)) {
+   them. Painted edge to edge inside the rounded scroller, they made Safari
+   take its content for opaque to the square corners and fill what the
+   rounding cut away with black. */
+.scroller :global(:is(.case-study-page, .humi-case-study, .case-study-sheet)) {
   background: transparent;
 }
 
@@ -169,24 +145,45 @@
   }
 }
 
-/* The story's header blur and fade are fixed to the screen, as on its own
-   page. They stay off while the story sits at its top, where they would
-   paint over the desk above the sheet, and while the sheet moves, when they
-   ride on it. Five backdrop filters resampled on every frame of a slide are
-   also what Safari drops frames to. */
-.sheet:is(
-    :not([data-scrolled]),
-    :global(.vaul-dragging),
-    [data-dragging],
-    [data-state="closed"]
-  )
-  :is(:global(.case-study-page__blur), :global(.case-study-page__scrim)) {
+/* The sheet's own header blur and fade, at its top edge and the story's
+   values, with its corners. Keep the heights in step with `.case-study-page`
+   in `globals.css`. */
+.chrome {
+  --case-study-header-height: 136px;
+  --case-study-fade-height: 160px;
+}
+
+@media (max-width: 80rem) {
+  .chrome {
+    --case-study-header-height: 96px;
+    --case-study-fade-height: 96px;
+  }
+}
+
+.chrome :global(.case-study-page__blur),
+.chrome :global(.case-study-page__scrim) {
+  position: absolute;
+}
+
+.chrome :global(.case-study-page__scrim),
+.chrome :global(.case-study-page__blur > span) {
+  border-start-start-radius: var(--case-sheet-radius);
+  border-start-end-radius: var(--case-sheet-radius);
+}
+
+/* The blur stays off while the story sits at its top, with only the sheet's
+   own colour beneath it, and while the sheet moves. Five backdrop filters
+   resampled on every frame of a slide are what Safari drops frames to. */
+.sheet:is(:not([data-scrolled]), :global(.vaul-dragging), [data-state="closed"])
+  .chrome
+  :global(.case-study-page__blur) {
   visibility: hidden;
 }
 
-/* Held at the start of its entrance for the frame the sheet mounts in; see
-   `openSheet` in `case-sheet.tsx`. */
-:global(html[data-case-sheet-held]) .sheet.sheet {
+/* Held at the start of their entrances for the frame the sheet mounts in;
+   see `openSheet` in `case-sheet.tsx`. */
+:global(html[data-case-sheet-held]) .sheet.sheet,
+:global(html[data-case-sheet-held]) .overlay.overlay {
   animation-play-state: paused;
 }
 
@@ -194,6 +191,12 @@
    stories the first three blocks of its sheet fill it. */
 .sheet[data-landing] :global(.case-study-sheet) > :nth-child(n + 4) {
   display: none;
+}
+
+/* The story's copies still measure, for its line ink, but never paint. */
+.scroller :global(.case-study-page__blur),
+.scroller :global(.case-study-page__scrim) {
+  visibility: hidden;
 }
 
 .grabber {
@@ -208,7 +211,6 @@
 
 .handle.handle {
   width: 2.75rem;
-  touch-action: none;
   pointer-events: auto;
   cursor: grab;
   opacity: 1;

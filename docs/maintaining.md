@@ -61,7 +61,11 @@ enter over 300ms while opening media fades in. Returning pages do not replay
 their entrances. Homepage cards open case studies as a Vaul sheet over the page
 (`src/components/work/case-sheet`, fed by the intercepted route in
 `src/app/@sheet`); a case study reached by its URL is a full page, and its close
-button returns home with a one-snapshot CSS zoom. Other routes navigate
+button returns home with a one-snapshot CSS zoom. On phones (narrow and touch)
+a card opens the full page instead, by a full navigation that a cross-document
+view transition draws as a sheet; closing, Back and a pull down from the top
+step back to the homepage, which the browser restores from its back-forward
+cache (`case-sheet/phone-sheet.ts`). Other routes navigate
 immediately, and theme changes alone retain the button-origin reveal. The
 snapshots live in `src/components/motion/page-wipe.ts`.
 

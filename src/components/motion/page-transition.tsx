@@ -25,7 +25,12 @@ export function PageTransition({ children }: { children: ReactNode }) {
     // Keep Strict Mode's effect replay from mistaking the first mount for a return.
     firstArrival.current ??= !visited.has(path);
     visited.add(path);
-    if (!firstArrival.current || window.location.hash) {
+    // A story that rose as a phone's sheet (`phone-sheet.ts`) has arrived.
+    if (
+      !firstArrival.current ||
+      window.location.hash ||
+      document.documentElement.hasAttribute("data-case-sheet-arrival")
+    ) {
       page.dataset.caseArrival = "done";
       return;
     }

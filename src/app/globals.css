@@ -411,6 +411,175 @@ html[data-page-zoom="close"] {
   }
 }
 
+/* --- Case study on a phone ----------------------------------------------- */
+/* On a phone a homepage card opens its story as a page of its own, by a full
+   navigation (`phone-sheet.ts`), and the browser carries the change across
+   the two documents. These rules make it a sheet: the homepage scales back
+   about the top of the screen, darkens and rounds its top corners over a
+   black desk while the story rises from the bottom edge, and closing plays
+   it back. Both are viewport-sized pictures, moved by transform, opacity and
+   clip alone. `phone-sheet-script.ts` sets the direction on the arriving
+   document. With reduced motion the pages simply switch. */
+@media (max-width: 780px) and (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+:root {
+  /* Vaul's duration and curve, as on the desktop sheet. */
+  --case-sheet-duration: 500ms;
+  --case-sheet-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --case-sheet-radius: 24px;
+}
+
+html[data-case-sheet-vt]::view-transition {
+  background: #000;
+}
+
+html[data-case-sheet-vt]::view-transition-group(root) {
+  animation: none;
+}
+
+html[data-case-sheet-vt]::view-transition-old(root),
+html[data-case-sheet-vt]::view-transition-new(root) {
+  mask: none;
+  transform-origin: 50% 0;
+  animation-duration: var(--case-sheet-duration);
+  animation-timing-function: var(--case-sheet-ease);
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+html[data-case-sheet-vt="open"]::view-transition-old(root) {
+  z-index: 0;
+  animation-name: case-sheet-home-recede;
+}
+
+html[data-case-sheet-vt="open"]::view-transition-new(root) {
+  z-index: 1;
+  animation-name: case-sheet-story-rise;
+}
+
+html[data-case-sheet-vt="close"]::view-transition-old(root) {
+  z-index: 1;
+  animation-name: case-sheet-story-fall;
+}
+
+html[data-case-sheet-vt="close"]::view-transition-new(root) {
+  z-index: 0;
+  animation-name: case-sheet-home-return;
+}
+
+/* Let go from a pull, the story's picture already sits where the finger
+   left it, over the black desk; the desk is clipped away and the story
+   slides on from there. The homepage rises out of the black. */
+html[data-case-sheet-pulled]::view-transition-old(root) {
+  clip-path: inset(
+    var(--case-sheet-pulled, 0) 0 0 0 round var(--case-sheet-radius)
+      var(--case-sheet-radius) 0 0
+  );
+  animation-name: case-sheet-story-drop;
+}
+
+html[data-case-sheet-pulled]::view-transition-new(root) {
+  animation-name: case-sheet-home-surface;
+}
+
+@keyframes case-sheet-home-recede {
+  to {
+    opacity: 0.6;
+    transform: translateY(calc(env(safe-area-inset-top) + 14px))
+      scale(var(--case-sheet-scale, 0.96));
+    clip-path: inset(
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+    );
+  }
+}
+
+@keyframes case-sheet-home-return {
+  from {
+    opacity: 0.6;
+    transform: translateY(calc(env(safe-area-inset-top) + 14px))
+      scale(var(--case-sheet-scale, 0.96));
+    clip-path: inset(
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+    );
+  }
+}
+
+@keyframes case-sheet-home-surface {
+  from {
+    opacity: 0;
+    transform: translateY(calc(env(safe-area-inset-top) + 14px))
+      scale(var(--case-sheet-scale, 0.96));
+    clip-path: inset(
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+    );
+  }
+}
+
+@keyframes case-sheet-story-rise {
+  from {
+    transform: translateY(100%);
+    clip-path: inset(
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+    );
+  }
+  to {
+    transform: none;
+    clip-path: inset(0 round 0);
+  }
+}
+
+@keyframes case-sheet-story-fall {
+  from {
+    transform: none;
+    clip-path: inset(0 round 0);
+  }
+  to {
+    transform: translateY(100%);
+    clip-path: inset(
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+    );
+  }
+}
+
+@keyframes case-sheet-story-drop {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Under a pull the whole page drags down over a black desk with its top
+   corners rounded (`watchPhonePull`). The desk is the root's own ground,
+   not a fixed layer, which iOS would tint its bars from and keep. The
+   header's blur goes while the page moves: its band masks drop under a
+   rounded clip. */
+html[data-case-sheet-pulling],
+html[data-case-sheet-pulling] body {
+  background: #000;
+}
+
+html[data-case-sheet-pulling] [data-site-root] {
+  clip-path: inset(
+    0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+  );
+  background: var(--site-background);
+}
+
+html[data-case-sheet-pulling]
+  :is(.case-study-page__blur, .case-study-page__scrim) {
+  visibility: hidden;
+}
+
+/* While the story rises, only its first screen is laid out: in both stories
+   the first three blocks of its sheet fill it. The rest joins once it has
+   landed. */
+html[data-case-sheet-landing] .case-study-sheet > :nth-child(n + 4) {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),
@@ -434,14 +603,6 @@ html[data-page-zoom="close"] {
 }
 
 /* --- Case study page ------------------------------------------------------ */
-
-/* With a case study's sheet up, the black desk behind the homepage runs
-   under the status bar too, so Safari tints it black (`case-sheet.tsx`).
-   Safari samples the body as well as the root. */
-html[data-case-sheet-frozen],
-html[data-case-sheet-frozen] body {
-  background: #000;
-}
 
 /* The story's own gutters for anchor jumps, now that the document scrolls. */
 html:has(.case-study-page) {
@@ -6840,24 +7001,32 @@ html[data-page-wipe] .humi-impact__photo .pg-frame:not([data-pg-enlarged]) {
     animation: none;
   }
 
-  .case-study-page:not([data-case-arrival="done"])
+  :root:not([data-case-sheet-arrival])
+    .case-study-page:not([data-case-arrival="done"])
     .humi-story-intro__brand
     > :not([data-brand-turned]) {
     animation: site-load-enter var(--site-load-duration) var(--site-load-ease)
       backwards;
   }
 
-  .case-study-page:not([data-case-arrival="done"]) .humi-story-intro__lede {
+  :root:not([data-case-sheet-arrival])
+    .case-study-page:not([data-case-arrival="done"])
+    .humi-story-intro__lede {
     animation: site-load-enter var(--site-load-duration) var(--site-load-ease)
       var(--case-enter-lede-delay) backwards;
   }
 
-  .case-study-page:not([data-case-arrival="done"]) .humi-story-intro__date {
+  :root:not([data-case-sheet-arrival])
+    .case-study-page:not([data-case-arrival="done"])
+    .humi-story-intro__date {
     animation: site-load-enter var(--site-load-duration) var(--site-load-ease)
       var(--case-enter-date-delay) backwards;
   }
 
-  .case-study-page:not([data-case-arrival="done"]) .humi-story-intro + * {
+  :root:not([data-case-sheet-arrival])
+    .case-study-page:not([data-case-arrival="done"])
+    .humi-story-intro
+    + * {
     animation: site-load-enter var(--site-load-duration) var(--site-load-ease)
       var(--case-enter-media-delay) backwards;
   }

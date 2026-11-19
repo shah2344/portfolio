@@ -16,7 +16,7 @@ import { observeCaseStudyLineInk } from "@/components/motion/case-study-line-ink
 import { holdMedia } from "@/components/motion/page-wipe";
 
 import styles from "./case-sheet.module.css";
-import { trackSheetDrag } from "./sheet-gesture";
+import { isPhoneSheet, openAsPage } from "./phone-sheet";
 
 type Story = { href: string; name: string; content: ReactNode };
 
@@ -32,43 +32,6 @@ const DROP = 14;
 const ABANDON = 2000;
 
 const FROZEN = styles.frozen as string;
-
-let themeColorWatch: MutationObserver | null = null;
-
-/** Sets each `theme-color` to black, or back to the colour it carried. */
-function paintThemeColors(frozen: boolean) {
-  for (const meta of document.querySelectorAll<HTMLMetaElement>(
-    'meta[name="theme-color"]',
-  )) {
-    if (frozen) {
-      if (meta.content === "#000") continue;
-      meta.dataset.caseSheetColor = meta.content;
-      meta.content = "#000";
-    } else if (meta.dataset.caseSheetColor !== undefined) {
-      meta.content = meta.dataset.caseSheetColor;
-      delete meta.dataset.caseSheetColor;
-    }
-  }
-}
-
-/** Paints the browser's status bar black over the frozen page, or hands it
- *  back to the page's own ground. Safari 26 tints from the root's
- *  background, earlier browsers from `theme-color`. The route change to the
- *  story renders fresh `theme-color` tags, so those are painted as they
- *  arrive. */
-function paintStatusBar(frozen: boolean) {
-  const root = document.documentElement;
-  themeColorWatch?.disconnect();
-  themeColorWatch = null;
-  paintThemeColors(frozen);
-  if (frozen) {
-    root.dataset.caseSheetFrozen = "";
-    themeColorWatch = new MutationObserver(() => paintThemeColors(true));
-    themeColorWatch.observe(document.head, { childList: true });
-  } else {
-    delete root.dataset.caseSheetFrozen;
-  }
-}
 
 /*
  * The intercepted route and the homepage are siblings, not parent and child,
@@ -159,12 +122,13 @@ export function CaseSheetEntry({
 }
 
 /**
- * The homepage, with its case studies opening as a Vaul sheet over it.
+ * The homepage, with its case studies opening as a Vaul sheet over it. On a
+ * phone they open as pages of their own instead (`phone-sheet.ts`).
  *
  * The page behind recedes the way an iOS sheet's does: it scales back, drops
  * below the safe area, rounds its top corners over a black desk and fades
- * its content to a blank card, in step
- * with the sheet on the way in, out, and under a drag. One function paints
+ * its content to a blank card, in step with the sheet on the way in, out,
+ * and under a drag. One function paints
  * it, from one number: 0 at rest, 1 fully behind the sheet.
  *
  * Vaul's own `shouldScaleBackground` scales a wrapper from the document's
@@ -179,13 +143,12 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const cornersRef = useRef<HTMLSpanElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const homeScroll = useRef(0);
   const scrollRestoration = useRef<ScrollRestoration | null>(null);
   const openRef = useRef(false);
   const timer = useRef(0);
   const landTimer = useRef(0);
-  const settleTimer = useRef(0);
   const cancelFrame = useRef(() => {});
   const pausedVideos = useRef<HTMLVideoElement[]>([]);
   const opener = useRef<HTMLElement | null>(null);
@@ -201,8 +164,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     const card = cardRef.current;
     const content = contentRef.current;
     const corners = cornersRef.current;
-    const overlay = overlayRef.current;
-    if (!card || !content || !corners || !overlay) return;
+    if (!card || !content || !corners) return;
     const transition = animate && !reducedMotion();
     card.style.transition = transition
       ? `transform ${DURATION}ms ${EASE}`
@@ -220,9 +182,6 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       ? `opacity ${DURATION}ms ${EASE}`
       : "none";
     content.style.opacity = String(1 - progress);
-    // The dim over it, which Vaul would otherwise draw with a scroll lock.
-    overlay.style.transition = content.style.transition;
-    overlay.style.opacity = String(progress);
   }, []);
 
   /** Pins the homepage where the reader left it, still at rest. Done on the
@@ -246,7 +205,6 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     scrollRestoration.current ??= history.scrollRestoration;
     history.scrollRestoration = "manual";
     stage.classList.add(FROZEN);
-    paintStatusBar(true);
     content.style.top = `${-homeScroll.current}px`;
     // The page is behind the sheet now; its clips needn't keep decoding.
     pausedVideos.current = [...stage.querySelectorAll("video")].filter(
@@ -259,7 +217,6 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const releaseHome = useCallback(() => {
     if (openRef.current) return;
     stageRef.current?.classList.remove(FROZEN);
-    paintStatusBar(false);
     for (const ref of [cardRef, contentRef, cornersRef]) {
       ref.current?.removeAttribute("style");
     }
@@ -298,9 +255,6 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       window.clearTimeout(timer.current);
       window.clearTimeout(landTimer.current);
       freezeHome();
-      // Reopened on the way out, the page is still frozen but the bar was
-      // handed back.
-      paintStatusBar(true);
       openRef.current = true;
       // Only the story's first screen is laid out while the sheet rises. The
       // rest — most of its elements, clips and glass — joins once the sheet
@@ -341,8 +295,6 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     (fromHistory: boolean) => {
       if (!openRef.current) return;
       openRef.current = false;
-      // The status bar goes back to the homepage as the sheet leaves.
-      paintStatusBar(false);
       window.clearTimeout(landTimer.current);
       setOpen(false);
       // Once the sheet is gone the page is let go. Stepping back out of the
@@ -396,7 +348,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       } else if (openRef.current) {
         setStory((shown) => {
           if (shown?.href !== next.href) {
-            window.scrollTo({ top: 0, behavior: "instant" });
+            scrollerRef.current?.scrollTo({ top: 0, behavior: "instant" });
           }
           return next;
         });
@@ -415,90 +367,29 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     () => () => {
       window.clearTimeout(timer.current);
       window.clearTimeout(landTimer.current);
-      window.clearTimeout(settleTimer.current);
       cancelFrame.current();
       delete document.documentElement.dataset.caseSheetHeld;
-      paintStatusBar(false);
     },
     [],
   );
 
-  /** Once the sheet has eased back to rest, drops the transform of zero a
-   *  drag leaves on it, which would make the sheet the frame the story's
-   *  fixed header and contents bar are placed in. */
-  const settleSheet = useCallback(() => {
-    window.clearTimeout(settleTimer.current);
-    settleTimer.current = window.setTimeout(
-      () => {
-        if (
-          !openRef.current ||
-          !sheet ||
-          sheet.classList.contains("vaul-dragging") ||
-          sheet.hasAttribute("data-dragging")
-        ) {
-          return;
-        }
-        sheet.style.removeProperty("transform");
-        sheet.style.removeProperty("transition");
-      },
-      reducedMotion() ? 0 : DURATION,
-    );
-  }, [sheet]);
-
-  // A pull down from anywhere on the story, while it sits at its top, drags
-  // the sheet; see `sheet-gesture.ts`.
+  // The story's line ink, media arrivals and phone contents bar listen for
+  // the window's scroll and measure against the viewport. Inside the sheet
+  // the scroll is the container's, so it is passed on to them. It also marks
+  // when the story has left the top, the only time the header blur has
+  // anything under it to blur.
   useEffect(() => {
-    if (!open || !sheet) return;
-    return trackSheetDrag(sheet, {
-      // Not while it slides in or out: those keyframes outrank the drag.
-      canStart: () =>
-        openRef.current &&
-        !sheet.getAnimations().some((motion) => motion instanceof CSSAnimation),
-      onMove: (offset) => {
-        window.clearTimeout(settleTimer.current);
-        sheet.setAttribute("data-dragging", "");
-        sheet.style.transition = "none";
-        sheet.style.transform = `translate3d(0, ${offset}px, 0)`;
-        paintHome(
-          1 - Math.min(1, Math.max(0, offset / window.innerHeight)),
-          false,
-        );
-      },
-      onEnd: (close) => {
-        sheet.removeAttribute("data-dragging");
-        if (close) {
-          // Vaul's exit slides on from where the finger left the sheet.
-          closeSheet(false);
-          return;
-        }
-        sheet.style.transition = reducedMotion()
-          ? "none"
-          : `transform ${DURATION}ms ${EASE}`;
-        sheet.style.transform = "translate3d(0, 0, 0)";
-        paintHome(1, true);
-        settleSheet();
-      },
-    });
-  }, [closeSheet, open, paintHome, settleSheet, sheet]);
-
-  // The page scrolls the story, so its line ink, media arrivals and contents
-  // bar hear the window as they do on the story's own page. This marks when
-  // the story has left the top, the only time its header blur and fade have
-  // anything under them; at the top they would paint over the desk.
-  useEffect(() => {
-    if (!open || !sheet) return;
+    const scroller = scrollerRef.current;
+    if (!open || !sheet || !scroller) return;
     let scrolled = false;
-    const mark = () => {
-      if (window.scrollY > 0 === scrolled) return;
+    const relay = () => {
+      window.dispatchEvent(new Event("scroll"));
+      if (scroller.scrollTop > 0 === scrolled) return;
       scrolled = !scrolled;
       sheet.toggleAttribute("data-scrolled", scrolled);
     };
-    mark();
-    window.addEventListener("scroll", mark, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", mark);
-      sheet.removeAttribute("data-scrolled");
-    };
+    scroller.addEventListener("scroll", relay, { passive: true });
+    return () => scroller.removeEventListener("scroll", relay);
   }, [open, sheet]);
 
   return (
@@ -508,6 +399,15 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         onClickCapture={(event) => {
           const target = linkPath(event);
           if (!target?.path.startsWith("/work/") || openRef.current) return;
+          // On a phone the story is its own page, reached by a full
+          // navigation that the browser animates as a sheet; see
+          // `phone-sheet.ts`.
+          if (isPhoneSheet()) {
+            event.preventDefault();
+            event.stopPropagation();
+            openAsPage(target.path);
+            return;
+          }
           freezeHome();
           // Should the sheet not follow, the page is let go again.
           window.clearTimeout(timer.current);
@@ -527,10 +427,6 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {/* The dim over the page behind, painted by `paintHome`. Vaul's own
-          overlay locks the document's scroll, which here is the story's. */}
-      <div aria-hidden="true" className={styles.overlay} ref={overlayRef} />
-
       <Drawer.Root
         // Vaul 1.1.2 reads this one inverted: `false` stops it holding the
         // document still on iOS, which the frozen homepage already does.
@@ -545,11 +441,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         // Under a finger the page behind follows the sheet at once, by the
         // share of it dragged away…
         onDrag={(_, dragged) => {
-          if (!openRef.current || !sheet) return;
-          // Vaul gives the share of the whole sheet, which runs the length
-          // of the story; the page behind follows the share of a screen.
-          const distance = dragged * sheet.getBoundingClientRect().height;
-          paintHome(1 - Math.min(1, distance / window.innerHeight), false);
+          if (openRef.current) paintHome(1 - Math.min(1, dragged), false);
         }}
         // …and eases back with it if it is let go short of closing. A close
         // goes through `onOpenChange`.
@@ -557,16 +449,12 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
           if (!next) closeSheet(false);
         }}
         onRelease={(_, stillOpen) => {
-          if (!stillOpen || !openRef.current) return;
-          paintHome(1, true);
-          settleSheet();
+          if (stillOpen && openRef.current) paintHome(1, true);
         }}
         open={open}
-        // The story scrolls the page, so the sheet is never resized for a
-        // keyboard.
-        repositionInputs={false}
       >
         <Drawer.Portal>
+          <Drawer.Overlay className={styles.overlay} />
           <Drawer.Content
             aria-describedby={undefined}
             className={styles.sheet}
@@ -612,13 +500,32 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
             }}
             ref={setSheet}
           >
+            {/* The story's own header blur and fade sit inside the scroller,
+                which has to clip to the sheet's corners, and Chromium drops
+                the blur's band masks under a rounded clip. So the sheet
+                draws them, above the scroller and below the story's sticky
+                controls; the story's copies are hidden. */}
+            <div aria-hidden="true" className={styles.chrome}>
+              <div className="case-study-page__blur">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="case-study-page__scrim" />
+            </div>
             <div className={styles.grabber}>
               <Drawer.Handle className={styles.handle} />
             </div>
             <Drawer.Title className="sr-only">
               {story ? `${story.name} case study` : "Case study"}
             </Drawer.Title>
-            <div className={styles.story}>
+            <div
+              className={styles.scroller}
+              data-case-study-scroller=""
+              ref={scrollerRef}
+            >
               {story ? (
                 <SheetStory key={story.href}>{story.content}</SheetStory>
               ) : null}

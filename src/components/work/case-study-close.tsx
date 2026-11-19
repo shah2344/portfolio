@@ -8,8 +8,14 @@ import { closeCaseStudy } from "@/components/motion/case-study-zoom";
 import { markCaseStudySeen } from "@/components/motion/return-visit";
 import { RouteLink } from "@/components/motion/route-link";
 import { GlassMaterial } from "@/components/ui/glass-material";
+import {
+  closePhoneSheet,
+  watchPhonePull,
+} from "@/components/work/case-sheet/phone-sheet";
 
 // Closing navigates home; HomeEntranceRoot restores its saved scroll position.
+// On a phone, a story opened from the homepage steps back to it instead, and
+// a pull down from its top does the same; see `phone-sheet.ts`.
 const HOME = "/";
 
 /* User-supplied IconCrossLarge, inlined so it arrives with the glass button. */
@@ -25,6 +31,8 @@ export function CaseStudyClose({ label }: { label: string }) {
     markCaseStudySeen();
   }, []);
 
+  useEffect(() => watchPhonePull(), []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
@@ -37,6 +45,7 @@ export function CaseStudyClose({ label }: { label: string }) {
         return;
       }
 
+      if (closePhoneSheet()) return;
       closeCaseStudy(() => router.push(HOME, { scroll: false }));
     };
 
@@ -50,6 +59,12 @@ export function CaseStudyClose({ label }: { label: string }) {
         aria-label={label}
         className="glass-button case-study-page__close"
         href={HOME}
+        onClick={(event) => {
+          // The homepage's sheet closes itself first.
+          if (!event.defaultPrevented && closePhoneSheet()) {
+            event.preventDefault();
+          }
+        }}
         scroll={false}
         zoom="close"
       >

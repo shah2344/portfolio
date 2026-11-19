@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AgentationTools } from "@/components/dev/agentation-tools";
 import { LiveFavicon } from "@/components/favicon/live-favicon";
 import { characterBackgroundScript } from "@/components/home/character/backgrounds";
+import { phoneSheetScript } from "@/components/work/case-sheet/phone-sheet-script";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -108,6 +109,9 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{ __html: characterBackgroundScript }}
         />
+        {/* Sets the direction of a phone's case-study transition before the
+            arriving page's first frame; see `phone-sheet.ts`. */}
+        <script dangerouslySetInnerHTML={{ __html: phoneSheetScript }} />
       </head>
       <body>
         <div data-site-root>{children}</div>
