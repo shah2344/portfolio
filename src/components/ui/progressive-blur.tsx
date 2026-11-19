@@ -1,14 +1,19 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import { cn } from "@/lib/utils";
 
 const DEFAULT_BLUR_LEVELS = [0.25, 0.5, 1, 2, 4, 6];
 
 export interface ProgressiveBlurProps {
   className?: string;
+  /** The band's depth: its height at the top or bottom, its width at a side. */
   height?: string;
-  position?: "top" | "bottom";
+  position?: "top" | "bottom" | "left" | "right";
   blurLevels?: number[];
+  /** Merged onto the band, after its size and position. */
+  style?: CSSProperties;
 }
 
 // Each layer is masked to an overlapping band rather than a full fade, so the
@@ -28,17 +33,25 @@ export function ProgressiveBlur({
   height = "30%",
   position = "bottom",
   blurLevels = DEFAULT_BLUR_LEVELS,
+  style,
 }: ProgressiveBlurProps) {
-  const direction = position === "top" ? "to top" : "to bottom";
+  const direction = `to ${position}`;
+  const side = position === "left" || position === "right";
 
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-x-0 z-10",
-        position === "top" ? "top-0" : "bottom-0",
+        "pointer-events-none absolute z-10",
+        side ? "inset-y-0" : "inset-x-0",
+        {
+          top: "top-0",
+          bottom: "bottom-0",
+          left: "left-0",
+          right: "right-0",
+        }[position],
         className,
       )}
-      style={{ height }}
+      style={{ ...(side ? { width: height } : { height }), ...style }}
     >
       {blurLevels.map((blur, index) => {
         const mask = createBandMask(direction, index, blurLevels.length);

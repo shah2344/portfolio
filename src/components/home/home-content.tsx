@@ -2,6 +2,7 @@ import { SmoothSurface } from "@/components/ui/smooth-surface";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { entranceDelayMs } from "@/components/motion/entrance-timing";
+import { homeResumeScript } from "@/components/home/resume";
 
 import anydaySecurityPromoImage from "../../../public/media/craft/anyday-security-promo.png";
 import anydaySuperadminImage from "../../../public/media/craft/anyday-superadmin.png";
@@ -38,6 +39,8 @@ import {
 } from "@/components/home/playground/playground";
 import { PlaygroundFeed } from "@/components/home/playground/feed";
 import { PlaygroundGrid } from "@/components/home/playground/grid";
+import { AppComponentGrid } from "@/components/home/component-grid/app/app-grid";
+import { PortalComponentGrid } from "@/components/home/component-grid/portal/portal-grid";
 import { HomeKeyboardFocus } from "@/components/home/home-keyboard-focus";
 import { HomeEntranceRoot } from "@/components/home/home-entrance-root";
 import {
@@ -53,8 +56,9 @@ import { SectionHeading } from "@/components/ui/section-heading";
 const showCurrencySelect = false;
 const showSuperadmin = false;
 const showTipSummaries = false;
+const showPortalComponents = false;
 
-const projects = [
+export const projects = [
   {
     id: "anyday",
     name: "AnyDay",
@@ -92,6 +96,9 @@ const enterDelay = (index: number) =>
 export function HomeContent() {
   return (
     <div className="editorial-page">
+      {/* Before the masthead is parsed, so a resumed load never paints the
+          opening's waiting state. */}
+      <script dangerouslySetInnerHTML={{ __html: homeResumeScript }} />
       <HomeEntranceRoot />
       <HomeKeyboardFocus />
       <HomeTooltip />
@@ -126,8 +133,8 @@ export function HomeContent() {
                 style={enterDelay(0)}
               >
                 I&rsquo;m <span className="home-intro__name">Muhammad</span>, a
-                product designer from Toronto, currently exploring AI and design
-                systems at <Company name="Montran" />.
+                product designer from Toronto, currently designing and building
+                at <Company name="Montran" />.
               </p>
               <p
                 data-home-enter="idle"
@@ -228,6 +235,16 @@ export function HomeContent() {
                   </PlaygroundTile>
 
                   <PlaygroundTile
+                    caption="App components"
+                    expandable={false}
+                    label="Live AnyDay app components"
+                    subtitle="AnyDay"
+                    year={2026}
+                  >
+                    <AppComponentGrid />
+                  </PlaygroundTile>
+
+                  <PlaygroundTile
                     caption="Club owner experience"
                     subtitle="House of Doge"
                     year={2026}
@@ -290,6 +307,18 @@ export function HomeContent() {
                       src="/media/craft/shots-mockups.mp4?v=4"
                     />
                   </PlaygroundTile>
+
+                  {showPortalComponents && (
+                    <PlaygroundTile
+                      caption="Client portal components"
+                      expandable={false}
+                      label="Live AnyDay client portal components"
+                      subtitle="AnyDay"
+                      year={2025}
+                    >
+                      <PortalComponentGrid />
+                    </PlaygroundTile>
+                  )}
 
                   {showSuperadmin && (
                     <PlaygroundTile

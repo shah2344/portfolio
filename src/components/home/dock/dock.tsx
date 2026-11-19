@@ -2,14 +2,11 @@ import type { CSSProperties } from "react";
 import {
   dribbbleIcon,
   githubIcon,
+  linkedinIcon,
   mailIcon,
-  pdfIcon,
 } from "@/components/home/dock/icons";
 import { HomeDockTrack } from "@/components/home/dock/track";
 import { RemixIcon } from "@/components/ui/remix-icon";
-
-/** The URL names the file browsers offer when saving from their PDF viewer. */
-const RESUME_HREF = "/Muhammad-Shahid-Resume.pdf";
 
 const profiles: readonly {
   id: string;
@@ -26,11 +23,10 @@ const profiles: readonly {
     ariaLabel: "Email",
   },
   {
-    id: "resume",
-    label: "Resume",
-    href: RESUME_HREF,
-    icon: pdfIcon,
-    ariaLabel: "Open resume (PDF) in a new tab",
+    id: "linkedin",
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/muhammad-s-a0960117a",
+    icon: linkedinIcon,
   },
   {
     id: "dribbble",
@@ -46,7 +42,7 @@ const profiles: readonly {
   },
 ];
 
-/** Profile and résumé links below the introduction. */
+/** Profile links below the introduction. */
 export function HomeDock({ enterStyle }: { enterStyle?: CSSProperties }) {
   return (
     <div className="home-dock" style={enterStyle}>
@@ -56,7 +52,7 @@ export function HomeDock({ enterStyle }: { enterStyle?: CSSProperties }) {
       </div>
 
       <nav
-        aria-label="Profiles and résumé"
+        aria-label="Profiles"
         className="home-dock__bar"
         data-home-enter="idle"
         data-home-load=""
@@ -66,8 +62,7 @@ export function HomeDock({ enterStyle }: { enterStyle?: CSSProperties }) {
         <HomeDockTrack>
           <ul className="home-dock__group" role="list">
             {profiles.map(({ id, label, href, icon, ariaLabel }, index) => {
-              const opensNewTab =
-                href.startsWith("http") || href === RESUME_HREF;
+              const opensNewTab = href.startsWith("http");
               return (
                 <li
                   data-home-dock-item=""

@@ -15,6 +15,23 @@ export function currentWipe() {
   return wiping;
 }
 
+/**
+ * Holds media that mounts now, as a snapshot does, until `settled`: a sheet
+ * sliding a story in is the same moment for Safari's compositor. A theme
+ * change asked for meanwhile runs once the hold lets go.
+ */
+export function holdMedia(settled: Promise<void>) {
+  if (wiping) return;
+  wiping = settled;
+  void settled.then(() => {
+    if (wiping !== settled) return;
+    wiping = null;
+    const queued = queuedTheme;
+    queuedTheme = undefined;
+    queued?.();
+  });
+}
+
 /** A navigation interrupts theme capture without delaying the destination. */
 export function navigateToPage(navigate: () => void) {
   queuedTheme = undefined;

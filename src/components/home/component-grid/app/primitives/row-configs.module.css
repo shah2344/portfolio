@@ -1,0 +1,65 @@
+/* The card is always light, so focus takes the site's light-surface ink in
+   both themes. */
+.root {
+  --site-focus-color: rgb(0 0 0 / 40%);
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 0;
+  /* The scrubber's height (32px) and its foot margin (14px) mirrored at the
+     top, so the stage, and the row in it, centre on the whole card. */
+  padding-top: 46px;
+}
+
+/* The site's focus ring on every control here, instead of the product's
+   blue shadow (doubled class to outrank `.anyday-app button:focus-visible`). */
+.root.root :is(button, [role="slider"]):focus-visible {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
+  box-shadow: none;
+  animation: var(--site-focus-animation);
+}
+
+.scrub {
+  position: relative;
+  display: flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-inline: 13px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(120, 120, 128, 0.12);
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* A 44px target without growing the control. */
+.scrub::before {
+  content: "";
+  position: absolute;
+  inset: -6px -4px;
+}
+
+.dot {
+  display: block;
+  flex: none;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(120, 120, 128, 0.32);
+  overflow: hidden;
+}
+
+/* The black fill inside the current pill; a dot until it grows. */
+.ink {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #0a0a0a;
+}

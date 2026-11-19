@@ -1,0 +1,320 @@
+/*
+ * One page, six ways to divide it. Every study keeps the homepage's 676px of
+ * content; the frames sit outside that, so the cards and rows measure the
+ * same as they do on the homepage.
+ */
+
+.page {
+  --sep-content: 676px;
+  --sep-inset: 48px;
+  --sep-line: var(--editorial-line);
+  --sep-hatch: repeating-linear-gradient(
+    -45deg,
+    var(--sep-line) 0 1px,
+    transparent 1px 7px
+  );
+
+  /* Full-bleed rules reach past the column; this keeps them from adding a
+     sideways scroll. */
+  overflow-x: clip;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  /* Plus the rails some studies draw down each side. */
+  width: min(
+    100%,
+    calc(var(--sep-content) + 2 * var(--sep-inset) + 2 * var(--sep-rail, 0px))
+  );
+  margin-inline: auto;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 56px var(--sep-inset);
+}
+
+.block :global(.section-heading) {
+  scroll-margin-top: 24px;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* The frames do the dividing, so the contact line drops its own rule. */
+.block footer {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.band {
+  position: relative;
+  flex: none;
+}
+
+.bandLabel {
+  display: none;
+}
+
+.bandIndex {
+  margin-inline-end: 10px;
+  color: var(--lab-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 1 Hatched bands ------------------------------------------------------ */
+
+/* A ruled column with hatched spacers between its blocks, and a short tick
+   where each spacer's edge meets the column's side. */
+[data-separator="1"] .column {
+  --sep-rail: 1px;
+  border-inline: 1px solid var(--sep-line);
+}
+
+[data-separator="1"] .band {
+  height: 48px;
+  border-block: 1px solid var(--sep-line);
+  background: var(--sep-hatch);
+}
+
+[data-separator="1"] .band::before,
+[data-separator="1"] .band::after {
+  content: "";
+  position: absolute;
+  inset-block: -1px;
+  width: 7px;
+  border-block: 1px solid var(--sep-line);
+}
+
+[data-separator="1"] .band::before {
+  inset-inline-start: -8px;
+}
+
+[data-separator="1"] .band::after {
+  inset-inline-end: -8px;
+}
+
+[data-separator="1"] .band:first-child::before,
+[data-separator="1"] .band:first-child::after {
+  border-block-start: 0;
+}
+
+/* --- 2 Ruled grid --------------------------------------------------------- */
+
+/* Rails down both sides and rules right across the window, like a sheet of
+   graph paper, with a small cross where each pair meets. */
+[data-separator="2"] .column {
+  --sep-rail: 1px;
+  border-inline: 1px solid var(--sep-line);
+}
+
+[data-separator="2"] .band {
+  height: 0;
+}
+
+[data-separator="2"] .band::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -0.5px;
+  inset-inline-start: 50%;
+  width: 100vw;
+  height: 1px;
+  transform: translateX(-50%);
+  background: var(--sep-line);
+}
+
+[data-separator="2"] .band::after {
+  content: "";
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline: -6.5px;
+  height: 11px;
+  background:
+    linear-gradient(var(--lab-faint), var(--lab-faint)) left 5px top 0 / 1px
+      100% no-repeat,
+    linear-gradient(var(--lab-faint), var(--lab-faint)) right 5px top 0 / 1px
+      100% no-repeat;
+}
+
+[data-separator="2"] .band:first-child::after,
+[data-separator="2"] .band:last-child::after {
+  display: none;
+}
+
+[data-separator="2"] .block {
+  padding-block: 64px;
+}
+
+/* --- 3 Sheets ------------------------------------------------------------- */
+
+/* Each block on its own rounded surface, with a narrow gap between. */
+[data-separator="3"] .column {
+  gap: 0;
+  padding-block: 12px;
+}
+
+[data-separator="3"] .band {
+  height: 12px;
+}
+
+[data-separator="3"] .band:first-child,
+[data-separator="3"] .band:last-child {
+  height: 0;
+}
+
+[data-separator="3"] .block {
+  border-radius: 28px;
+  background: var(--lab-wash);
+  box-shadow: inset 0 0 0 1px var(--sep-line);
+}
+
+/* --- 4 Labelled bands ----------------------------------------------------- */
+
+/* The hatched spacer carries the section's name and number, so the heading
+   below it steps back to the screen reader alone. */
+[data-separator="4"] .column {
+  --sep-rail: 1px;
+  border-inline: 1px solid var(--sep-line);
+}
+
+[data-separator="4"] .band {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding-inline: var(--sep-inset);
+  border-block: 1px solid var(--sep-line);
+  background: var(--sep-hatch);
+}
+
+[data-separator="4"] .bandLabel {
+  display: block;
+  padding: 2px 8px;
+  margin-inline-start: -8px;
+  border-radius: var(--r-sm);
+  background: var(--editorial-page);
+  color: var(--lab-muted);
+  font-family: var(--site-font-mono);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+[data-separator="4"] .block :global(.section-heading) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- 5 Hatched margins ---------------------------------------------------- */
+
+/* The hatching runs down both margins for the whole page; the blocks between
+   them are divided by a plain hairline. */
+[data-separator="5"] .column {
+  --sep-rail: 1px;
+  position: relative;
+  border-inline: 1px solid var(--sep-line);
+}
+
+[data-separator="5"] .column::before,
+[data-separator="5"] .column::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  width: 40px;
+  background: var(--sep-hatch);
+  pointer-events: none;
+}
+
+[data-separator="5"] .column::before {
+  inset-inline-end: calc(100% + 1px);
+  border-inline-start: 1px solid var(--sep-line);
+}
+
+[data-separator="5"] .column::after {
+  inset-inline-start: calc(100% + 1px);
+  border-inline-end: 1px solid var(--sep-line);
+}
+
+[data-separator="5"] .band {
+  height: 0;
+  border-block-start: 1px solid var(--sep-line);
+}
+
+[data-separator="5"] .band:first-child,
+[data-separator="5"] .band:last-child {
+  border: 0;
+}
+
+/* --- 6 Tone shift --------------------------------------------------------- */
+
+/* No lines at all: every other section sits on the wash, edge to edge. */
+[data-separator="6"] .block {
+  position: relative;
+  padding-block: 72px;
+}
+
+[data-separator="6"] .block[data-alt]::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: var(--lab-wash);
+}
+
+[data-separator="6"] .column {
+  isolation: isolate;
+}
+
+/* --- Narrow --------------------------------------------------------------- */
+
+@media (max-width: 52rem) {
+  /* No room for hatched margins beside the column; it keeps its rails. */
+  [data-separator="5"] .column::before,
+  [data-separator="5"] .column::after {
+    display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .page {
+    --sep-inset: 20px;
+  }
+
+  .block {
+    padding-block: 40px;
+  }
+
+  [data-separator="1"] .band,
+  [data-separator="4"] .band {
+    height: 32px;
+  }
+
+  [data-separator="1"] .band::before,
+  [data-separator="1"] .band::after {
+    display: none;
+  }
+
+  [data-separator="3"] .column {
+    padding-inline: 8px;
+  }
+
+  [data-separator="3"] .block {
+    border-radius: 20px;
+  }
+
+  [data-separator="6"] .block {
+    padding-block: 48px;
+  }
+}

@@ -5,16 +5,16 @@ import type { ComponentProps } from "react";
 
 import { PrefetchLink } from "@/components/ui/prefetch-link";
 
-import { closeCaseStudy, openCaseStudy } from "./case-study-zoom";
-import { navigateToPage, type ZoomDirection } from "./page-wipe";
+import { closeCaseStudy } from "./case-study-zoom";
+import { navigateToPage } from "./page-wipe";
 
 type RouteLinkProps = Omit<
   ComponentProps<typeof PrefetchLink>,
   "href" | "onNavigate"
 > & {
   href: string;
-  /** Opens a case study out of its homepage card, or closes it into one. */
-  zoom?: ZoomDirection;
+  /** Closes a full-page case study back into the homepage. */
+  zoom?: "close";
 };
 
 /** Prefetched navigation with immediate arrival, including during a theme change. */
@@ -37,8 +37,7 @@ export function RouteLink({
           replace
             ? router.replace(href, { scroll })
             : router.push(href, { scroll });
-        if (zoom === "open") openCaseStudy(navigate, href);
-        else if (zoom === "close") closeCaseStudy(navigate);
+        if (zoom === "close") closeCaseStudy(navigate);
         else navigateToPage(navigate);
       }}
       replace={replace}

@@ -9,7 +9,6 @@ import anydayIconImage from "../../../../public/media/anyday/logo.png";
 import oldPortalImage from "../../../../public/media/anyday/old-portal.webp";
 import payoutPosterImage from "../../../../public/media/anyday/payout-poster.webp";
 
-import { HomeFooter } from "@/components/home/footer/footer";
 import { PlaygroundTile } from "@/components/home/playground/playground";
 import { SectionToc, type TocSection } from "@/components/ui/section-toc";
 import { AnyDayFinSupport } from "@/components/work/anyday/fin-support";
@@ -397,7 +396,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="portal-onboarding"
                 title="I chose a rule builder over presets."
-                description="Presets would have been easier to build, but only a builder let every location match how it already split tips. Setup took longer, so I added a checklist that guides managers through it without a call to support."
+                description="Presets would have been quicker to ship, but no location would switch to a split that didn't match its own. Setup took longer with a builder, so I added a checklist managers could follow on their own."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -579,8 +578,6 @@ export function AnyDayCaseStudy() {
             </div>
           </div>
         </main>
-
-        <HomeFooter className="case-study-footer" contactOnly />
       </div>
     </CaseStudyPage>
   );

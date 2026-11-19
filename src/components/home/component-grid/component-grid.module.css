@@ -1,0 +1,112 @@
+/*
+ * Separate cards sharing one feed slot. The grid keeps `.pg-split`'s treatment
+ * (no card behind, no outer hairline, and each direct child drawn as its own
+ * rounded, hairlined panel), and the feed card keeps the same 3:2 shape as
+ * every card around it. Each component fits its card: at the shared scale
+ * when it has room, a little smaller when it doesn't.
+ */
+:global(.pg-split).grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: var(--rows, repeat(2, minmax(0, 1fr)));
+  /* The screen width FitStage lays each component out on. */
+  --canvas: 375;
+  /* Cards have a set height, so FitStage fits within it. */
+  --fit: contain;
+}
+
+:global(.pg-split).grid[data-columns="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  --canvas: 560;
+}
+
+/* Each card centres its component on the grey it shipped against. Product UI
+   keeps its light appearance, like the screens in the other cards. */
+.cell {
+  grid-column: var(--cell-column);
+  grid-row: var(--cell-row);
+  display: flex;
+  align-items: center;
+  color-scheme: light;
+  background: #f3f3f3;
+}
+
+/* A phone scrolls the cards sideways instead, one in view with the next
+   peeking in, each snapping to the middle. The lead comes first and every
+   card hugs its own component, so a short one never floats in a tall card. */
+@media (max-width: 780px) {
+  /* A 3:2 card this narrow would shrink the components past reading, so
+     here the feed card grows to fit them. */
+  :global(.pg-grid--feed .pg-tile):has(.grid:not([data-bleed])) {
+    aspect-ratio: auto !important;
+  }
+
+  :global(.pg-tile):has(.grid:not([data-bleed])) > :global(.pg-frame) {
+    height: auto;
+  }
+
+  :global(.pg-frame__clip):has(> .grid:not([data-bleed])) {
+    position: relative;
+  }
+
+  :global(.pg-split).grid,
+  :global(.pg-split).grid[data-columns="2"] {
+    --canvas: 375;
+    --fit: grow;
+    position: relative;
+    inset: auto;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  :global(.pg-split).grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cell {
+    flex: 0 0 72%;
+    scroll-snap-align: center;
+  }
+
+  .cell[data-lead] {
+    order: -1;
+  }
+
+  /* A bleeding set keeps the feed card's shape, so it is as tall as the
+     cards around it; every card fills that height and its component fits
+     inside. The carousel leaves the frame's rounded clip and runs from one
+     edge of the screen to the other, its first card still on the gutter. */
+  :global(.pg-frame__clip):has(> .grid[data-bleed]) {
+    overflow: visible;
+    clip-path: none !important;
+  }
+
+  :global(.pg-split).grid[data-bleed] {
+    --fit: contain;
+    --gutter: calc((100vw - 100%) / 2);
+    position: absolute;
+    inset: 0 calc(var(--gutter) * -1);
+    align-items: stretch;
+    padding-inline: var(--gutter);
+  }
+}
+
+/* The component is laid out at its real size in the product, then scaled as
+   one piece to its card's width; the card is as tall as the scaled component
+   plus the same padding all round. */
+.fit {
+  position: relative;
+  flex: 1;
+  align-self: stretch;
+}
+
+.stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  transform-origin: center;
+}

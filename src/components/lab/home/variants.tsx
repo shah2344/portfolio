@@ -2,10 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { CaseStudyTiles } from "@/components/home/case-study-tiles/case-study-tiles";
+import { projects } from "@/components/home/home-content";
+import { SmoothSurface } from "@/components/ui/smooth-surface";
 import { buildExperienceGroups } from "@/content/experience";
 
 import { EMAIL, feed, figures, work, type LabFeedItem } from "./data";
+import { FilteredFeed } from "./filtered-feed";
+import { HostStage } from "./host-stage";
 import { LocalTime } from "./local-time";
+import { SectionNav } from "./section-nav";
 import {
   Character,
   Contact,
@@ -131,6 +137,12 @@ export function FactRail() {
 
 /* --- 03 Pinned identity ---------------------------------------------------- */
 
+const pinnedSections = [
+  ["work", "Selected work"],
+  ["experience", "Experience"],
+  ["feed", "Feed"],
+] as const;
+
 export function Pinned() {
   return (
     <div className={styles.pinned}>
@@ -139,29 +151,34 @@ export function Pinned() {
           <Character />
           <h1>Muhammad Shahid</h1>
           <p>
-            Product designer from Toronto. Seven years of fintech and HR tech,
-            now exploring AI and design systems at{" "}
+            I&rsquo;m <span className={base.ink}>Muhammad</span>, a product
+            designer from Toronto, currently exploring AI and design systems at{" "}
             <span className={base.ink}>Montran</span>.
+          </p>
+          <p>
+            I&rsquo;ve spent the last 7 years designing fintech and HR tech
+            products used by hundreds of thousands of people. I&rsquo;m a
+            generalist with a passion for coherence.
           </p>
           <Links className={styles.pinnedLinks} />
         </div>
-        <nav aria-label="Sections" className={styles.pinnedNav}>
-          <a href="#work">Selected work</a>
-          <a href="#experience">Experience</a>
-          <a href="#feed">Feed</a>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-        </nav>
+        <SectionNav sections={pinnedSections} />
       </header>
       <main className={styles.pinnedMain}>
         <WorkSection>
-          <div className={styles.pinnedCards}>
-            {work.map((project) => (
-              <WorkCard key={project.id} project={project} />
-            ))}
-          </div>
+          <CaseStudyTiles projects={projects} />
         </WorkSection>
         <ExperienceSection />
-        <FeedSection />
+        <section aria-labelledby="feed" className={base.section}>
+          <FilteredFeed
+            className={base.feed}
+            heading={<Heading id="feed">Feed</Heading>}
+          >
+            {feed.map((item) => (
+              <FeedTile item={item} key={item.id} />
+            ))}
+          </FilteredFeed>
+        </section>
       </main>
     </div>
   );
@@ -169,31 +186,90 @@ export function Pinned() {
 
 /* --- 04 Character as host -------------------------------------------------- */
 
+/**
+ * iMessage's pointer: the left edge runs on past the corner and curls down
+ * to a point just below the bubble. The top of the box hides under the body.
+ */
+function Tail() {
+  return (
+    <svg
+      aria-hidden="true"
+      className={styles.tail}
+      fill="currentColor"
+      viewBox="0 0 40 42"
+    >
+      <path d="M0 0h40v28h-6c-10 1-16 5-20 13C6 38 0 30 0 18Z" />
+    </svg>
+  );
+}
+
+/**
+ * One bubble from the character. Rendered unread; `HostStage` types and
+ * delivers it when it is reached. The body is a Lisse surface, so the tail
+ * sits outside its clip.
+ */
+function Message({
+  as: Tag = "p",
+  id,
+  tail = true,
+  children,
+}: {
+  as?: "p" | "h2";
+  id?: string;
+  tail?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Tag className={styles.bubble} data-message="" data-state="unread" id={id}>
+      <SmoothSurface as="span" className={styles.bubbleBody}>
+        <span className={styles.bubbleText}>{children}</span>
+        <span aria-hidden="true" className={styles.typing}>
+          <i />
+          <i />
+          <i />
+        </span>
+      </SmoothSurface>
+      {tail && <Tail />}
+    </Tag>
+  );
+}
+
 export function Host() {
   return (
-    <div className={styles.host}>
-      <div className={styles.hostFigure}>
-        <Character className={styles.hostCharacter} />
+    <HostStage className={styles.host}>
+      <div className={styles.hostTrack}>
+        <div className={styles.hostFigure} data-figure="">
+          <Character className={styles.hostCharacter} />
+        </div>
       </div>
       <main className={styles.hostMain}>
-        <header className={styles.bubble} data-size="large">
+        <header className={styles.hostIntro}>
           <h1 className="sr-only">Muhammad Shahid</h1>
-          <p>
-            Hi, I&rsquo;m <span className={base.ink}>Muhammad</span>. I&rsquo;m
-            a product designer from Toronto, exploring AI and design systems at{" "}
-            <span className={base.ink}>Montran</span>.
-          </p>
-          <p>
-            Seven years of fintech and HR tech, used by hundreds of thousands of
-            people.
-          </p>
-          <Links />
+          <div className={styles.thread}>
+            <Message tail={false}>
+              Hi, I&rsquo;m <span className={base.ink}>Muhammad</span>.
+              I&rsquo;m a product designer from Toronto, exploring AI and design
+              systems at <span className={base.ink}>Montran</span>.
+            </Message>
+            <Message>
+              Seven years of fintech and HR tech, used by hundreds of thousands
+              of people.
+            </Message>
+          </div>
+          <div
+            className={styles.hostLinks}
+            data-attachment=""
+            data-message=""
+            data-state="unread"
+          >
+            <Links />
+          </div>
         </header>
 
         <section aria-labelledby="work" className={base.section}>
-          <h2 className={styles.bubble} id="work">
+          <Message as="h2" id="work">
             Start with these two.
-          </h2>
+          </Message>
           <div className={base.cards}>
             {work.map((project) => (
               <WorkCard key={project.id} project={project} />
@@ -202,16 +278,16 @@ export function Host() {
         </section>
 
         <section aria-labelledby="experience" className={base.section}>
-          <h2 className={styles.bubble} id="experience">
+          <Message as="h2" id="experience">
             Here&rsquo;s where I&rsquo;ve worked.
-          </h2>
+          </Message>
           <ExperienceRows />
         </section>
 
         <section aria-labelledby="feed" className={base.section}>
-          <h2 className={styles.bubble} id="feed">
+          <Message as="h2" id="feed">
             And the smaller things I&rsquo;ve made along the way.
-          </h2>
+          </Message>
           <div className={base.feed}>
             {feed.map((item) => (
               <FeedTile item={item} key={item.id} />
@@ -220,12 +296,12 @@ export function Host() {
         </section>
 
         <section className={base.section}>
-          <p className={styles.bubble}>
+          <Message>
             Say hello at <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.
-          </p>
+          </Message>
         </section>
       </main>
-    </div>
+    </HostStage>
   );
 }
 

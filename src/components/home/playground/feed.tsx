@@ -134,6 +134,10 @@ function FeedStage({ children }: { children: ReactNode }) {
     });
 
     let keyboardFocused = false;
+    /* Until the reader scrolls for themselves, any movement is the browser's:
+       restoring a refresh or following a link. The feed lands at that place
+       rather than springing there from wherever it was first measured. */
+    let readerScrolled = false;
     let padTop = 0;
     let padBottom = 0;
 
@@ -201,6 +205,7 @@ function FeedStage({ children }: { children: ReactNode }) {
             ? entering
             : Math.min(entering, leaving),
       );
+      if (!readerScrolled) settled.jump(progress.get());
 
       /*
        * Pinned by whichever edge is nearer the reader's section: the top on
@@ -237,14 +242,25 @@ function FeedStage({ children }: { children: ReactNode }) {
       track();
     };
 
+    const input = new AbortController();
+    const markReader = () => {
+      readerScrolled = true;
+      input.abort();
+    };
+    for (const type of ["wheel", "touchstart", "keydown", "pointerdown"]) {
+      window.addEventListener(type, markReader, {
+        capture: true,
+        passive: true,
+        signal: input.signal,
+      });
+    }
+
     keyboardFocused =
       document.activeElement instanceof HTMLElement &&
       feed.contains(document.activeElement) &&
       document.activeElement.matches(":focus-visible");
     measure();
     track();
-    // Arriving mid-page, the feed starts where the scroll already has it.
-    settled.jump(progress.get());
 
     feed.addEventListener("focusin", syncFocus);
     feed.addEventListener("focusout", syncFocus);
@@ -252,6 +268,7 @@ function FeedStage({ children }: { children: ReactNode }) {
     window.addEventListener("resize", resize);
 
     return () => {
+      input.abort();
       feed.removeEventListener("focusin", syncFocus);
       feed.removeEventListener("focusout", syncFocus);
       listener.removeEventListener("scroll", track);

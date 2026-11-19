@@ -135,7 +135,6 @@ export function CaseStudyTiles({
                   className={styles.tileLink}
                   data-home-tip={`View ${project.name}`}
                   href={project.href}
-                  zoom="open"
                 >
                   <span className="sr-only">
                     Read the case study for {project.name}

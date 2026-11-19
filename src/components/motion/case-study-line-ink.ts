@@ -258,7 +258,7 @@ function startLineInk(root: HTMLElement) {
         !block ||
         !root.contains(block) ||
         parent.closest(EXCLUDED) ||
-        !block.closest("main, .case-study-footer")
+        !block.closest("main")
       )
         continue;
       if (!colors.has(parent))

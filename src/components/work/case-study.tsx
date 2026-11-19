@@ -7,7 +7,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { Tilt } from "@/components/motion-primitives/tilt";
 import { CASE_STUDY_ART_SIZES } from "@/components/motion/case-study-art";
 import { PlaygroundTile } from "@/components/home/playground/tile";
-import { HomeFooter } from "@/components/home/footer/footer";
 import { RouteLink } from "@/components/motion/route-link";
 import { GlassMaterial } from "@/components/ui/glass-material";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -78,9 +77,8 @@ export function CaseStudy({
             <span>{brand.name}</span>
           </div>
 
-          {/* The story slides up over the footer, which waits pinned beneath
-              it. The brand mark and contents rail stay outside, above the
-              header blur. */}
+          {/* The brand mark and contents rail stay outside the story, above
+              the header blur. */}
           <div className="case-study-sheet">
             <header className="humi-story-intro">
               <h1 className="sr-only">{heading}</h1>
@@ -91,8 +89,6 @@ export function CaseStudy({
             {children}
           </div>
         </main>
-
-        <HomeFooter className="case-study-footer" contactOnly />
       </div>
     </CaseStudyPage>
   );

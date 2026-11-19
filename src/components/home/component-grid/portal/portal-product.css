@@ -1,0 +1,369 @@
+/*
+ * AnyDay client portal styles, copied from the product's app/globals.css
+ * (light mode only) and scoped under .anyday-portal. Rules sit in the same
+ * cascade layers the product uses so Tailwind utilities still win over them.
+ */
+
+@keyframes anyday-ios-spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes anyday-spinner-segment {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes anyday-opacity-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes anyday-shiny-text {
+  0%,
+  90%,
+  100% {
+    background-position: calc(-100% - var(--shiny-width)) 0;
+  }
+  30%,
+  60% {
+    background-position: calc(100% + var(--shiny-width)) 0;
+  }
+}
+
+.anyday-portal {
+  /* Product @theme tokens */
+  --font-family-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    system-ui, "Segoe UI", Inter, "Helvetica Neue", Arial, sans-serif;
+  --background: #ffffff;
+  --foreground: #272a2a;
+  --primary: #5c61ff;
+  --primary-foreground: #ffffff;
+  --border: #ededee;
+  --ring: #5c61ff;
+
+  --radius-1: 0.25rem;
+  --radius-2: 0.375rem;
+  --radius-3: 0.5rem;
+  --radius-4: 0.625rem;
+  --radius-5: 0.75rem;
+  --radius-6: 1rem;
+  --radius-7: 1.25rem;
+  --radius-full: 9999px;
+
+  --color-primary: #1c1c1c;
+  --color-secondary: #62626a;
+  --color-faint: #94949e;
+
+  --label-primary: rgb(39, 39, 42);
+  --label-secondary: rgb(98, 98, 106);
+  --label-faint: rgb(148, 148, 158);
+  --label-disabled: rgb(191, 191, 197);
+  --label-link: rgb(84, 89, 247);
+  --label-positive: rgb(18, 135, 61);
+  --label-critical: rgb(220, 38, 38);
+  --label-linkhover: rgb(39, 39, 42);
+  --label-interactive: rgb(37, 99, 235);
+  --label-primaryinverse: rgb(255, 255, 255);
+  --label-secondaryinverse: rgba(255, 255, 255, 0.8);
+  --label-warning: rgb(217, 119, 6);
+
+  --bg-base: rgb(255, 255, 255);
+  --bg-basehover: rgb(247, 247, 247);
+  --bg-shade: rgb(247, 247, 247);
+  --bg-sub: rgb(239, 239, 240);
+  --bg-brand: rgb(112, 119, 255);
+  --bg-baseopaque: rgba(255, 255, 255, 0.88);
+  --bg-shadehover: rgb(239, 239, 240);
+  --bg-interactive: rgb(239, 246, 255);
+  --bg-baseinverse: rgb(39, 39, 42);
+  --bg-subhover: rgb(228, 228, 231);
+  --bg-warninglight: rgb(254, 243, 199);
+  --bg-criticallight: rgb(254, 226, 226);
+  --bg-positivelight: rgb(220, 252, 231);
+  --bg-infolight: rgb(219, 234, 254);
+  --bg-critical: rgb(220, 38, 38);
+  --bg-paper: rgb(255, 255, 255);
+  --bg-paper-opaque: rgba(255, 255, 255, 0.88);
+  --bg-brandlight: rgb(232, 233, 255);
+
+  --border-default: rgba(39, 39, 42, 0.06);
+  --border-defaulthover: rgba(39, 39, 42, 0.1);
+  --border-stronghover: rgba(39, 39, 42, 0.16);
+  --border-focus: rgba(56, 189, 248, 0.36);
+  --border-strong: rgba(39, 39, 42, 0.1);
+  --border-brand: rgb(112, 119, 255);
+  --border-critical: rgb(220, 38, 38);
+  --border-interactive: rgb(37, 99, 235);
+  --border-solid: rgb(237, 237, 238);
+  --border-heavy: rgba(39, 39, 42, 0.16);
+  --border-heavyhover: rgba(39, 39, 42, 0.24);
+
+  --icon-primary: rgb(39, 39, 42);
+  --icon-secondary: rgb(98, 98, 106);
+  --icon-faint: rgb(161, 161, 170);
+  --icon-disabled: rgb(212, 212, 216);
+  --icon-brand: rgb(112, 119, 255);
+  --icon-branda: rgb(92, 97, 255);
+  --icon-postive: rgb(34, 197, 94);
+  --icon-critical: rgb(239, 68, 68);
+  --icon-critiala: rgb(220, 38, 38);
+  --icon-postivea: rgb(18, 135, 61);
+  --icon-primaryinverse: rgb(255, 255, 255);
+
+  --control-base: rgb(255, 255, 255);
+  --control-basehover: rgb(247, 247, 247);
+  --control-sub: rgb(239, 239, 240);
+  --control-brand: rgb(112, 119, 255);
+  --control-brandhover: rgb(92, 97, 255);
+  --control-critical: rgb(239, 68, 68);
+  --control-crticalhover: rgb(220, 38, 38);
+  --control-interactable: rgb(219, 234, 254);
+  --control-primary: rgb(39, 39, 42);
+  --control-primaryhover: rgb(39, 39, 42);
+
+  /* Product body + Tailwind preflight html. The page's white ground is left
+     out so each component sits on its card's grey. */
+  color-scheme: light;
+  color: var(--foreground);
+  font-family: var(--font-family-sans);
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  text-indent: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -moz-osx-font-smoothing: auto;
+}
+
+@layer base {
+  .anyday-portal *,
+  .anyday-portal *::before,
+  .anyday-portal *::after {
+    border-color: var(--border);
+    outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+
+  .anyday-portal table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .anyday-portal .font-mono {
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+  }
+}
+
+@layer components {
+  .anyday-portal tbody tr:hover {
+    background-color: var(--bg-shade);
+  }
+
+  .anyday-portal .shimmer-text {
+    animation: anyday-opacity-pulse 1.5s infinite ease-in-out;
+    color: #bfbfc5;
+  }
+
+  .anyday-portal .shimmer-text *,
+  .anyday-portal .shimmer-text span,
+  .anyday-portal .shimmer-text div {
+    animation: anyday-opacity-pulse 1.5s infinite ease-in-out;
+    color: #bfbfc5;
+  }
+}
+
+@layer utilities {
+  .anyday-portal tbody tr.cursor-pointer:hover,
+  .anyday-portal tr.cursor-pointer:hover {
+    background-color: var(--bg-shade);
+    cursor: pointer;
+  }
+
+  .anyday-portal .ios-spinner {
+    animation: anyday-ios-spinner 1s linear infinite;
+  }
+
+  .anyday-portal .animate-shiny-text {
+    animation: anyday-shiny-text 8s infinite;
+    animation-play-state: paused;
+  }
+
+  .anyday-portal .animate-shiny-text[data-in-view="true"] {
+    animation-play-state: running;
+  }
+
+  .anyday-portal .proportional-nums {
+    font-variant-numeric: proportional-nums;
+  }
+
+  .anyday-portal .text-xlarge-heavy {
+    font-size: 28px;
+    line-height: auto;
+    letter-spacing: -0.03125rem;
+    font-weight: 600;
+  }
+
+  .anyday-portal .text-large-heavy {
+    font-size: 24px;
+    line-height: 2rem;
+    letter-spacing: -0.024375rem;
+    font-weight: 600;
+  }
+
+  .anyday-portal .text-medium-default {
+    font-size: 1.0625rem;
+    line-height: 1.375rem;
+    letter-spacing: -0.01375rem;
+    font-weight: 400;
+  }
+
+  .anyday-portal .text-medium-plus {
+    font-size: 1.0625rem;
+    line-height: 1.375rem;
+    letter-spacing: -0.01375rem;
+    font-weight: 500;
+  }
+
+  .anyday-portal .text-medium-heavy {
+    font-size: 1.0625rem;
+    line-height: 1.375rem;
+    letter-spacing: -0.01375rem;
+    font-weight: 600;
+  }
+
+  .anyday-portal .text-regular-default {
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+    letter-spacing: -0.015rem;
+    font-weight: 400;
+  }
+
+  .anyday-portal .text-regular-plus {
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+    letter-spacing: -0.015rem;
+    font-weight: 500;
+  }
+
+  .anyday-portal .text-regular-heavy {
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+    letter-spacing: -0.015rem;
+    font-weight: 600;
+  }
+
+  .anyday-portal .text-small-default {
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    letter-spacing: -0.005rem;
+    font-weight: 400;
+  }
+
+  .anyday-portal .text-small-plus {
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    letter-spacing: -0.005rem;
+    font-weight: 500;
+  }
+
+  .anyday-portal .text-small-heavy {
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    letter-spacing: -0.005rem;
+    font-weight: 600;
+  }
+
+  .anyday-portal label.text-regular-plus {
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+    letter-spacing: -0.015rem;
+    font-weight: 500;
+  }
+}
+
+/* Sonner toast, as the product overrides it (app/globals.css). */
+.anyday-portal [data-sonner-toast] {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  width: 356px;
+  box-sizing: border-box;
+  background-color: #000000;
+  border-radius: var(--radius-3);
+  border: 1px solid #333333;
+  padding: 14px 16px;
+  box-shadow:
+    0 -1px 0 0 rgba(39, 39, 42, 0.15) inset,
+    0 12px 32px 0 rgba(39, 39, 42, 0.3);
+  filter: drop-shadow(0 12px 32px rgba(39, 39, 42, 0.3));
+  gap: 12px;
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.anyday-portal [data-sonner-toast] [data-icon] {
+  display: flex;
+  height: 16px;
+  width: 16px;
+  position: relative;
+  flex-shrink: 0;
+  margin-left: -3px;
+  margin-right: 4px;
+  color: #ffffff;
+}
+
+.anyday-portal [data-sonner-toast] [data-title] {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+@layer utilities {
+  .anyday-portal .shadow-dropdown {
+    box-shadow:
+      0 0 0 1px rgba(39, 39, 42, 0.1),
+      0 2px 4px -1px rgba(39, 39, 42, 0.06),
+      0 12px 24px -4px rgba(39, 39, 42, 0.16);
+  }
+}
+
+/*
+ * The site's focus ring is unlayered, so it would beat the product's own
+ * layered utilities (`outline-none`, its focus shadows). Inside the product,
+ * focus looks the way the product draws it.
+ */
+.anyday-portal :focus-visible {
+  outline: revert-layer;
+  outline-offset: revert-layer;
+  animation: revert-layer;
+}

@@ -11,6 +11,7 @@ import {
   homeCharacterDissolveFrames,
   homeCharacterEntranceFrames,
 } from "./character/entrance";
+import { isHomeResume, rememberHomeResume } from "./resume";
 
 import { observeSectionEntrances } from "@/components/motion/section-entrances";
 
@@ -31,7 +32,11 @@ export function HomeEntranceRoot({
     if (isReturnVisit()) {
       window.scrollTo({ top: takeHomeScroll() ?? 0, behavior: "instant" });
     }
-    return () => rememberHomeScroll(window.scrollY);
+    const forgetResume = rememberHomeResume();
+    return () => {
+      forgetResume();
+      rememberHomeScroll(window.scrollY);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -50,32 +55,21 @@ export function HomeEntranceRoot({
     const character = document.querySelector<HTMLElement>(
       ".home-masthead__character",
     );
-    // A link to a section skips the opening, which is composed for the top of
-    // the page. A refresh partway down still greets, then dissolves in place
-    // when the masthead is out of view.
-    const displaced = Boolean(window.location.hash);
+    // The opening is composed for the top of the page. A refresh or history
+    // visit partway down, or a link to a section, lands on the finished page:
+    // the stylesheet already painted it that way (see `resume.ts`). A section
+    // link followed inside the app arrives here without that mark.
     if (
       isReturnVisit() ||
-      displaced ||
+      isHomeResume() ||
+      window.location.hash ||
       document.hidden ||
       reduced.matches ||
       !character?.animate ||
       typeof IntersectionObserver !== "function"
     ) {
-      // Any waiting character still has to leave the centre of the screen.
-      const homing =
-        displaced &&
-        waitingAt &&
-        character?.animate &&
-        !isReturnVisit() &&
-        !document.hidden &&
-        !reduced.matches
-          ? character
-          : undefined;
-      for (const target of targets) if (target !== homing) finish(target);
-      return homing && waitingAt
-        ? sendCharacterHome(homing, waitingAt)
-        : undefined;
+      for (const target of targets) finish(target);
+      return;
     }
 
     // A slow load already showed the arrival in CSS; continue it from where
@@ -257,45 +251,4 @@ export function HomeEntranceRoot({
   }, [rootMargin]);
 
   return null;
-}
-
-/**
- * The CSS waiting state was on screen, but a link landed partway down.
- * The character takes the opening's trip from where it waits, without the hold
- * or greeting: it lands in the masthead if that is in view, and otherwise
- * rises out of view toward it. A character that had barely appeared fades.
- */
-function sendCharacterHome(
-  character: HTMLElement,
-  waiting: { ms: number; x: number; y: number },
-) {
-  const slot = character.getBoundingClientRect();
-  const root = character.querySelector<HTMLElement>("[data-character-root]");
-  const slotHidden = slot.bottom <= 0 || slot.top >= window.innerHeight;
-  let animation: Animation;
-  if (root && slotHidden && waiting.ms < HOME_CHARACTER_TIMING.arrivalMs) {
-    // Still idle, so it fades where the CSS state holds it.
-    animation = root.animate(
-      [{ opacity: getComputedStyle(root).opacity }, { opacity: 0 }],
-      { duration: 160, easing: "ease-out", fill: "forwards" },
-    );
-  } else {
-    animation = character.animate(
-      homeCharacterEntranceFrames(
-        waiting.x - slot.left - slot.width / 2,
-        waiting.y - slot.top - slot.height / 2,
-      ),
-      { duration: HOME_CHARACTER_TIMING.entranceMs, fill: "both" },
-    );
-    animation.currentTime = HOME_CHARACTER_TIMING.travelDelayMs;
-    character.dataset.homeEnter = "shown";
-  }
-  void animation.finished.then(
-    () => {
-      character.dataset.homeEnter = "done";
-      animation.cancel();
-    },
-    () => {},
-  );
-  return () => animation.cancel();
 }

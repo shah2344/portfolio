@@ -23,18 +23,13 @@
   padding-block-end: 96px;
 }
 
-.note {
-  width: min(100%, var(--lab-column));
-  margin: 0 auto;
-  padding: 20px var(--lab-gutter) 0;
-  color: var(--lab-faint);
-  font-size: 13px;
-  line-height: 18px;
-}
-
-.note span {
-  font-family: var(--site-font-mono);
-  font-size: 12px;
+/* The homepage's real parts start hidden for its entrance, which the lab
+   doesn't run, so they are shown as they settle. */
+.page :global([data-home-enter="idle"]) {
+  visibility: visible;
+  opacity: 1;
+  filter: none;
+  transform: none;
 }
 
 /* --- Switcher ------------------------------------------------------------ */

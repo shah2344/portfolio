@@ -1,0 +1,89 @@
+/* The app grid at the homepage's feed width, one study per page. */
+
+.page {
+  min-height: 100vh;
+  padding-block-end: 96px;
+  background: var(--editorial-page);
+  color: var(--editorial-ink);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: min(100%, 1120px);
+  margin-inline: auto;
+  padding: 56px 24px 0;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.header p {
+  max-width: 60ch;
+  margin: 8px 0 0;
+  color: var(--editorial-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* The feed card's 3:2 slot, which the grid fills absolutely. */
+.frame {
+  --home-tile-radius: 20px;
+
+  position: relative;
+  aspect-ratio: 3 / 2;
+}
+
+@media (max-width: 780px) {
+  .frame {
+    aspect-ratio: auto;
+  }
+}
+
+.switcher {
+  position: fixed;
+  inset-block-end: 16px;
+  inset-inline-start: 50%;
+  z-index: var(--site-layer-chrome);
+  padding: 4px;
+  transform: translateX(-50%);
+  border: 1px solid var(--editorial-line);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--editorial-page) 82%, transparent);
+  box-shadow: var(--site-shadow-raised);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
+.switcher ol {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.switcher a {
+  display: grid;
+  min-width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: var(--r-pill);
+  color: var(--editorial-muted);
+  font-size: 13px;
+  font-weight: 510;
+  text-decoration: none;
+}
+
+.switcher a:hover {
+  color: var(--editorial-ink);
+}
+
+.switcher a[aria-current="page"] {
+  background: var(--editorial-ink);
+  color: var(--editorial-page);
+}

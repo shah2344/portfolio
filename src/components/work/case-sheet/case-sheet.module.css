@@ -1,0 +1,236 @@
+/* The homepage behind the sheet. At rest these wrappers do nothing. Frozen,
+   the stage pins to the viewport over a black desk, and the card inside it
+   is what scales back, about the top of the screen. The card doesn't scroll:
+   its content is shifted up to the reader's position instead, so the
+   homepage's fixed dock, held by the card's transform, stays in place. */
+.frozen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.frozen > .card {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  transform-origin: 50% 0;
+  background: var(--site-background);
+  will-change: transform;
+}
+
+.frozen .content {
+  position: relative;
+}
+
+/* The card's top corners, rounded to the sheet's radius. Animating
+   `border-radius` repaints the whole page every frame, so two caps the
+   desk's colour sit over the square corners instead, each scaled from its
+   outer corner by `--corner-progress`: a cap at scale p is a corner of
+   radius p × 24px, a transform only. Its bottom corners never come into
+   view. */
+.corners {
+  display: none;
+}
+
+.frozen .corners {
+  /* Keep in step with `--case-sheet-radius` on `.sheet`. */
+  --corner: 24px;
+
+  position: absolute;
+  z-index: var(--site-layer-overlay);
+  inset: 0 0 auto;
+  display: block;
+  height: var(--corner);
+  pointer-events: none;
+}
+
+.corners::before,
+.corners::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  width: var(--corner);
+  height: var(--corner);
+  transform: scale(var(--corner-progress, 0));
+  /* `paintHome` sets the transition on `.corners`. */
+  transition: inherit;
+}
+
+.corners::before {
+  /* Physical sides: the gradients are drawn for them. */
+  left: 0;
+  transform-origin: 0 0;
+  background: radial-gradient(
+    circle at 100% 100%,
+    transparent calc(var(--corner) - 0.5px),
+    #000 var(--corner)
+  );
+}
+
+.corners::after {
+  right: 0;
+  transform-origin: 100% 0;
+  background: radial-gradient(
+    circle at 0 100%,
+    transparent calc(var(--corner) - 0.5px),
+    #000 var(--corner)
+  );
+}
+
+/* Doubled to out-rank the rules Vaul injects on `[data-vaul-drawer]`. */
+.sheet.sheet {
+  /* Keep in step with `--corner` on `.corners`. */
+  --case-sheet-radius: 24px;
+
+  position: fixed;
+  z-index: var(--site-layer-overlay);
+  inset-block: calc(env(safe-area-inset-top) + 1.75rem) 0;
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  border-start-start-radius: var(--case-sheet-radius);
+  border-start-end-radius: var(--case-sheet-radius);
+  background: var(--site-background);
+  outline: none;
+  user-select: auto;
+}
+
+/* Over the page behind and its black desk: the dim. Vaul fades it in and
+   out, and with the drag. */
+.overlay {
+  position: fixed;
+  z-index: calc(var(--site-layer-overlay) - 1);
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+/* The story scrolls here, so the sheet itself never moves with it. */
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: inherit;
+}
+
+/* The story's own grounds stand down: the sheet paints that colour behind
+   them. Painted edge to edge inside the rounded scroller, they made Safari
+   take its content for opaque to the square corners and fill what the
+   rounding cut away with black. */
+.scroller :global(:is(.case-study-page, .humi-case-study, .case-study-sheet)) {
+  background: transparent;
+}
+
+/* In dark the sheet and the page behind share a colour, so the sheet's top
+   edge carries a hairline, over the header's fade but under its controls. */
+.sheet::before {
+  content: "";
+  position: absolute;
+  z-index: calc(var(--site-layer-chrome) + 1);
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 var(--case-sheet-edge, transparent);
+  pointer-events: none;
+}
+
+:global([data-theme="dark"]) .sheet {
+  --case-sheet-edge: oklch(1 0 0 / 12%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme])) .sheet {
+    --case-sheet-edge: oklch(1 0 0 / 12%);
+  }
+}
+
+/* The sheet's own header blur and fade, at its top edge and the story's
+   values, with its corners. Keep the heights in step with `.case-study-page`
+   in `globals.css`. */
+.chrome {
+  --case-study-header-height: 136px;
+  --case-study-fade-height: 160px;
+}
+
+@media (max-width: 80rem) {
+  .chrome {
+    --case-study-header-height: 96px;
+    --case-study-fade-height: 96px;
+  }
+}
+
+.chrome :global(.case-study-page__blur),
+.chrome :global(.case-study-page__scrim) {
+  position: absolute;
+}
+
+.chrome :global(.case-study-page__scrim),
+.chrome :global(.case-study-page__blur > span) {
+  border-start-start-radius: var(--case-sheet-radius);
+  border-start-end-radius: var(--case-sheet-radius);
+}
+
+/* The blur stays off while the story sits at its top, with only the sheet's
+   own colour beneath it, and while the sheet moves. Five backdrop filters
+   resampled on every frame of a slide are what Safari drops frames to. */
+.sheet:is(:not([data-scrolled]), :global(.vaul-dragging), [data-state="closed"])
+  .chrome
+  :global(.case-study-page__blur) {
+  visibility: hidden;
+}
+
+/* Held at the start of their entrances for the frame the sheet mounts in;
+   see `openSheet` in `case-sheet.tsx`. */
+:global(html[data-case-sheet-held]) .sheet.sheet,
+:global(html[data-case-sheet-held]) .overlay.overlay {
+  animation-play-state: paused;
+}
+
+/* While the sheet rises, only the story's first screen is laid out: in both
+   stories the first three blocks of its sheet fill it. */
+.sheet[data-landing] :global(.case-study-sheet) > :nth-child(n + 4) {
+  display: none;
+}
+
+/* The story's copies still measure, for its line ink, but never paint. */
+.scroller :global(.case-study-page__blur),
+.scroller :global(.case-study-page__scrim) {
+  visibility: hidden;
+}
+
+.grabber {
+  position: absolute;
+  z-index: calc(var(--site-layer-chrome) + 4);
+  inset-block-start: 0.5rem;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.handle.handle {
+  width: 2.75rem;
+  pointer-events: auto;
+  cursor: grab;
+  opacity: 1;
+  background: color-mix(in srgb, var(--site-ink) 20%, transparent);
+}
+
+/* The pill stays small; what takes the drag is a broad strip around it, clear
+   of the close button. */
+.handle.handle::before {
+  content: "";
+  position: absolute;
+  inset: -1rem -4rem -1.5rem;
+}
+
+.handle.handle:active {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet.sheet {
+    animation-duration: 1ms;
+    transition: none;
+  }
+}

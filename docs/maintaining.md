@@ -58,9 +58,12 @@ The canonical URL resolves in this order:
 
 Home introduces semantic groups with a short blur and rise. Case-study intros
 enter over 300ms while opening media fades in. Returning pages do not replay
-their entrances. Homepage cards open and close case studies with a one-snapshot
-CSS zoom, other routes navigate immediately, and theme changes alone retain the
-button-origin reveal. All of it lives in `src/components/motion/page-wipe.ts`.
+their entrances. Homepage cards open case studies as a Vaul sheet over the page
+(`src/components/work/case-sheet`, fed by the intercepted route in
+`src/app/@sheet`); a case study reached by its URL is a full page, and its close
+button returns home with a one-snapshot CSS zoom. Other routes navigate
+immediately, and theme changes alone retain the button-origin reveal. The
+snapshots live in `src/components/motion/page-wipe.ts`.
 
 Keep each interaction in its own Client Component. Wrap the smallest animated
 subtree in `MotionBoundary`, import `m` from `motion/react`, and use semantic

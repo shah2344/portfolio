@@ -1,0 +1,774 @@
+/*
+ * The AnyDay product's own CSS, copied from its globals.css with the light
+ * values resolved, and scoped under .anyday-app so nothing leaks into the
+ * portfolio. Product-only tokens, classes and keyframes live here.
+ */
+@layer theme, base, components, utilities;
+
+@font-face {
+  font-family: "AnyDay Inter";
+  src: url("/fonts/inter/Inter-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "AnyDay Inter";
+  src: url("/fonts/inter/Inter-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "AnyDay Inter";
+  src: url("/fonts/inter/Inter-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "AnyDay Inter";
+  src: url("/fonts/inter/Inter-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.anyday-app {
+  --radius: 0.625rem;
+  --sat-top: 0px;
+  --sat-bottom: 0px;
+  --floating-cta-bottom: 24px;
+
+  --foreground: #1f1f1f;
+  --background: #fdfdfd;
+  --background-secondary: #f8f8f8;
+  --background-tertiary: #f7f7f7;
+  --card-background: #ffffff;
+
+  /* System colors (avatars, category accents). */
+  --yellow: color(display-p3 1 0.8 0);
+  --mint: color(display-p3 0 0.784 0.702);
+  --teal: color(display-p3 0 0.765 0.816);
+  --cyan: color(display-p3 0 0.753 0.91);
+  --indigo: color(display-p3 0.016 0.314 0.62);
+  --purple: color(display-p3 0.796 0.188 0.878);
+  --pink: color(display-p3 1 0.176 0.333);
+  --brown: color(display-p3 0.675 0.498 0.369);
+  --icon-active-filter: none;
+  --icon-active-opacity: 1;
+  --row-divider: rgba(0, 0, 0, 0.08);
+
+  --labels-primary: #1f1f1f;
+  --labels-secondary: rgba(31, 31, 31, 0.6);
+  --labels-tertiary: rgba(31, 31, 31, 0.4);
+  --labels-inverse: #ffffff;
+
+  --dividers-default: #f0f0f0;
+  --fills-primary: rgba(120, 120, 128, 0.32);
+  --fills-secondary: rgba(120, 120, 128, 0.12);
+  --fills-tertiary: rgba(120, 120, 128, 0.08);
+  --fills-tertiary-solid: rgb(244, 244, 245);
+
+  --red: color(display-p3 1 0.22 0.235);
+  --orange: color(display-p3 1 0.553 0.157);
+  --yellow: color(display-p3 1 0.8 0);
+  --green: color(display-p3 0.204 0.78 0.349);
+  --blue: color(display-p3 0 0.533 1);
+  --color-blue: var(--blue);
+  --color-blue-hover: color(display-p3 0 0.467 0.902);
+  --color-green: var(--green);
+  --color-green-amount: color(display-p3 0 0.537 0.196);
+  --color-green-label: color(display-p3 0.204 0.78 0.345);
+
+  --letter-spacing-15: -0.008125rem;
+  --letter-spacing-17: -0.01375rem;
+  --letter-spacing-20: -0.020625rem;
+  --letter-spacing-22: -0.025rem;
+  --letter-spacing-24: -0.029375rem;
+  --letter-spacing-32: -0.043125rem;
+  --large-amount: 3.5rem;
+  --letter-spacing-large-amount: -0.04em;
+
+  --error-bg: color(display-p3 1 0.22 0.235 / 0.08);
+  --error-text: var(--red);
+
+  --primary: #1f1f1f;
+  --secondary-foreground: #1f1f1f;
+  --destructive-foreground: #ffffff;
+  --filter-pill-default: rgba(120, 120, 128, 0.1);
+  --border: rgba(0, 0, 0, 0.08);
+
+  --font-inter:
+    "AnyDay Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif;
+
+  font-family: var(--font-inter);
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1;
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: left;
+  letter-spacing: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.anyday-app .text-spec-13 {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  letter-spacing: -0.00625rem;
+}
+
+.anyday-app .text-spec-15 {
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
+  letter-spacing: var(--letter-spacing-15);
+}
+
+.anyday-app .text-spec-17 {
+  font-size: 1.0625rem;
+  line-height: 1.375rem;
+  letter-spacing: var(--letter-spacing-17);
+}
+
+.anyday-app .text-spec-20 {
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+  letter-spacing: var(--letter-spacing-20);
+}
+
+.anyday-app .text-spec-22 {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  letter-spacing: var(--letter-spacing-22);
+}
+
+.anyday-app .text-spec-24 {
+  font-size: 1.5rem;
+  line-height: 1.75rem;
+  letter-spacing: var(--letter-spacing-24);
+}
+
+.anyday-app .text-spec-32 {
+  font-size: 2rem;
+  line-height: 2.25rem;
+  letter-spacing: var(--letter-spacing-32);
+  font-weight: 650;
+}
+
+@layer base {
+  .anyday-app h1,
+  .anyday-app h2,
+  .anyday-app h3,
+  .anyday-app button,
+  .anyday-app nav {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .anyday-app button,
+  .anyday-app [role="button"],
+  .anyday-app .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .anyday-app .font-medium {
+    font-weight: 500 !important;
+  }
+
+  .anyday-app .font-bold {
+    font-weight: 600 !important;
+  }
+}
+
+.anyday-app .font-inter-amounts {
+  font-family: var(--font-inter), sans-serif !important;
+  font-feature-settings: "ss01" 1;
+}
+
+.anyday-app .price {
+  font-feature-settings: "ss01" 1;
+}
+
+.anyday-app .price *,
+.anyday-app .font-inter-amounts * {
+  font-feature-settings: "ss01" 1;
+}
+
+.anyday-app img[src$=".svg"] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.anyday-app .border-3 {
+  border-width: 0.1875rem;
+}
+
+@keyframes fast-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes lighter-pulse {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.12;
+  }
+}
+
+.anyday-app .fast-pulse {
+  animation: fast-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.anyday-app .value-prop-mask-icon {
+  flex-shrink: 0;
+  background-color: var(--labels-primary);
+  mask-mode: alpha;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.anyday-app .card-shadow {
+  box-shadow:
+    0 0 0 1px var(--dividers-default),
+    0 0.125rem 1.5rem 0 rgba(0, 0, 0, 0.03),
+    0 0.25rem 0.25rem 0 rgba(0, 0, 0, 0.01),
+    0 0.125rem 0.125rem 0 rgba(0, 0, 0, 0.01);
+}
+
+@keyframes text-shimmer-bg-pos {
+  0% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
+
+.anyday-app button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem color(display-p3 0 0.533 1 / 0.24);
+  transition: box-shadow 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Primary button */
+.anyday-app .primary-button {
+  position: relative;
+  border-radius: 62.4375rem;
+  border: 1px solid transparent;
+  background: #000000;
+  background: color(display-p3 0.039 0.039 0.039);
+  box-shadow: 0 8px 24px 0 color(display-p3 0 0 0 / 0.08);
+  overflow: visible;
+  transition:
+    background 0.2s ease-in-out,
+    border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+  color: var(--labels-inverse);
+}
+
+@media (hover: hover) {
+  .anyday-app .primary-button:not(.primary-button-disabled):hover {
+    background: color(display-p3 0.15 0.15 0.15);
+  }
+}
+
+.anyday-app .primary-button:not(.primary-button-disabled):active {
+  background: color(display-p3 0.18 0.18 0.18);
+}
+
+/* The highlight stroke sits 1px in from the edge, not the product's 1.5px:
+   the dark band outside it read too heavy at the portfolio's scale. */
+.anyday-app .primary-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(62.4375rem - 1px);
+  padding: 1.5px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(255, 255, 255, 0) 64%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.anyday-app .primary-button::after {
+  display: none;
+}
+
+.anyday-app .primary-button-disabled {
+  box-shadow: none;
+  background: var(--background-secondary);
+  color: var(--labels-tertiary);
+}
+
+.anyday-app .primary-button-disabled::before {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.anyday-app .primary-button-disabled::after {
+  display: none;
+}
+
+.anyday-app .primary-button:focus-visible {
+  box-shadow:
+    0 8px 24px 0 color(display-p3 0 0 0 / 0.08),
+    0 0 0 1px var(--primary),
+    0 0 0 0.3125rem color(display-p3 0 0.533 1 / 0.24);
+}
+
+/* Circular icon buttons */
+.anyday-app .icon-button-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 4rem;
+  min-width: 0;
+}
+
+.anyday-app .icon-button-circle-btn {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: var(--background-tertiary);
+  box-shadow:
+    0 8px 24px 0 color(display-p3 0 0 0 / 0.06),
+    0 0 0 1px rgba(31, 31, 31, 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease-in-out;
+  overflow: visible;
+}
+
+@media (hover: hover) {
+  .anyday-app .icon-button-circle-btn:hover {
+    background: #f0f0f0;
+  }
+}
+
+.anyday-app .icon-button-circle-btn:active {
+  background: #e8e8e8;
+}
+
+.anyday-app .icon-button-circle-btn-primary {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: #000000;
+  background: color(display-p3 0.039 0.039 0.039);
+  box-shadow: 0 0.5rem 1.5rem 0 color(display-p3 0 0 0 / 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s ease-in-out,
+    border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+  overflow: visible;
+}
+
+@media (hover: hover) {
+  .anyday-app .icon-button-circle-btn-primary:hover {
+    background: color(display-p3 0.15 0.15 0.15);
+  }
+}
+
+.anyday-app .icon-button-circle-btn-primary:active {
+  background: color(display-p3 0.18 0.18 0.18);
+}
+
+.anyday-app .icon-button-circle-btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(50% - 1px);
+  padding: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(255, 255, 255, 0) 64%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.anyday-app .icon-button-circle-btn-primary::after {
+  display: none;
+}
+
+.anyday-app .primary-button-icon {
+  filter: brightness(0) invert(1);
+}
+
+.anyday-app .icon-button-circle-btn::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.anyday-app .icon-button-circle-btn::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anyday-app .icon-button-circle-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--labels-primary);
+  text-align: center;
+  min-width: 0;
+}
+
+/* Secondary button */
+.anyday-app .secondary-button {
+  position: relative;
+  border-radius: var(--radius-max, 62.4375rem);
+  border: 1px solid transparent;
+  background: #f7f7f7;
+  box-shadow:
+    0 8px 24px 0 color(display-p3 0 0 0 / 0.06),
+    0 0 0 1px rgba(31, 31, 31, 0.09);
+  overflow: visible;
+  color: var(--secondary-foreground);
+  transition: background 0.2s ease-in-out;
+}
+
+@media (hover: hover) {
+  .anyday-app .secondary-button:not(.secondary-button-disabled):hover {
+    background: #f0f0f0;
+  }
+}
+
+.anyday-app .secondary-button:not(.secondary-button-disabled):active {
+  background: #e8e8e8;
+}
+
+.anyday-app .secondary-button::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.anyday-app .secondary-button::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anyday-app .secondary-button-disabled {
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+
+.anyday-app .secondary-button-disabled::before,
+.anyday-app .secondary-button-disabled::after {
+  display: none;
+}
+
+/* Destructive solid button */
+.anyday-app .destructive-solid-button {
+  position: relative;
+  border-radius: var(--radius-max, 62.4375rem);
+  border: 1px solid transparent;
+  background: var(--red);
+  box-shadow: 0 8px 24px 0 color(display-p3 0 0 0 / 0.08);
+  overflow: visible;
+  transition:
+    background 0.2s ease-in-out,
+    border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+  color: var(--destructive-foreground);
+}
+
+@media (hover: hover) {
+  .anyday-app
+    .destructive-solid-button:not(.destructive-solid-button-disabled):hover {
+    background: color-mix(in srgb, var(--red) 88%, white);
+  }
+}
+
+.anyday-app
+  .destructive-solid-button:not(.destructive-solid-button-disabled):active {
+  background: color-mix(in srgb, var(--red) 82%, black);
+}
+
+/* Same 1px band as the primary button. */
+.anyday-app .destructive-solid-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--radius-max, 62.4375rem) - 1px);
+  padding: 1.5px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(255, 255, 255, 0) 64%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.anyday-app .destructive-solid-button::after {
+  display: none;
+}
+
+.anyday-app .destructive-solid-button-disabled {
+  box-shadow: none;
+  background: var(--background-secondary);
+  color: var(--labels-tertiary);
+}
+
+.anyday-app .destructive-solid-button-disabled::before {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.anyday-app .destructive-solid-button-disabled::after {
+  display: none;
+}
+
+.anyday-app .instant-hover-row {
+  transition: background-color 0s;
+}
+
+.anyday-app .instant-hover-row:not(:hover) {
+  transition: background-color 0.15s ease-out;
+}
+
+@media (hover: none) {
+  .anyday-app .instant-hover-row:hover:not(:active):not(:focus-within) {
+    background-color: transparent !important;
+  }
+}
+
+/*
+ * The site's focus ring is unlayered, so it would beat the product's own
+ * layered utilities (`outline-none`, its focus shadows). Inside the product,
+ * focus looks the way the product draws it.
+ */
+.anyday-app :focus-visible {
+  outline: revert-layer;
+  outline-offset: revert-layer;
+  animation: revert-layer;
+}
+
+.anyday-app .recipient-pill {
+  background-color: rgba(120, 120, 128, 0.12);
+}
+
+/* Bottom navigation pill (app/layout-client.tsx BottomNav). */
+.anyday-app .nav-pill-container-bottom {
+  corner-shape: round;
+}
+
+.anyday-app .nav-pill-container-bottom::before {
+  content: "";
+  position: absolute;
+  inset: -0.125rem;
+  border-radius: inherit;
+  corner-shape: round;
+  padding: 2px;
+  background:
+    radial-gradient(
+      ellipse 240% 240% at top left,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 1) 50%,
+      rgba(255, 255, 255, 0.95) 58%,
+      rgba(255, 255, 255, 0.75) 65%,
+      rgba(255, 255, 255, 0.5) 72%,
+      rgba(255, 255, 255, 0.25) 78%,
+      rgba(255, 255, 255, 0.1) 83%,
+      transparent 88%
+    ),
+    radial-gradient(
+      ellipse 240% 240% at bottom right,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 1) 50%,
+      rgba(255, 255, 255, 0.95) 58%,
+      rgba(255, 255, 255, 0.75) 65%,
+      rgba(255, 255, 255, 0.5) 72%,
+      rgba(255, 255, 255, 0.25) 78%,
+      rgba(255, 255, 255, 0.1) 83%,
+      transparent 88%
+    ),
+    linear-gradient(to right, transparent 0%, transparent 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 1;
+}
+
+.anyday-app .nav-pill-bg-blur {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.anyday-app .nav-icon-inactive {
+  filter: brightness(0) saturate(100%) invert(12%);
+  opacity: 0.5;
+}
+
+.anyday-app .toast-container {
+  background-color: rgba(0, 0, 0, 1);
+  color: #ffffff;
+  box-shadow:
+    0 18px 90px 6px rgba(0, 0, 0, 0.22),
+    0 10px 46px 2px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* The pockets story spans two cards: its stage is two phone screens and the
+   gap wide, so it keeps the grid's scale. A phone shows one card at a time,
+   so there it goes back to one screen and the story stacks. */
+.pockets-canvas {
+  display: contents;
+  --canvas: 758;
+}
+
+@media (max-width: 780px) {
+  .pockets-canvas {
+    --canvas: 375;
+  }
+
+  .anyday-app .pockets-arrow {
+    display: none;
+  }
+}

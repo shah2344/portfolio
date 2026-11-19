@@ -86,7 +86,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+  sheet,
+}: Readonly<{
+  children: React.ReactNode;
+  /** A case study opened over the homepage (`app/@sheet`). */
+  sheet: React.ReactNode;
+}>) {
   return (
     <html
       className={`${timelessSans.variable} ${caveat.variable}`}
@@ -106,6 +111,7 @@ export default function RootLayout({
       </head>
       <body>
         <div data-site-root>{children}</div>
+        {sheet}
         <AgentationTools />
         <LiveFavicon />
         <Analytics />

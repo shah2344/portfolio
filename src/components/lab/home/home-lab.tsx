@@ -97,10 +97,6 @@ export function HomeLab({ slug }: { slug: string }) {
 
   return (
     <div className={`editorial-page ${styles.page}`}>
-      <p className={styles.note}>
-        <span>{study.slug.padStart(2, "0")}</span> {study.name}. {study.idea}
-      </p>
-
       <Component />
 
       <nav aria-label="Homepage studies" className={styles.switcher}>

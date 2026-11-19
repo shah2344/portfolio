@@ -164,13 +164,13 @@ function getFirstBaseline(element: HTMLElement): number | null {
 /**
  * The page may scroll in the document or inside a container. The case studies
  * scroll the document; a selector names a container for a rail that lives in
- * one. Reading position off the element while listening on the matching
- * target covers both.
+ * one, and a case study opened in a sheet marks its own. Reading position off
+ * the element while listening on the matching target covers both.
  */
 function resolveScroller(selector?: string) {
-  const container = selector
-    ? document.querySelector<HTMLElement>(selector)
-    : null;
+  const container = document.querySelector<HTMLElement>(
+    selector ?? "[data-case-study-scroller]",
+  );
   if (container) {
     return {
       contained: true,

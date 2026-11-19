@@ -52,6 +52,9 @@ export function PlaygroundVideo({
   const onScreen = useRef(false);
   const [attached, setAttached] = useState(false);
   const [stillNear, setStillNear] = useState(false);
+  // The clip's first frame, and then the end of its fade in over the wash.
+  const [framed, setFramed] = useState(false);
+  const [washed, setWashed] = useState(false);
   // Nothing is fetched or decoded under a theme reveal; see `useAfterWipe`.
   const settled = useAfterWipe();
   const sourced = attached && settled;
@@ -101,13 +104,17 @@ export function PlaygroundVideo({
       else resume();
     };
 
+    const land = () => setFramed(true);
+
     document.addEventListener("visibilitychange", onVisibility);
     video.addEventListener("canplay", resume);
+    video.addEventListener("loadeddata", land);
 
     return () => {
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       video.removeEventListener("canplay", resume);
+      video.removeEventListener("loadeddata", land);
     };
   }, []);
 
@@ -128,13 +135,20 @@ export function PlaygroundVideo({
         sizes={sizes}
         src={poster}
       />
+      {/* A white wash pulses over the still while the clip loads. The clip
+          fades in above it, and the wash goes once the clip covers it. */}
+      {washed ? null : <span aria-hidden="true" className="pg-media pg-wash" />}
       <video
         aria-label={alt}
-        className="pg-media"
+        className="pg-media pg-clip"
+        data-waiting={framed ? undefined : ""}
         disablePictureInPicture
         loop
         muted
         playsInline
+        onTransitionEnd={(event) => {
+          if (event.propertyName === "opacity" && framed) setWashed(true);
+        }}
         preload="none"
         ref={videoRef}
       >

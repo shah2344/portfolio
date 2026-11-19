@@ -211,6 +211,7 @@ export function PlaygroundTile({
   caption,
   children,
   className = "",
+  expandable = true,
   label,
   interactiveContent = false,
   maxScale = OPEN_MAX_SCALE,
@@ -225,6 +226,8 @@ export function PlaygroundTile({
   caption?: string;
   children: ReactNode;
   className?: string;
+  /** False for a card that is used where it sits and never opens. */
+  expandable?: boolean;
   label?: string;
   /** Let media handle dragging while clicks toggle the card and a transparent button supports keyboard access. */
   interactiveContent?: boolean;
@@ -818,7 +821,7 @@ export function PlaygroundTile({
           {...(Clip === SmoothSurface ? { borderInset } : {})}
           className="pg-frame__clip"
           onClick={
-            interactiveContent
+            expandable && interactiveContent
               ? (event) => {
                   if (
                     (event.target as Element).closest(
@@ -834,20 +837,22 @@ export function PlaygroundTile({
         >
           {children}
 
-          <button
-            aria-label={
-              enlarged ? `Close ${openLabel}` : `Enlarge ${openLabel}`
-            }
-            className="pg-open"
-            data-home-tip={enlarged ? undefined : "Enlarge"}
-            data-home-tip-focus-only
-            onBlur={() => {
-              // The tapped focus is over, so the next one is judged afresh.
-              delete figureRef.current?.dataset.pgTap;
-            }}
-            onClick={enlarged ? close : open}
-            type="button"
-          />
+          {expandable ? (
+            <button
+              aria-label={
+                enlarged ? `Close ${openLabel}` : `Enlarge ${openLabel}`
+              }
+              className="pg-open"
+              data-home-tip={enlarged ? undefined : "Enlarge"}
+              data-home-tip-focus-only
+              onBlur={() => {
+                // The tapped focus is over, so the next one is judged afresh.
+                delete figureRef.current?.dataset.pgTap;
+              }}
+              onClick={enlarged ? close : open}
+              type="button"
+            />
+          ) : null}
         </Clip>
 
         {caption ? (

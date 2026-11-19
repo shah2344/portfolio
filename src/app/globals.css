@@ -391,11 +391,6 @@ html[data-page-zoom]::view-transition-new(root) {
 
 /* The arriving page travels further than the leaving one, so the eye follows
    it; both stay well inside a subtle 0.97–1.03. */
-html[data-page-zoom="open"] {
-  --page-zoom-from: 0.975;
-  --page-zoom-to: 1.01;
-}
-
 html[data-page-zoom="close"] {
   --page-zoom-arrive: 300ms;
   --page-zoom-from: 1.025;
@@ -450,19 +445,9 @@ html:has(.case-study-page) {
   /* The fade runs a little past the blur, so the blur's lower edge never
      reads as a line. */
   --case-study-fade-height: 160px;
-  /* The homepage's sheet colour, here under the footer the story uncovers. */
-  --case-study-sheet: #ffffff;
-  /* The homepage sheet's edge as it reads over the sheet: 6% black on white,
-     and 12% white on black below. Solid, as one stop in the footer's fill. */
-  --case-study-sheet-line: #f0f0f0;
   position: relative;
   min-height: 100vh;
   background: var(--site-background);
-
-  @variant dark {
-    --case-study-sheet: #000000;
-    --case-study-sheet-line: #1f1f1f;
-  }
 }
 
 .case-study-page__toolbar {
@@ -3660,6 +3645,8 @@ html[data-page-wipe]
   --home-heading-gap: 16px;
   --home-sheet-edge-gap: 64px;
   --home-page-end: 48px;
+  /* The space above the masthead, a step roomier than the case studies'. */
+  --home-opening-space: 160px;
 
   /* The column itself: its width, gutters, and the space above the masthead
      and below the footer. Sections fill it and set none of their own. */
@@ -3668,7 +3655,7 @@ html[data-page-wipe]
   gap: var(--home-section-gap);
   width: min(100%, var(--home-column));
   margin-inline: auto;
-  padding: var(--site-opening-space) var(--home-gutter) var(--home-page-end);
+  padding: var(--home-opening-space) var(--home-gutter) var(--home-page-end);
 }
 
 /* Rules and hairlines turn to light at much the same weight, and the wash a
@@ -3747,6 +3734,7 @@ html[data-page-wipe]
   .home {
     --home-gutter: 24px;
     --home-section-gap: 72px;
+    --home-opening-space: 80px;
   }
 }
 
@@ -3977,7 +3965,6 @@ html[data-page-wipe]
 .section-heading,
 .mobile-toc-landing,
 .case-study-ending__divider,
-.case-study-footer,
 .home-footer__rule,
 .experience-list {
   --section-heading-rule: rgb(0 0 0 / 18%);
@@ -4104,6 +4091,18 @@ html[data-page-wipe]
     filter: none;
     transform: none;
   }
+}
+
+/* A load resuming partway down (`resume.ts`) paints the finished page from its
+   first frame, before hydration settles each entrance for good. */
+:root[data-home-resume] [data-home-enter],
+:root[data-home-resume] [data-home-enter] span,
+:root[data-home-resume] [data-home-enter]::after {
+  visibility: visible;
+  opacity: 1;
+  animation: none;
+  filter: none;
+  transform: none;
 }
 
 /* Homepage ink steps back to tertiary as the copy nears the top and scrolls
@@ -4397,11 +4396,6 @@ html[data-page-wipe]
   margin-block-end: 16px;
 }
 
-/* Case studies end on the note alone, with nothing below it. */
-.case-study-footer > .home-contact {
-  margin-block-end: 0;
-}
-
 /* The footer comes into focus as the sheet lifts away, all of it as one surface
    settling forward from behind the sheet. The pinned footer never moves itself,
    so the page's last stretch of scroll drives it, locked to the scroll with no
@@ -4432,22 +4426,13 @@ html[data-page-wipe]
     /* The travel is set from the page's end, where the note's top line clears
        the sheet at a fixed distance, so taller footers on a narrow window land
        the same way. It ends a pixel short because the furthest scroll can land
-       a fraction shy of 100%, which would strand the type just under full size.
-       The case study animates its note alone: the footer box carries the sheet
-       colour, which has to stay put. */
-    .home-reveal > .home-footer,
-    .case-study-footer > .home-contact {
+       a fraction shy of 100%, which would strand the type just under full size. */
+    .home-reveal > .home-footer {
+      --footer-emerge-travel: 220px;
+
       animation: footer-emerge linear both;
       animation-timeline: scroll(root block);
       animation-range: calc(100% - var(--footer-emerge-travel)) calc(100% - 1px);
-    }
-
-    .home-reveal > .home-footer {
-      --footer-emerge-travel: 220px;
-    }
-
-    .case-study-footer > .home-contact {
-      --footer-emerge-travel: 125px;
     }
   }
 }
@@ -4607,6 +4592,36 @@ html[data-page-wipe]
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* While a clip loads, a white wash pulses over its still; the clip then fades
+   in on top. Reduced motion never loads the clip, so the still simply stays. */
+.pg-wash {
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: pg-wash-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pg-wash-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pg-clip {
+  transition: opacity 300ms var(--site-ease-standard);
+}
+
+.pg-clip[data-waiting] {
+  opacity: 0;
+}
+
+/* Without script no clip loads either, so the still is the finished frame. */
+@media (prefers-reduced-motion: reduce), (scripting: none) {
+  .pg-wash {
+    animation: none;
+  }
 }
 
 /*
@@ -5055,58 +5070,15 @@ html:has(.pg-frame[data-pg-enlarged]) {
   margin: 0;
 }
 
-/* The story, on the page colour, scrolls up over the footer. It stacks above
-   the footer but stays below the header blur; the brand mark and contents rail
-   sit outside it so they can still rise above that blur. `flow-root` keeps
-   the last block's margin on the story rather than as a seam beneath it. */
+/* The story, on the page colour, stacks below the header blur; the brand mark
+   and contents rail sit outside it so they can still rise above that blur.
+   `flow-root` keeps the last block's margin on the story rather than as a seam
+   beneath it. */
 .case-study-sheet {
   position: relative;
   z-index: 1;
   display: flow-root;
   background: var(--site-background);
-}
-
-/* The sheet's lower edge, bled to the window's edges, so it rides up with the
-   story rather than waiting on the footer beneath it. Hung just below the
-   sheet, it lands where the footer's top edge sits once uncovered. */
-.case-study-sheet::after {
-  content: "";
-  position: absolute;
-  inset-block-end: -1px;
-  inset-inline-start: calc(50% - 50vw);
-  width: 100vw;
-  height: 1px;
-  background: var(--case-study-sheet-line);
-  pointer-events: none;
-}
-
-/* Pinned to the foot of the viewport beneath the sheet, and uncovered as the
-   page runs out. The sheet colour bleeds to the
-   window's edges without widening the column (the page clips the overflow).
-   The contact note sits centred, 64px clear of the sheet and of the page end.
-
-   Safari tints its bottom safe area from any full-width pinned element 4px above
-   the viewport's edge, even one the story covers, so a footer flush with that
-   edge would tint it for the whole read. The lift stands the box clear of that
-   point; the margin, padding and fill give the same space back, so it still
-   reads as flush. */
-.case-study-footer {
-  --editorial-ink: var(--site-ink);
-  --home-secondary: var(--palette-secondary-label);
-  --case-study-footer-lift: 8px;
-
-  position: sticky;
-  bottom: var(--case-study-footer-lift);
-  width: min(100%, 724px);
-  margin-inline: auto;
-  margin-block-end: var(--case-study-footer-lift);
-  padding-inline: 24px;
-  padding-block: 64px calc(64px - var(--case-study-footer-lift));
-  border-image: linear-gradient(
-      var(--case-study-sheet),
-      var(--case-study-sheet)
-    )
-    fill 0 / 0 / 0 100vmax var(--case-study-footer-lift);
 }
 
 .home-footer__row {
@@ -5331,24 +5303,13 @@ html:has(.pg-frame[data-pg-enlarged]) {
   }
 }
 
+.home-dock [data-profile="linkedin"] {
+  --home-dock-brand: #0a66c2;
+}
+
 .home-dock [data-profile="email"] {
   --home-dock-brand: var(--palette-blue);
   color: var(--home-dock-icon-color, var(--site-icon-color));
-}
-
-.home-dock [data-profile="resume"] {
-  --home-dock-brand: #ff383c;
-
-  @variant dark {
-    --home-dock-brand: #ff4245;
-  }
-
-  @media (color-gamut: p3) {
-    --home-dock-brand: oklch(65.3% 0.294 25.7);
-    @variant dark {
-      --home-dock-brand: oklch(66.2% 0.284 25.1);
-    }
-  }
 }
 
 /* Every link rests in tertiary ink and takes its brand ink when active. */
@@ -5486,12 +5447,12 @@ html:has(.pg-frame[data-pg-enlarged]) {
   --home-dock-label-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext dominant-baseline='text-before-edge' font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif' font-size='18' font-weight='500'%3EDribbble%3C/text%3E%3C/svg%3E");
 }
 
-.home-dock [data-profile="email"] .home-dock__label {
-  --home-dock-label-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext dominant-baseline='text-before-edge' font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif' font-size='18' font-weight='500'%3EEmail%3C/text%3E%3C/svg%3E");
+.home-dock [data-profile="linkedin"] .home-dock__label {
+  --home-dock-label-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext dominant-baseline='text-before-edge' font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif' font-size='18' font-weight='500'%3ELinkedIn%3C/text%3E%3C/svg%3E");
 }
 
-.home-dock [data-profile="resume"] .home-dock__label {
-  --home-dock-label-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext dominant-baseline='text-before-edge' font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif' font-size='18' font-weight='500'%3EResume%3C/text%3E%3C/svg%3E");
+.home-dock [data-profile="email"] .home-dock__label {
+  --home-dock-label-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext dominant-baseline='text-before-edge' font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif' font-size='18' font-weight='500'%3EEmail%3C/text%3E%3C/svg%3E");
 }
 
 .home-dock__link {
@@ -5919,13 +5880,18 @@ html:has(.pg-frame[data-pg-enlarged]) {
   transform-origin: center bottom;
 }
 
-.pg-feed[data-pg-feed-live="grow"] {
-  --pg-feed-width: min(
-    1280px,
-    90vw,
-    calc(100vw - 2 * var(--home-gutter)),
-    var(--pg-feed-height-width)
-  );
+/* Laid out at the grown width from the server HTML, the same media query
+   `PlaygroundFeed` uses for its grow mode, so hydration never reflows the
+   page under a restored scroll. Until then the feed shows at full size. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 781px) {
+  .pg-feed {
+    --pg-feed-width: min(
+      1280px,
+      90vw,
+      calc(100vw - 2 * var(--home-gutter)),
+      var(--pg-feed-height-width)
+    );
+  }
 }
 
 /*
@@ -6799,15 +6765,19 @@ html[data-page-wipe] .humi-impact__photo .pg-frame:not([data-pg-enlarged]) {
   /* Until hydration the character is the page's loading state. It arrives at
      the centre from first paint, with no script, and waits there; the slot
      keeps its size so the opening can still measure it. `HomeEntranceRoot`
-     reads how far this has run and continues the same entrance from there. */
-  .home-masthead__character[data-home-enter="idle"] {
+     reads how far this has run and continues the same entrance from there.
+     A load resuming partway down (`resume.ts`) never shows it. */
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"] {
     width: 44px;
     height: 44px;
     filter: none;
     transform: none;
   }
 
-  .home-masthead__character[data-home-enter="idle"] [data-character-root] {
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"]
+    [data-character-root] {
     position: fixed;
     z-index: 1;
     top: calc(50% - 22px);
@@ -6821,33 +6791,41 @@ html[data-page-wipe] .humi-impact__photo .pg-frame:not([data-pg-enlarged]) {
   /* Eyes and face move on their own properties, so the beats compose: it
      wakes as the JS rig does, blinks, looks around for the page after a
      couple of seconds, and grows heavy-lidded and glum if it keeps waiting. */
-  .home-masthead__character[data-home-enter="idle"]
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"]
     :is([data-eye], [data-pupil], [data-head], [data-mouth]) {
     transform-box: fill-box;
     transform-origin: center;
   }
 
-  .home-masthead__character[data-home-enter="idle"] [data-eye] {
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"]
+    [data-eye] {
     animation:
       home-character-wait-wake 300ms linear both,
       home-character-wait-blink 4.4s ease-in-out 1.6s infinite,
       home-character-wait-weary 1.2s ease-in-out 6s both;
   }
 
-  .home-masthead__character[data-home-enter="idle"] [data-pupil] {
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"]
+    [data-pupil] {
     animation: home-character-wait-look 5.6s ease-in-out 2.2s infinite;
   }
 
-  .home-masthead__character[data-home-enter="idle"] [data-head] {
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"]
+    [data-head] {
     animation: home-character-wait-turn 5.6s ease-in-out 2.2s infinite;
   }
 
-  .home-masthead__character[data-home-enter="idle"] [data-mouth] {
+  :root:not([data-home-resume])
+    .home-masthead__character[data-home-enter="idle"]
+    [data-mouth] {
     animation: home-character-wait-glum 1.2s ease-in-out 6s both;
   }
 
-  /* Above the content it crosses, such as the feed's stacked cards, when a
-     load restored partway down greets over them. */
+  /* Above the content it crosses on its way to the masthead. */
   .home-masthead__character[data-home-enter="shown"] {
     position: relative;
     z-index: calc(var(--site-layer-content) + 1);
