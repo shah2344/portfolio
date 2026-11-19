@@ -436,8 +436,10 @@ html[data-page-zoom="close"] {
 /* --- Case study page ------------------------------------------------------ */
 
 /* With a case study's sheet up, the black desk behind the homepage runs
-   under the status bar too, so Safari tints it black (`case-sheet.tsx`). */
-html[data-case-sheet-frozen] {
+   under the status bar too, so Safari tints it black (`case-sheet.tsx`).
+   Safari samples the body as well as the root. */
+html[data-case-sheet-frozen],
+html[data-case-sheet-frozen] body {
   background: #000;
 }
 

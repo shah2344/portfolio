@@ -180,6 +180,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const cornersRef = useRef<HTMLSpanElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const homeScroll = useRef(0);
+  const scrollRestoration = useRef<ScrollRestoration | null>(null);
   const openRef = useRef(false);
   const timer = useRef(0);
   const landTimer = useRef(0);
@@ -232,6 +233,12 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         ? document.activeElement
         : null;
     homeScroll.current = window.scrollY;
+    // The story's URL is pushed with the page frozen at the top, so the
+    // browser files the homepage's place as 0 and, stepping back, scrolls
+    // there as soon as the page can scroll again. The place is put back
+    // here instead.
+    scrollRestoration.current ??= history.scrollRestoration;
+    history.scrollRestoration = "manual";
     stage.classList.add(FROZEN);
     paintStatusBar(true);
     content.style.top = `${-homeScroll.current}px`;
@@ -251,6 +258,10 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
       ref.current?.removeAttribute("style");
     }
     window.scrollTo({ top: homeScroll.current, behavior: "instant" });
+    if (scrollRestoration.current) {
+      history.scrollRestoration = scrollRestoration.current;
+      scrollRestoration.current = null;
+    }
     for (const video of pausedVideos.current) {
       if (video.isConnected) void video.play().catch(() => {});
     }
