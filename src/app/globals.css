@@ -433,59 +433,209 @@ html[data-page-zoom="close"] {
   --case-sheet-radius: 24px;
 }
 
+/* How far the homepage behind is stacked back: 1 at rest behind the story,
+   0 full-size, as a pull lets it come forward. Registered so it can ease. */
+@property --case-sheet-depth {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+/* A story opened from the homepage stays stacked over it, as the desktop
+   sheet does: the homepage a blank card stood back behind it, dimmed, with
+   the story's rounded top just below (`data-case-sheet-stacked`, set by
+   `phone-sheet-script.ts`). The page still scrolls as a document. Only a
+   strip along the top is fixed: the desk and that card's edge, with the
+   story's rounded corners over them. A full-screen fixed layer would leave
+   Safari's bars solid. */
+.case-sheet-desk {
+  display: none;
+}
+
+@media (max-width: 780px) and (pointer: coarse) {
+  html[data-case-sheet-stacked] {
+    --case-sheet-top: calc(env(safe-area-inset-top) + 1.75rem);
+  }
+
+  html[data-case-sheet-stacked]:has(.case-study-page) {
+    scroll-padding-block-start: calc(var(--case-sheet-top) + 6.5rem);
+  }
+
+  html[data-case-sheet-stacked],
+  html[data-case-sheet-stacked] body {
+    background: #000;
+  }
+
+  html[data-case-sheet-stacked] .case-sheet-desk {
+    position: fixed;
+    z-index: var(--site-layer-chrome);
+    inset: 0 0 auto;
+    display: block;
+    height: calc(var(--case-sheet-top) + var(--case-sheet-radius));
+    overflow: hidden;
+    pointer-events: none;
+    background: #000;
+    /* Below the desk, only the corners: the story's top shows between
+       them, close control and all. */
+    mask:
+      linear-gradient(#000 0 0) top / 100% var(--case-sheet-top) no-repeat,
+      linear-gradient(
+          to right,
+          #000 var(--case-sheet-radius),
+          transparent var(--case-sheet-radius)
+            calc(100% - var(--case-sheet-radius)),
+          #000 0
+        )
+        bottom / 100% var(--case-sheet-radius) no-repeat;
+  }
+
+  /* The homepage, stood back. Its content is gone, as behind the desktop
+     sheet: what shows is the card it sits on. */
+  html[data-case-sheet-stacked] .case-sheet-desk::before {
+    content: "";
+    position: absolute;
+    inset: calc((env(safe-area-inset-top) + 14px) * var(--case-sheet-depth))
+      calc(8px * var(--case-sheet-depth)) 0;
+    border-start-start-radius: calc(
+      var(--case-sheet-radius) * var(--case-sheet-depth)
+    );
+    border-start-end-radius: calc(
+      var(--case-sheet-radius) * var(--case-sheet-depth)
+    );
+    background: var(--site-background);
+    opacity: calc(1 - 0.4 * var(--case-sheet-depth));
+  }
+
+  html[data-case-sheet-stacked] [data-site-root] {
+    padding-block-start: var(--case-sheet-top);
+  }
+
+  /* The story's rounded corners, drawn with the desk: the story is a layer
+     of its own beneath it. */
+  html[data-case-sheet-stacked] .case-sheet-desk::after {
+    content: "";
+    position: absolute;
+    inset: var(--case-sheet-top) 0 auto;
+    height: var(--case-sheet-radius);
+    border-start-start-radius: var(--case-sheet-radius);
+    border-start-end-radius: var(--case-sheet-radius);
+    background: var(--site-background);
+  }
+
+  /* Under a pull the story drags down off the homepage, which comes
+     forward behind it (`watchPhonePull`). The desk reaches the bottom of
+     the screen, absolute rather than fixed: the page sits at its top. */
+  html[data-case-sheet-stacked][data-case-sheet-pulling] .case-sheet-desk {
+    position: absolute;
+    z-index: 0;
+    height: 100lvh;
+    mask: none;
+  }
+
+  /* The rounded top goes with the story, which rounds its own. */
+  html[data-case-sheet-stacked][data-case-sheet-pulling]
+    .case-sheet-desk::after {
+    display: none;
+  }
+
+  html[data-case-sheet-stacked][data-case-sheet-pulling] .case-study-page {
+    clip-path: inset(
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+    );
+  }
+
+  /* The header's blur goes while the page moves: its band masks drop
+     under the moving layer. */
+  html[data-case-sheet-pulling]
+    :is(.case-study-page__blur, .case-study-page__scrim) {
+    visibility: hidden;
+  }
+
+  /* Opening, the story rises as a picture of its own, taken without the
+     desk: the homepage itself stands behind it. (Closing, Safari would
+     skip a picture of the whole story; the page's own is clipped below.) */
+  html[data-case-sheet-stacked][data-case-sheet-vt="open"] [data-site-root] {
+    view-transition-name: case-sheet-story;
+  }
+}
+
 html[data-case-sheet-vt]::view-transition {
   background: #000;
 }
 
-html[data-case-sheet-vt]::view-transition-group(root) {
+html[data-case-sheet-vt]::view-transition-group(*) {
   animation: none;
 }
 
-html[data-case-sheet-vt]::view-transition-old(root),
-html[data-case-sheet-vt]::view-transition-new(root) {
+/* Safari draws the page's own picture over the story's unless told. */
+html[data-case-sheet-vt]::view-transition-group(root) {
+  z-index: 0;
+}
+
+html[data-case-sheet-vt]::view-transition-group(case-sheet-story) {
+  z-index: 1;
+}
+
+html[data-case-sheet-vt]::view-transition-image-pair(*) {
+  isolation: auto;
+}
+
+html[data-case-sheet-vt]::view-transition-old(*),
+html[data-case-sheet-vt]::view-transition-new(*) {
   mask: none;
   transform-origin: 50% 0;
   animation-duration: var(--case-sheet-duration);
   animation-timing-function: var(--case-sheet-ease);
   animation-fill-mode: both;
+  mix-blend-mode: normal;
   will-change: transform, opacity;
 }
 
-html[data-case-sheet-vt="open"]::view-transition-old(root) {
-  z-index: 0;
-  animation-name: case-sheet-home-recede;
-}
-
+/* The story's page around it is only the desk, which the homepage
+   stands in for until the story has landed. */
 html[data-case-sheet-vt="open"]::view-transition-new(root) {
-  z-index: 1;
-  animation-name: case-sheet-story-rise;
+  animation-name: none;
+  opacity: 0;
 }
 
+/* Closing, the story's page is the picture, cut below the desk and any
+   pull: from the story's rounded top down. */
 html[data-case-sheet-vt="close"]::view-transition-old(root) {
   z-index: 1;
+  clip-path: inset(
+    calc(env(safe-area-inset-top) + 1.75rem + var(--case-sheet-pulled, 0px)) 0 0
+      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+  );
   animation-name: case-sheet-story-fall;
 }
 
 html[data-case-sheet-vt="close"]::view-transition-new(root) {
   z-index: 0;
+}
+
+html[data-case-sheet-vt="open"]::view-transition-old(root) {
+  animation-name: case-sheet-home-recede;
+}
+
+html[data-case-sheet-vt="close"]::view-transition-new(root) {
   animation-name: case-sheet-home-return;
 }
 
-/* Let go from a pull, the story's picture already sits where the finger
-   left it, over the black desk; the desk is clipped away and the story
-   slides on from there. The homepage rises out of the black. */
-html[data-case-sheet-pulled]::view-transition-old(root) {
+/* The story's picture spans its page from the top of the screen; its
+   rounded top starts below the desk. */
+html[data-case-sheet-vt]::view-transition-new(case-sheet-story) {
   clip-path: inset(
-    var(--case-sheet-pulled, 0) 0 0 0 round var(--case-sheet-radius)
+    var(--case-sheet-top, 0) 0 0 0 round var(--case-sheet-radius)
       var(--case-sheet-radius) 0 0
   );
-  animation-name: case-sheet-story-drop;
 }
 
-html[data-case-sheet-pulled]::view-transition-new(root) {
-  animation-name: case-sheet-home-surface;
+html[data-case-sheet-vt="open"]::view-transition-new(case-sheet-story) {
+  animation-name: case-sheet-story-rise;
 }
 
+/* The homepage stood back: `--case-sheet-depth` of the way, 1 at rest and
+   less where a pull had brought it forward. */
 @keyframes case-sheet-home-recede {
   to {
     opacity: 0.6;
@@ -499,78 +649,31 @@ html[data-case-sheet-pulled]::view-transition-new(root) {
 
 @keyframes case-sheet-home-return {
   from {
-    opacity: 0.6;
-    transform: translateY(calc(env(safe-area-inset-top) + 14px))
-      scale(var(--case-sheet-scale, 0.96));
+    opacity: calc(1 - 0.4 * var(--case-sheet-depth));
+    transform: translateY(
+        calc((env(safe-area-inset-top) + 14px) * var(--case-sheet-depth))
+      )
+      scale(
+        calc(1 - (1 - var(--case-sheet-scale, 0.96)) * var(--case-sheet-depth))
+      );
     clip-path: inset(
-      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
+      0 round calc(var(--case-sheet-radius) * var(--case-sheet-depth))
+        calc(var(--case-sheet-radius) * var(--case-sheet-depth)) 0 0
     );
   }
 }
 
-@keyframes case-sheet-home-surface {
-  from {
-    opacity: 0;
-    transform: translateY(calc(env(safe-area-inset-top) + 14px))
-      scale(var(--case-sheet-scale, 0.96));
-    clip-path: inset(
-      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
-    );
-  }
-}
-
+/* From the bottom edge, and back off it from wherever a pull left it. */
 @keyframes case-sheet-story-rise {
   from {
-    transform: translateY(100%);
-    clip-path: inset(
-      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
-    );
-  }
-  to {
-    transform: none;
-    clip-path: inset(0 round 0);
+    transform: translateY(100vh);
   }
 }
 
 @keyframes case-sheet-story-fall {
-  from {
-    transform: none;
-    clip-path: inset(0 round 0);
-  }
   to {
-    transform: translateY(100%);
-    clip-path: inset(
-      0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
-    );
+    transform: translateY(100vh);
   }
-}
-
-@keyframes case-sheet-story-drop {
-  to {
-    transform: translateY(100%);
-  }
-}
-
-/* Under a pull the whole page drags down over a black desk with its top
-   corners rounded (`watchPhonePull`). The desk is the root's own ground,
-   not a fixed layer, which iOS would tint its bars from and keep. The
-   header's blur goes while the page moves: its band masks drop under a
-   rounded clip. */
-html[data-case-sheet-pulling],
-html[data-case-sheet-pulling] body {
-  background: #000;
-}
-
-html[data-case-sheet-pulling] [data-site-root] {
-  clip-path: inset(
-    0 round var(--case-sheet-radius) var(--case-sheet-radius) 0 0
-  );
-  background: var(--site-background);
-}
-
-html[data-case-sheet-pulling]
-  :is(.case-study-page__blur, .case-study-page__scrim) {
-  visibility: hidden;
 }
 
 /* While the story rises, only its first screen is laid out: in both stories
@@ -622,7 +725,7 @@ html:has(.case-study-page) {
 .case-study-page__toolbar {
   position: sticky;
   z-index: calc(var(--site-layer-chrome) + 1);
-  inset-block-start: 0;
+  inset-block-start: var(--case-sheet-top, 0);
   isolation: isolate;
   display: flex;
   width: min(100%, 724px);
@@ -641,7 +744,7 @@ html:has(.case-study-page) {
 .case-study-page__blur {
   position: fixed;
   z-index: var(--site-layer-chrome);
-  inset-block-start: 0;
+  inset-block-start: var(--case-sheet-top, 0);
   inset-inline: 0;
   height: var(--case-study-header-height);
   pointer-events: none;
@@ -712,7 +815,7 @@ html:has(.case-study-page) {
 
   position: fixed;
   z-index: var(--site-layer-chrome);
-  inset-block-start: 0;
+  inset-block-start: var(--case-sheet-top, 0);
   inset-inline: 0;
   height: var(--case-study-fade-height);
   pointer-events: none;
@@ -1092,7 +1195,7 @@ html:has(.case-study-page) {
 .humi-story-intro__brand {
   position: sticky;
   z-index: calc(var(--site-layer-chrome) + 2);
-  inset-block-start: 1.25rem;
+  inset-block-start: calc(var(--case-sheet-top, 0px) + 1.25rem);
   display: flex;
   /* The same column and gutter the intro below it uses, so the mark's left
      edge and the lede's first character land on one line at every width. */
@@ -5723,15 +5826,17 @@ html:has(.pg-frame[data-pg-enlarged]) {
 }
 
 @media (max-width: 600px) {
+  /* Icon-only on phones: every link, Email included. */
   .home-dock__group .home-dock__label {
     display: none;
   }
 
-  .home-dock__group [data-profile="email"] .home-dock__label {
-    display: inline;
+  /* Square buttons inset the glyph 10px, so hang them by that instead. */
+  .home-dock__bar > .home-dock__track {
+    margin-inline-start: -10px;
   }
 
-  .home-dock__group .home-dock__link:not([data-profile="email"]) {
+  .home-dock__group .home-dock__link {
     width: 44px;
     height: 44px;
     min-height: 44px;

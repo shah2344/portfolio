@@ -63,9 +63,10 @@ their entrances. Homepage cards open case studies as a Vaul sheet over the page
 `src/app/@sheet`); a case study reached by its URL is a full page, and its close
 button returns home with a one-snapshot CSS zoom. On phones (narrow and touch)
 a card opens the full page instead, by a full navigation that a cross-document
-view transition draws as a sheet; closing, Back and a pull down from the top
-step back to the homepage, which the browser restores from its back-forward
-cache (`case-sheet/phone-sheet.ts`). Other routes navigate
+view transition draws as a sheet. While it is open the page stays stacked over
+a dimmed card that stands for the homepage; only a strip along the top is fixed.
+Closing, Back and a pull down from the top step back to the homepage, which
+the browser restores from its back-forward cache (`case-sheet/phone-sheet.ts`). Other routes navigate
 immediately, and theme changes alone retain the button-origin reveal. The
 snapshots live in `src/components/motion/page-wipe.ts`.
 

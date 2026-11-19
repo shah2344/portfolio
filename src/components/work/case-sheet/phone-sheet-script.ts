@@ -12,6 +12,10 @@
  * An opened story also keeps `data-case-sheet-arrival`, which settles its
  * intro before paint (the sheet rising is its entrance), and lays out only
  * its first screen until it has landed (`data-case-sheet-landing`).
+ *
+ * A story with the homepage just behind it in history is drawn stacked over
+ * it (`data-case-sheet-stacked`), on every showing: opened, reloaded, or
+ * stepped forward to.
  */
 
 export const FROM_KEY = "case-sheet:from";
@@ -19,10 +23,38 @@ export const TRANSITION_KEY = "case-sheet:transition";
 export const PULLED_KEY = "case-sheet:pulled";
 export const HOME_SCROLL_KEY = "case-sheet:home-scroll";
 
-function direct(transition: string, pulled: string, homeScroll: string) {
+function direct(
+  from: string,
+  transition: string,
+  pulled: string,
+  homeScroll: string,
+) {
   const storage = window.sessionStorage;
   const root = document.documentElement;
   const isStory = (path: string) => path.startsWith("/work/");
+
+  type Navigation = {
+    currentEntry: { index: number } | null;
+    entries(): { url: string | null }[];
+  };
+  // Keep in step with `homeIsBehind` in `phone-sheet.ts`.
+  const stack = () => {
+    const path = window.location.pathname;
+    let behind = false;
+    if (isStory(path)) {
+      const navigation = (window as { navigation?: Navigation }).navigation;
+      const current = navigation?.currentEntry;
+      if (navigation && current) {
+        const previous = navigation.entries()[current.index - 1];
+        behind = previous?.url ? new URL(previous.url).pathname === "/" : false;
+      } else {
+        behind = storage.getItem(from) === path;
+      }
+    }
+    if (behind) root.dataset.caseSheetStacked = "";
+    else delete root.dataset.caseSheetStacked;
+  };
+  stack();
   const directionOf = (from: string, to: string | null) => {
     if (from === "/" && (to === null || isStory(to))) return "open";
     if (isStory(from) && (to === null || to === "/")) return "close";
@@ -55,6 +87,7 @@ function direct(transition: string, pulled: string, homeScroll: string) {
   });
 
   window.addEventListener("pagereveal", (event) => {
+    stack();
     const direction = storage.getItem(transition);
     const offset = Number(storage.getItem(pulled)) || 0;
     storage.removeItem(transition);
@@ -86,13 +119,18 @@ function direct(transition: string, pulled: string, homeScroll: string) {
       root.dataset.caseSheetArrival = "";
       root.dataset.caseSheetLanding = "";
     } else if (offset > 0) {
-      root.dataset.caseSheetPulled = "";
+      // The story's picture sits that far down, and the homepage had come
+      // part way forward.
       root.style.setProperty("--case-sheet-pulled", `${offset}px`);
+      root.style.setProperty(
+        "--case-sheet-depth",
+        String(Math.max(0, 1 - offset / window.innerHeight)),
+      );
     }
     void viewTransition.finished.finally(() => {
       delete root.dataset.caseSheetVt;
-      delete root.dataset.caseSheetPulled;
       root.style.removeProperty("--case-sheet-scale");
+      root.style.removeProperty("--case-sheet-depth");
       root.style.removeProperty("--case-sheet-pulled");
       if (root.dataset.caseSheetLanding === undefined) return;
       delete root.dataset.caseSheetLanding;
@@ -102,4 +140,4 @@ function direct(transition: string, pulled: string, homeScroll: string) {
   });
 }
 
-export const phoneSheetScript = `try{(${direct.toString()})(${[TRANSITION_KEY, PULLED_KEY, HOME_SCROLL_KEY].map((key) => JSON.stringify(key)).join(",")})}catch(e){}`;
+export const phoneSheetScript = `try{(${direct.toString()})(${[FROM_KEY, TRANSITION_KEY, PULLED_KEY, HOME_SCROLL_KEY].map((key) => JSON.stringify(key)).join(",")})}catch(e){}`;

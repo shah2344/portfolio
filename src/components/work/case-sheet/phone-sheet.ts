@@ -13,6 +13,10 @@
  * Coming back steps back through history, so iOS restores the homepage from
  * its back-forward cache exactly as the reader left it, scroll included. The
  * close button and a pull down from the story's top both do that.
+ *
+ * Between the two, the story is drawn stacked over the homepage as the sheet
+ * is: the homepage a dimmed card stood back behind its rounded top. Only a
+ * strip along the top is fixed, so the page still scrolls as a document.
  */
 
 import { FROM_KEY, PULLED_KEY, TRANSITION_KEY } from "./phone-sheet-script";
@@ -96,16 +100,18 @@ function insideSheet() {
 
 /**
  * Pull down to dismiss. While the story sits at its top, a downward pull
- * from anywhere drags the whole page down over a black desk, its top corners
- * rounded (`data-case-sheet-pulling` in `globals.css`); see `sheet-gesture.ts`
- * for how a pull is told from a scroll and when letting go closes. A close
+ * from anywhere drags the whole page down, and the homepage stood back
+ * behind it comes forward with the pull, as behind the desktop sheet
+ * (`data-case-sheet-pulling` in `globals.css`); see `sheet-gesture.ts` for
+ * how a pull is told from a scroll and when letting go closes. A close
  * steps back with the page where the finger left it, and the transition
  * slides it on from there.
  */
 export function watchPhonePull() {
   const root = document.documentElement;
   const page = document.querySelector<HTMLElement>("[data-site-root]");
-  if (!page) return () => {};
+  const desk = document.querySelector<HTMLElement>(".case-sheet-desk");
+  if (!page || !desk) return () => {};
   let offset = 0;
   let closing = false;
   let settle = 0;
@@ -113,19 +119,29 @@ export function watchPhonePull() {
   const rest = () => {
     window.clearTimeout(settle);
     delete root.dataset.caseSheetPulling;
-    page.style.removeProperty("transform");
-    page.style.removeProperty("transition");
+    for (const el of [page, desk]) {
+      el.style.removeProperty("transform");
+      el.style.removeProperty("transition");
+      el.style.removeProperty("--case-sheet-depth");
+    }
   };
 
   const stop = trackSheetDrag(page, {
     canStart: () =>
-      !closing && isPhoneSheet() && !insideSheet() && homeIsBehind(),
+      !closing &&
+      isPhoneSheet() &&
+      !insideSheet() &&
+      root.dataset.caseSheetStacked !== undefined,
     onMove: (next) => {
       offset = next;
       window.clearTimeout(settle);
       root.dataset.caseSheetPulling = "";
-      page.style.transition = "none";
+      page.style.transition = desk.style.transition = "none";
       page.style.transform = `translate3d(0, ${next}px, 0)`;
+      desk.style.setProperty(
+        "--case-sheet-depth",
+        String(Math.max(0, 1 - next / window.innerHeight)),
+      );
     },
     onEnd: (close) => {
       if (close) {
@@ -139,7 +155,11 @@ export function watchPhonePull() {
       page.style.transition = reduced
         ? "none"
         : `transform ${DURATION}ms ${EASE}`;
+      desk.style.transition = reduced
+        ? "none"
+        : `--case-sheet-depth ${DURATION}ms ${EASE}`;
       page.style.transform = "translate3d(0, 0, 0)";
+      desk.style.setProperty("--case-sheet-depth", "1");
       settle = window.setTimeout(rest, reduced ? 0 : DURATION);
     },
   });

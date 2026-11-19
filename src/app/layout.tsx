@@ -114,6 +114,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: phoneSheetScript }} />
       </head>
       <body>
+        {/* On a phone, the homepage stood back behind a story opened from
+            it; hidden otherwise. See `phone-sheet.ts`. */}
+        <div aria-hidden="true" className="case-sheet-desk" />
         <div data-site-root>{children}</div>
         {sheet}
         <AgentationTools />
