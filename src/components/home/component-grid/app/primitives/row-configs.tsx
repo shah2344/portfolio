@@ -39,6 +39,8 @@ const NOTE_SLOT = 52;
     last one holds before the next family, a beat longer. */
 const STEP = 2400;
 const INTERVAL = 3200;
+/** The row's side inset when no leading part sets its own. */
+const INSET = 20;
 /** The row's gap between its parts. */
 const GAP = 12;
 /** The selection's space around the part it marks. */
@@ -193,26 +195,6 @@ function Amount({
   );
 }
 
-function Check() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height="24"
-      viewBox="0 0 24 24"
-      width="24"
-    >
-      <path
-        d="M5.5 12.5l4.2 4.5 8.8-10"
-        stroke="var(--blue)"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.4"
-      />
-    </svg>
-  );
-}
-
 function LocalToggle({ label }: { label: string }) {
   const [on, setOn] = useState(true);
   return <ToggleSwitch checked={on} label={label} onChange={setOn} />;
@@ -222,7 +204,13 @@ type Slot = "Leading" | "Trailing" | "Subtitle";
 
 /** A leading or trailing part. Steps that share an id share the element,
     so it stays where it is while the rest of the row changes around it. */
-type Piece = { id: string; node: ReactNode };
+type Piece = {
+  id: string;
+  node: ReactNode;
+  /** A leading part's height, so the row's left inset can match the space
+      above and below it. */
+  size?: number;
+};
 
 type Variant = {
   /** Which part of the row the variant is about, and what it is. */
@@ -267,7 +255,7 @@ const chevron: Piece = {
  * read differently. The content is the wallet's own.
  */
 const FAMILIES: Variant[][] = [
-  // The card's trailing accessory, the rest of the row held.
+  // The card's trailing accessory: a button, then an icon.
   [
     {
       slot: "Trailing",
@@ -285,17 +273,10 @@ const FAMILIES: Variant[][] = [
     },
     {
       slot: "Trailing",
-      type: "Copy",
-      title: "Your card",
+      type: "Icon",
+      title: "Card details",
       subtitle: "•••• 4821",
       trailing: { id: "copy", node: <Glyph name="copy" /> },
-    },
-    {
-      slot: "Trailing",
-      type: "Selected",
-      title: "Your card",
-      subtitle: "•••• 4821",
-      trailing: { id: "check", node: <Check /> },
     },
   ],
   // A settings row built up around its toggle: a subtitle, then an icon.
@@ -308,19 +289,20 @@ const FAMILIES: Variant[][] = [
     },
     {
       slot: "Subtitle",
-      type: "With toggle",
+      type: "One line",
       title: "Face ID",
       subtitle: "Unlock with a glance",
       trailing: { id: "toggle", node: <LocalToggle label="Face ID" /> },
     },
     {
       slot: "Leading",
-      type: "Icon tile",
+      type: "Icon",
       title: "Face ID",
       subtitle: "Unlock with a glance",
       leading: {
         id: "face-id",
         node: <Tile color="var(--green)" icon="face-id" />,
+        size: 36,
       },
       trailing: { id: "toggle", node: <LocalToggle label="Face ID" /> },
     },
@@ -329,18 +311,18 @@ const FAMILIES: Variant[][] = [
   [
     {
       slot: "Leading",
-      type: "Badge",
+      type: "Icon with badge",
       title: "Riverside Grill",
       subtitle: "Tip-out · Pending",
-      leading: { id: "category", node: <Category badge /> },
+      leading: { id: "category", node: <Category badge />, size: 44 },
       trailing: { id: "amount", node: <Amount value="$50" /> },
     },
     {
       slot: "Trailing",
-      type: "Credit",
+      type: "Amount",
       title: "Riverside Grill",
       subtitle: "Tip-out",
-      leading: { id: "category", node: <Category /> },
+      leading: { id: "category", node: <Category />, size: 44 },
       trailing: { id: "amount", node: <Amount credit value="$50" /> },
     },
   ],
@@ -352,30 +334,33 @@ const FAMILIES: Variant[][] = [
       title: "Deposit cash",
       subtitle: "Add cash to your account",
       subheadline: true,
-      leading: { id: "logo", node: <Glyph name="fey-logo" size={44} /> },
+      leading: {
+        id: "logo",
+        node: <Glyph name="fey-logo" size={44} />,
+        size: 44,
+      },
       trailing: chevron,
     },
     {
       slot: "Leading",
-      type: "Avatar",
+      type: "Avatar with flag",
       title: "Priya Sharma",
       subtitle: "Account ending in ･･8923",
       subheadline: true,
-      leading: { id: "person", node: <Person initials="PS" /> },
+      leading: { id: "person", node: <Person initials="PS" />, size: 44 },
       trailing: chevron,
     },
   ],
-  // The subtitle runs longer, and the row grows with it.
+  // The same long subtitle, cut to one line, then wrapped in full as the
+  // row grows to hold it.
   [
     {
       slot: "Subtitle",
-      type: "Two lines",
+      type: "Truncated",
       title: <AvailablePay />,
       subtitle:
-        "There could be a few reasons for this. One of these may apply.",
+        "There could be a few reasons for this. One of the following may apply to your situation…",
       subheadline: true,
-      wrap: true,
-      height: 88,
     },
     {
       slot: "Subtitle",
@@ -415,31 +400,54 @@ function boxWithin(element: HTMLElement, ancestor: HTMLElement) {
 }
 
 /**
- * An element's width or height, kept current. The first reading is marked
- * instant, so a slot that mounts at its size doesn't animate into it.
+ * Sizes `slot` to fit `inner` on one axis, plus `extra` while it holds
+ * anything. The first reading lands outright, so a slot that mounts at its
+ * size doesn't animate into it; later changes ease. It writes the style
+ * itself: under the card's lazily loaded Motion features, a value given to
+ * an `m` element before they load is never applied, which left the first
+ * row's subtitle and accessory slots stuck at 0.
  */
-function useSize(ref: RefObject<HTMLElement | null>, axis: "width" | "height") {
-  const [size, setSize] = useState({ value: 0, instant: true });
+function useFit(
+  slot: RefObject<HTMLElement | null>,
+  inner: RefObject<HTMLElement | null>,
+  axis: "width" | "height",
+  reduce: boolean,
+  extra = 0,
+) {
+  const size = useMotionValue(0);
 
   useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const read = () =>
-      axis === "width" ? element.offsetWidth : element.offsetHeight;
-    setSize({ value: read(), instant: true });
-    let first = true;
+    const outer = slot.current;
+    const element = inner.current;
+    if (!outer || !element) return;
+    const read = () => {
+      const value =
+        axis === "width" ? element.offsetWidth : element.offsetHeight;
+      return value ? value + extra : 0;
+    };
+    const write = (value: number) => {
+      outer.style.setProperty(axis, `${value}px`);
+    };
+    const unsubscribe = size.on("change", write);
+    let run: ReturnType<typeof animate> | undefined;
+    let last = read();
+    size.jump(last);
+    write(last);
     const observer = new ResizeObserver(() => {
-      if (first) {
-        first = false;
-        return;
-      }
-      setSize({ value: read(), instant: false });
+      const value = read();
+      if (value === last) return;
+      last = value;
+      run?.stop();
+      if (reduce) size.jump(value);
+      else run = animate(size, value, MORPH);
     });
     observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref, axis]);
-
-  return size;
+    return () => {
+      observer.disconnect();
+      run?.stop();
+      unsubscribe();
+    };
+  }, [slot, inner, axis, reduce, extra, size]);
 }
 
 /** How a part enters and leaves its slot. */
@@ -471,17 +479,16 @@ function Side({
   annotate?: number;
   reduce: boolean;
 }) {
+  const slot = useRef<HTMLSpanElement>(null);
   const inner = useRef<HTMLSpanElement>(null);
-  const size = useSize(inner, "width");
+  useFit(slot, inner, "width", reduce, GAP);
 
   return (
-    <m.span
-      animate={{ width: size.value ? size.value + GAP : 0 }}
+    <span
       className={`flex shrink-0 items-center ${
         side === "trailing" ? "justify-end" : ""
       }`}
-      initial={false}
-      transition={size.instant || reduce ? INSTANT : MORPH}
+      ref={slot}
     >
       <span className="relative flex shrink-0 items-center" ref={inner}>
         {/* A leaving part keeps to its own edge while the slot resizes. */}
@@ -502,7 +509,7 @@ function Side({
           )}
         </AnimatePresence>
       </span>
-    </m.span>
+    </span>
   );
 }
 
@@ -601,17 +608,13 @@ function Subtitle({
   annotate?: number;
   reduce: boolean;
 }) {
+  const slot = useRef<HTMLSpanElement>(null);
   const inner = useRef<HTMLSpanElement>(null);
-  const size = useSize(inner, "height");
+  useFit(slot, inner, "height", reduce);
   const { subtitle, subheadline, wrap } = variant;
 
   return (
-    <m.span
-      animate={{ height: size.value }}
-      className="flex flex-col"
-      initial={false}
-      transition={size.instant || reduce ? INSTANT : MORPH}
-    >
+    <span className="flex flex-col" ref={slot}>
       <span className="relative flex flex-col" ref={inner}>
         <AnimatePresence initial={false} mode="popLayout">
           {subtitle && (
@@ -630,7 +633,7 @@ function Subtitle({
           )}
         </AnimatePresence>
       </span>
-    </m.span>
+    </span>
   );
 }
 
@@ -647,13 +650,18 @@ function Row({
 }) {
   const { slot, title, leading, trailing } = variant;
   const mark = (part: Slot) => (slot === part ? step : undefined);
+  // A leading part sits as far from the left edge as from the top and
+  // bottom; without one, the text keeps the row's usual inset.
+  const inset = leading?.size ? (ROW_HEIGHT - leading.size) / 2 : INSET;
 
   return (
     <m.div
-      className="flex items-center rounded-[20px] px-5"
+      className="flex items-center rounded-[20px] transition-[padding] duration-[450ms] ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
       data-row=""
       style={{
         height,
+        paddingLeft: inset,
+        paddingRight: INSET,
         backgroundColor: "var(--card-background)",
         boxShadow: ROW_SHADOW,
       }}
