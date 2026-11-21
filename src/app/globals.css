@@ -468,25 +468,26 @@ html[data-page-zoom="close"] {
 
   html[data-case-sheet-stacked] .case-sheet-desk {
     position: fixed;
-    z-index: var(--site-layer-chrome);
+    /* Over the header's blur, which would otherwise smear the corners
+       and show them as darker squares. */
+    z-index: calc(var(--site-layer-chrome) + 1);
     inset: 0 0 auto;
     display: block;
     height: calc(var(--case-sheet-top) + var(--case-sheet-radius));
     overflow: hidden;
     pointer-events: none;
     background: #000;
-    /* Below the desk, only the corners: the story's top shows between
-       them, close control and all. */
+    /* Below the desk, only what lies outside the story's rounded corners:
+       its top shows everywhere else, blur and close control and all. */
+    --case-sheet-corner:
+      transparent calc(var(--case-sheet-radius) - 0.5px),
+      #000 calc(var(--case-sheet-radius) + 0.5px);
     mask:
       linear-gradient(#000 0 0) top / 100% var(--case-sheet-top) no-repeat,
-      linear-gradient(
-          to right,
-          #000 var(--case-sheet-radius),
-          transparent var(--case-sheet-radius)
-            calc(100% - var(--case-sheet-radius)),
-          #000 0
-        )
-        bottom / 100% var(--case-sheet-radius) no-repeat;
+      radial-gradient(circle at 100% 100%, var(--case-sheet-corner)) bottom
+        left / var(--case-sheet-radius) var(--case-sheet-radius) no-repeat,
+      radial-gradient(circle at 0% 100%, var(--case-sheet-corner)) bottom
+        right / var(--case-sheet-radius) var(--case-sheet-radius) no-repeat;
   }
 
   /* The homepage, stood back. Its content is gone, as behind the desktop
@@ -510,18 +511,6 @@ html[data-page-zoom="close"] {
     padding-block-start: var(--case-sheet-top);
   }
 
-  /* The story's rounded corners, drawn with the desk: the story is a layer
-     of its own beneath it. */
-  html[data-case-sheet-stacked] .case-sheet-desk::after {
-    content: "";
-    position: absolute;
-    inset: var(--case-sheet-top) 0 auto;
-    height: var(--case-sheet-radius);
-    border-start-start-radius: var(--case-sheet-radius);
-    border-start-end-radius: var(--case-sheet-radius);
-    background: var(--site-background);
-  }
-
   /* Under a pull the story drags down off the homepage, which comes
      forward behind it (`watchPhonePull`). The desk reaches the bottom of
      the screen, absolute rather than fixed: the page sits at its top. */
@@ -530,12 +519,6 @@ html[data-page-zoom="close"] {
     z-index: 0;
     height: 100lvh;
     mask: none;
-  }
-
-  /* The rounded top goes with the story, which rounds its own. */
-  html[data-case-sheet-stacked][data-case-sheet-pulling]
-    .case-sheet-desk::after {
-    display: none;
   }
 
   html[data-case-sheet-stacked][data-case-sheet-pulling] .case-study-page {
@@ -4356,7 +4339,7 @@ html[data-page-wipe]
 
 @media (prefers-reduced-motion: reduce), (scripting: none) {
   [data-home-enter],
-  [data-home-enter] span,
+  [data-home-enter-kind="heading"] span,
   [data-home-enter]::after {
     opacity: 1;
     animation: none;
@@ -4368,7 +4351,7 @@ html[data-page-wipe]
 /* A load resuming partway down (`resume.ts`) paints the finished page from its
    first frame, before hydration settles each entrance for good. */
 :root[data-home-resume] [data-home-enter],
-:root[data-home-resume] [data-home-enter] span,
+:root[data-home-resume] [data-home-enter-kind="heading"] span,
 :root[data-home-resume] [data-home-enter]::after {
   visibility: visible;
   opacity: 1;
@@ -4646,6 +4629,11 @@ html[data-page-wipe]
 .home-contact p {
   margin: 0;
   text-wrap: pretty;
+}
+
+/* The ask starts its own line rather than splitting mid-sentence. */
+.home-contact__ask {
+  display: inline-block;
 }
 
 /* When to expect a reply: a step down from the note, a step up from the

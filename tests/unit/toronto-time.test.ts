@@ -23,26 +23,26 @@ describe("Toronto reply note", () => {
   test("reads the time in Toronto and picks the reply window", () => {
     // Thursday 2026-10-22, EDT (UTC-4).
     expect(replyNote(new Date("2026-10-23T02:38:00Z"))).toBe(
-      "It’s 10:38 PM in Toronto — I’ll reply by morning.",
+      "It’s 10:38 PM in Toronto. I’ll reply tonight or first thing.",
     );
     expect(replyNote(new Date("2026-10-22T14:05:00Z"))).toBe(
-      "It’s 10:05 AM in Toronto — I usually reply fast.",
+      "It’s 10:05 AM in Toronto. I usually reply within a few hours.",
     );
     expect(replyNote(new Date("2026-10-22T07:12:00Z"))).toBe(
-      "It’s 3:12 AM in Toronto — I’m probably asleep.",
+      "It’s 3:12 AM in Toronto. I’ll reply first thing.",
     );
   });
-  test("holds weekend messages until Monday", () => {
+  test("stays around over the weekend", () => {
     expect(replyNote(new Date("2026-10-23T22:00:00Z"))).toBe(
-      "It’s 6:00 PM Friday in Toronto — I’m back Monday.",
+      "It’s 6:00 PM Friday in Toronto. No need to wait for Monday.",
     );
     expect(replyNote(new Date("2026-10-25T23:00:00Z"))).toBe(
-      "It’s 7:00 PM in Toronto — I’ll reply by morning.",
+      "It’s 7:00 PM in Toronto. I’ll reply tonight or first thing.",
     );
   });
   test("treats midnight as the small hours, not 24", () => {
     expect(replyNote(new Date("2026-10-22T04:30:00Z"))).toContain(
-      "12:30 AM in Toronto — I’m probably asleep",
+      "12:30 AM in Toronto. I’ll reply first thing",
     );
   });
 });

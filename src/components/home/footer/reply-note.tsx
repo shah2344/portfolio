@@ -57,7 +57,8 @@ export function HomeReplyNote({ className }: { className?: string }) {
           trend={1}
           value={reply.day ? `${reply.time} ${reply.day}` : reply.time}
         />{" "}
-        in Toronto &mdash;{" "}
+        in Toronto.{" "}
+        {/* A space of its own: the flow trims one ending a run of words. */}
         <Scritto respectMotionPreference value={reply.promise} />
       </scritto-flow>
     </p>

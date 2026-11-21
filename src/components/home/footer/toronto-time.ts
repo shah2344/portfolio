@@ -30,9 +30,10 @@ export const REPLY_NOTE_FALLBACK = "I’m in Toronto and usually reply fast.";
 
 /**
  * When a message sent now is likely to be answered, read off the time in
- * Toronto: quickly through the working day, by the morning overnight, and
- * Monday from Friday evening until Sunday evening. The time comes apart
- * from the words around it so it can be animated on its own.
+ * Toronto: within hours through the working day, that night or first thing
+ * outside it, and no waiting for Monday from Friday evening until Sunday
+ * evening. The time comes apart from the words around it so it can be
+ * animated on its own.
  */
 export function replyParts(date: Date) {
   const parts = replyFormatter.formatToParts(date);
@@ -48,18 +49,18 @@ export function replyParts(date: Date) {
     (weekday === "Sunday" && hour < 17);
   const reply = (promise: string, day = "") => ({ time, day, promise });
 
-  if (weekend) return reply("I’m back Monday.", weekday);
-  if (hour < 6) return reply("I’m probably asleep.");
+  if (weekend) return reply("No need to wait for Monday.", weekday);
+  if (hour < 6) return reply("I’ll reply first thing.");
   if (hour < 9) return reply("I’m just getting started.");
-  if (hour < 17) return reply("I usually reply fast.");
-  return reply("I’ll reply by morning.");
+  if (hour < 17) return reply("I usually reply within a few hours.");
+  return reply("I’ll reply tonight or first thing.");
 }
 
 export type ReplyParts = ReturnType<typeof replyParts>;
 
 /** The reply note as one sentence. */
 export function replySentence({ time, day, promise }: ReplyParts) {
-  return `It’s ${time}${day ? ` ${day}` : ""} in Toronto — ${promise}`;
+  return `It’s ${time}${day ? ` ${day}` : ""} in Toronto. ${promise}`;
 }
 
 export function replyNote(date: Date) {

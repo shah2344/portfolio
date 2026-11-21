@@ -222,6 +222,70 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
       window.addEventListener("pointercancel", release);
     });
 
+    // On a phone the slide sits in a sideways-scrolling carousel. Safari
+    // doesn't reliably hold that scroll back for the knob's `pan-y`, and once
+    // the browser takes the pan it cancels the pointer and the drag dies. So
+    // the first move of a touch on the knob decides: mostly sideways, and
+    // every move of that touch is cancelled, so the finger stays with the
+    // knob. The first `touchmove` is the only one Safari lets a page cancel
+    // before it commits to scrolling; anything else stays a scroll.
+    const canGrabRef = useRef(canGrab);
+    canGrabRef.current = canGrab;
+    useEffect(() => {
+      const knob = dragButtonRef.current;
+      if (!knob) return;
+      let id: number | null = null;
+      let startX = 0;
+      let startY = 0;
+      let state: "pending" | "slide" | "scroll" = "scroll";
+      const find = (list: TouchList) => {
+        for (const touch of list) if (touch.identifier === id) return touch;
+        return null;
+      };
+      const onStart = (event: TouchEvent) => {
+        const touch = event.changedTouches[0];
+        if (event.touches.length > 1 || !touch || !canGrabRef.current) {
+          id = null;
+          state = "scroll";
+          return;
+        }
+        id = touch.identifier;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        state = "pending";
+      };
+      const onMove = (event: TouchEvent) => {
+        if (id === null || state === "scroll") return;
+        const touch = find(event.changedTouches);
+        if (!touch) return;
+        if (state === "pending") {
+          const dx = touch.clientX - startX;
+          const dy = touch.clientY - startY;
+          if (dx === 0 && dy === 0) return;
+          state = Math.abs(dx) > Math.abs(dy) ? "slide" : "scroll";
+          if (state === "scroll") return;
+        }
+        if (event.cancelable) event.preventDefault();
+      };
+      const onEnd = (event: TouchEvent) => {
+        if (id !== null && find(event.changedTouches)) {
+          id = null;
+          state = "scroll";
+        }
+      };
+      knob.addEventListener("touchstart", onStart, { passive: true });
+      // Not passive: it has to be able to keep the carousel from scrolling.
+      knob.addEventListener("touchmove", onMove, { passive: false });
+      knob.addEventListener("touchend", onEnd);
+      knob.addEventListener("touchcancel", onEnd);
+      return () => {
+        knob.removeEventListener("touchstart", onStart);
+        knob.removeEventListener("touchmove", onMove);
+        knob.removeEventListener("touchend", onEnd);
+        knob.removeEventListener("touchcancel", onEnd);
+      };
+    }, []);
+
     const handleDragStart = useCallback(() => {
       if (!canGrab) return;
       // Measure this drag from wherever the knob was caught, so it never
