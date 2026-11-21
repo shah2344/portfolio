@@ -1,5 +1,5 @@
 import { clamp, ease } from "./pose";
-import { HOME_CHARACTER_TIMING as timing } from "./timing";
+import { HOME_CHARACTER_TIMING, type HomeCharacterTiming } from "./timing";
 
 /** Underdamped spring, sampled once for WAAPI rather than a second frame loop. */
 function travelSpring(t: number) {
@@ -9,7 +9,11 @@ function travelSpring(t: number) {
 }
 
 /** One trip with a small overshoot, then an exact, drift-free resting slot. */
-export function homeCharacterEntranceFrames(x: number, y: number): Keyframe[] {
+export function homeCharacterEntranceFrames(
+  x: number,
+  y: number,
+  timing: HomeCharacterTiming = HOME_CHARACTER_TIMING,
+): Keyframe[] {
   const centered = `translate(${x}px, ${y}px)`;
   const travelStart = timing.travelDelayMs / timing.entranceMs;
   const travel = Array.from({ length: 48 }, (_, index): Keyframe => {
@@ -37,17 +41,21 @@ export function homeCharacterEntranceFrames(x: number, y: number): Keyframe[] {
       transform: `translate(${x * remaining}px, ${y * remaining}px) scale(${size / (1 + stretch)}, ${size * (1 + stretch)})`,
     };
   });
-  return [...arrivalFrames(centered), ...travel];
+  return [...arrivalFrames(centered, timing), ...travel];
 }
 
 /**
  * The same arrival and greeting, for a load restored below the masthead: the
  * character drifts a little toward its out-of-view slot and dissolves there.
  */
-export function homeCharacterDissolveFrames(x: number, y: number): Keyframe[] {
+export function homeCharacterDissolveFrames(
+  x: number,
+  y: number,
+  timing: HomeCharacterTiming = HOME_CHARACTER_TIMING,
+): Keyframe[] {
   const drift = 16 / Math.max(1, Math.hypot(x, y));
   return [
-    ...arrivalFrames(`translate(${x}px, ${y}px)`),
+    ...arrivalFrames(`translate(${x}px, ${y}px)`, timing),
     {
       offset: 1,
       opacity: 0,
@@ -58,7 +66,10 @@ export function homeCharacterDissolveFrames(x: number, y: number): Keyframe[] {
 }
 
 /** Arrives at the centre and holds there through the greeting. */
-function arrivalFrames(centered: string): Keyframe[] {
+function arrivalFrames(
+  centered: string,
+  timing: HomeCharacterTiming,
+): Keyframe[] {
   return [
     {
       offset: 0,

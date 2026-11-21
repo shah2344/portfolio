@@ -9,8 +9,9 @@ export const dynamicParams = false;
 
 /*
  * A case study opened from the homepage: it rises as a sheet over the page
- * rather than replacing it. Arriving by its URL, or reloading, renders the
- * full page in `app/work/[slug]` instead.
+ * rather than replacing it. Arriving by its URL renders the full page in
+ * `app/work/[slug]` instead; a reload on a desktop reopens the sheet
+ * (`reopen-sheet-script.ts`).
  */
 export default async function CaseSheetPage({
   params,

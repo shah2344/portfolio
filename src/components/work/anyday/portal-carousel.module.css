@@ -86,11 +86,22 @@
   text-wrap: pretty;
 }
 
+/* One slider: press anywhere on it and slide between clips. */
 .pills {
   display: flex;
   align-items: center;
   flex: none;
   gap: 0.25rem;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pills:focus-visible {
+  outline: var(--site-focus-width) solid var(--site-focus-color);
+  outline-offset: var(--site-focus-gap);
 }
 
 /* A 24px row around a 6px capsule; the hit area grows to 44px tall below. */
@@ -101,10 +112,6 @@
   width: 2rem;
   height: 1.5rem;
   padding: 0 0.125rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  cursor: pointer;
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -158,11 +165,6 @@
   .pill:hover .track {
     background: color-mix(in srgb, var(--anyday-ink) 18%, transparent);
   }
-}
-
-.pill:focus-visible {
-  outline: var(--site-focus-width) solid var(--site-focus-color);
-  outline-offset: var(--site-focus-gap);
 }
 
 @media (max-width: 40rem) {

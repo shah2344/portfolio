@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { entranceDelayMs } from "@/components/motion/entrance-timing";
 import { homeResumeScript } from "@/components/home/resume";
+import { experienceYears } from "@/content/experience";
 
 import anydaySecurityPromoImage from "../../../public/media/craft/anyday-security-promo.png";
 import anydaySuperadminImage from "../../../public/media/craft/anyday-superadmin.png";
@@ -62,7 +63,7 @@ export const projects = [
   {
     id: "anyday",
     name: "AnyDay",
-    tagline: "Moving restaurants beyond cash tip-outs",
+    tagline: "Tip payouts for hospitality teams",
     href: "/work/anyday",
     icon: anydayIconImage,
     film: {
@@ -142,9 +143,9 @@ export function HomeContent() {
                 data-home-enter-kind="text"
                 style={enterDelay(1)}
               >
-                I&rsquo;ve spent the last 7 years designing fintech and HR tech
-                products used by hundreds of thousands of people. I&rsquo;m a
-                generalist with a passion for coherence.
+                I&rsquo;ve spent the last {experienceYears()} years designing
+                fintech and HR tech products used by hundreds of thousands of
+                people. I&rsquo;m a generalist with a passion for coherence.
               </p>
             </div>
             <HomeDock enterStyle={enterDelay(DOCK_ENTER_STEP)} />
@@ -210,7 +211,7 @@ export function HomeContent() {
                   )}
 
                   <PlaygroundTile
-                    caption="Anyday Financial"
+                    caption="AnyDay Financial"
                     subtitle="AnyDay"
                     year={2026}
                   >

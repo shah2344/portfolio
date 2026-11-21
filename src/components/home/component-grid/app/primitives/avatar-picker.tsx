@@ -5,7 +5,9 @@ import {
   animate,
   m,
   useMotionValue,
+  useSpring,
   useTransform,
+  useVelocity,
   type MotionValue,
   type PanInfo,
 } from "motion/react";
@@ -22,10 +24,11 @@ import "../app-product.css";
 const AVATARS = [30, 8, 4, 20, 36, 41, 5, 29, 44, 10, 42];
 
 /**
- * Each slide's width. The product's carousel uses 8rem; wider here, so the
- * neighbours sit out at the card's edges and blur into them.
+ * Each slide's width. The product's carousel uses 8rem slides of 7rem
+ * avatars; both are larger here, so the neighbours sit out at the card's
+ * edges and blur into them.
  */
-const SLIDE = 142;
+const SLIDE = 156;
 /**
  * The product's tween: Embla's `TWEEN_FACTOR_BASE * snap count` over a scroll
  * progress that runs 0 to 1 across the snaps, so per slide of distance from
@@ -45,6 +48,11 @@ const EDGE_WIDTH = `${120 + EDGE_OVERHANG}px`;
 const EDGE_BLURS = [0.5, 1, 2, 4, 8, 12, 16];
 /** Embla's settle (`duration: 25`) is a quick, unbouncy glide. */
 const SNAP = { type: "spring", duration: 0.5, bounce: 0 } as const;
+/** The row speeds, in points a second, the ring is full under and gone over. */
+const RING_CALM = 200;
+const RING_RUSH = 600;
+/** Critically damped and quick, so it smooths without trailing the row. */
+const RING_SPRING = { stiffness: 900, damping: 60 };
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -60,12 +68,14 @@ function Slide({
   seed,
   x,
   isCenter,
+  dragging,
   onSelect,
 }: {
   index: number;
   seed: number;
   x: MotionValue<number>;
   isCenter: boolean;
+  dragging: boolean;
   onSelect: () => void;
 }) {
   const tween = useTransform(
@@ -87,34 +97,78 @@ function Slide({
           className="relative cursor-pointer"
           onClick={onSelect}
           role="radio"
-          style={{ width: "7rem", height: "7rem" }}
+          style={{ width: "9rem", height: "9rem" }}
           tabIndex={isCenter ? 0 : -1}
           type="button"
-          whileTap={{ scale: 0.95 }}
+          whileTap={dragging ? undefined : { scale: 0.95 }}
         >
           <GradientAvatar
             colors={characterBackgroundColors(seed)}
             p3
             seed={seed}
-            size={112}
+            size={144}
             style={{
               display: "block",
               backgroundColor: "var(--fills-tertiary)",
               boxShadow: "0 0 0 0.5px rgba(255, 255, 255, 0.15)",
             }}
           />
-          {isCenter && (
-            <m.div
-              animate={{ scale: 1, opacity: 1 }}
-              className="pointer-events-none absolute rounded-full"
-              initial={{ scale: 0.9, opacity: 0 }}
-              style={{ inset: "-6px", border: "3px solid var(--indigo)" }}
-              transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
-            />
-          )}
         </m.button>
       </m.div>
     </div>
+  );
+}
+
+/**
+ * The chosen avatar's ring. It stays put in the middle of the row at one size;
+ * only its stroke changes. It runs off the nearest avatar's own scale tween,
+ * on the same spring-driven row, and squares it, so the stroke drops away
+ * as soon as an avatar starts to leave and draws in over the last of the
+ * arriving one's settle, landing as it does. It also waits for the row to
+ * slow: scrubbing or flicking past several avatars sweeps each through the
+ * middle, which would otherwise flicker the stroke on and off, so it stays
+ * out until the row is calm enough to be landing. A stiff, unbouncy spring
+ * smooths the pointer's jittery speed. Drawn as a circle so the stroke thins
+ * about its own centreline.
+ */
+function CenterRing({ x }: { x: MotionValue<number> }) {
+  const velocity = useVelocity(x);
+  const target = useTransform(() => {
+    // The nearest avatar's progress from its smallest (0) to full size (1).
+    const offset = -x.get() / SLIDE;
+    const distance = Math.abs(offset - Math.round(offset));
+    const scale = clamp(1 - distance * TWEEN_PER_SLIDE, 0.7, 1);
+    const arrival = ((scale - 0.7) / 0.3) ** 2;
+    // Full under RING_CALM points a second, gone by RING_RUSH.
+    const speed = Math.abs(velocity.get());
+    const calm = clamp((RING_RUSH - speed) / (RING_RUSH - RING_CALM), 0, 1);
+    return arrival * calm;
+  });
+  const progress = useSpring(target, RING_SPRING);
+  const strokeWidth = useTransform(
+    progress,
+    (value) => clamp(value, 0, 1) * 3.5,
+  );
+  const opacity = useTransform(progress, (value) => clamp(value, 0, 1) * 0.6);
+
+  return (
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute top-1/2 left-1/2 overflow-visible"
+      height={156}
+      style={{ marginTop: -78, marginLeft: -78 }}
+      viewBox="0 0 156 156"
+      width={156}
+    >
+      <m.circle
+        cx={78}
+        cy={78}
+        fill="none"
+        r={76.75}
+        stroke="#3898ff"
+        style={{ strokeWidth, opacity }}
+      />
+    </svg>
   );
 }
 
@@ -155,7 +209,17 @@ export function AvatarPickerPrimitive() {
   const select = (index: number) =>
     setCurrent(clamp(index, 0, AVATARS.length - 1));
 
+  // Letting go of a drag over an avatar also clicks it, which would pull the
+  // row back to wherever the press began; a press that became a drag is no
+  // tap, so its click is dropped and its pressed scale let go.
+  const [dragging, setDragging] = useState(false);
+  const dragged = useRef(false);
+  const tap = (index: number) => {
+    if (!dragged.current) select(index);
+  };
+
   const onDragEnd = (_: unknown, info: PanInfo) => {
+    setDragging(false);
     const landing = x.get() + info.velocity.x * 0.2;
     const next = clamp(Math.round(-landing / SLIDE), 0, AVATARS.length - 1);
     if (next === current) animate(x, -current * SLIDE, SNAP);
@@ -174,7 +238,7 @@ export function AvatarPickerPrimitive() {
       <div className="flex flex-col items-center" ref={root}>
         <div
           className="relative w-full"
-          style={{ isolation: "isolate", height: "124px" }}
+          style={{ isolation: "isolate", height: "156px" }}
         >
           {/* Taller than the row, so the blur reaches past the avatars. */}
           <ProgressiveBlur
@@ -209,6 +273,11 @@ export function AvatarPickerPrimitive() {
               dragElastic={0.12}
               dragMomentum={false}
               onDragEnd={onDragEnd}
+              onDragStart={() => {
+                dragged.current = true;
+                setDragging(true);
+              }}
+              onPointerDownCapture={() => (dragged.current = false)}
               style={{
                 paddingLeft: `calc(50% - ${SLIDE / 2}px)`,
                 paddingTop: "6px",
@@ -222,13 +291,15 @@ export function AvatarPickerPrimitive() {
                   key={seed}
                   index={index}
                   isCenter={index === current}
-                  onSelect={() => select(index)}
+                  dragging={dragging}
+                  onSelect={() => tap(index)}
                   seed={seed}
                   x={x}
                 />
               ))}
             </m.div>
           </div>
+          <CenterRing x={x} />
         </div>
         <div className="mt-5 text-center">
           <p

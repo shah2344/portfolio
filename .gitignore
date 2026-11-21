@@ -26,6 +26,7 @@
 /outputs
 /src/content/research
 /.claude/skills
+/.agents
 /skills-lock.json
 
 # TypeScript

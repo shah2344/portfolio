@@ -76,7 +76,7 @@ export function AnyDayFinSupport() {
             />
           </SmoothSurface>
           <p className="sr-only" id="anyday-fin-video-description">
-            A member uses AnyDay’s Fin AI support chat to get help inside the
+            A worker uses AnyDay’s Fin AI support chat to get help inside the
             app.
           </p>
         </SmoothSurface>

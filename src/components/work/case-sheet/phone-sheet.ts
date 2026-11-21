@@ -93,6 +93,19 @@ export function closePhoneSheet() {
   return true;
 }
 
+/**
+ * On a phone, follows a story stacked over the homepage on to another in its
+ * place in history, so the homepage stays just behind and the next story is
+ * stacked over it too. Returns whether it did; otherwise the link navigates
+ * as usual.
+ */
+export function replacePhoneSheet(path: string) {
+  if (!isPhoneSheet() || !homeIsBehind() || insideSheet()) return false;
+  store(FROM_KEY, path);
+  window.location.replace(path);
+  return true;
+}
+
 /** A story drawn in the homepage's sheet, not as a page. */
 function insideSheet() {
   return document.querySelector("[data-vaul-drawer]") !== null;

@@ -26,9 +26,17 @@ const KNOB_MIN = 80;
  * overshoots home: a soft cap, so a long drag still only jiggles slightly.
  */
 const SETTLE_SQUASH = 3;
+/**
+ * A flick finishes the slide short of the end: past this share of the
+ * track, released at least this fast (points per second, toward the end).
+ */
+const FLICK_PROGRESS = 0.6;
+const FLICK_VELOCITY = 800;
 import { Spinner } from "./spinner";
 import { TextShimmer } from "./text-shimmer";
 import { cn } from "@/lib/utils";
+
+import { usePointerDown } from "../../use-pointer-down";
 
 const triggerHaptic = () => {};
 
@@ -73,7 +81,8 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
     const [isPostReleaseConfirming, setIsPostReleaseConfirming] =
       useState(false);
     const [showSpinner, setShowSpinner] = useState(false);
-    const [dragProgress, setDragProgress] = useState(0);
+    /** Under a tenth of the way, the arrow sits centred in the knob. */
+    const [arrowCentered, setArrowCentered] = useState(true);
     const [isDragging, setIsDragging] = useState(false);
     const constraintsRef = useRef<HTMLDivElement>(null);
     const dragButtonRef = useRef<HTMLButtonElement>(null);
@@ -84,12 +93,15 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
     const isMountedRef = useRef(true);
     const [shouldHideProcessing, setShouldHideProcessing] = useState(false);
     const canDrag = !disabled && !gateActive;
+    // Once released at the end the knob holds there while it sends; it can't
+    // be dragged again until it's reset.
+    const canGrab = canDrag && !isPostReleaseConfirming;
 
-    // While dragging horizontally we don't lock the body — `touch-action: pan-x`
-    // on the button plus framer-motion's `dragDirectionLock` already prevent
-    // the page from scrolling vertically. Locking the body with
-    // `position: fixed` causes layout jumps (page snaps to top, sticky headers
-    // disappear) so we avoid it entirely.
+    // While dragging horizontally we don't lock the body. Motion gives a
+    // `drag="x"` element `touch-action: pan-y`, so a vertical swipe that
+    // starts on the knob still scrolls the page, and `dragDirectionLock`
+    // keeps a drag on one axis. Locking the body with `position: fixed`
+    // causes layout jumps, so we avoid it entirely.
     const setBodyScrollLock = useCallback((locked: boolean) => {
       void locked;
       // Intentional no-op. Kept for API stability with existing call sites.
@@ -97,6 +109,8 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
 
     // Use motion value for button x position to keep progress in sync
     const x = useMotionValue(0);
+    /** Where the knob was when this drag caught it (mid-spring, say). */
+    const dragOriginRef = useRef(0);
 
     const containerWidthRef = useRef(0);
     const baseButtonWidthRef = useRef(KNOB_MIN);
@@ -167,7 +181,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
       x.set(0);
       if (disabled || gateActive) {
         const rafId = requestAnimationFrame(() => {
-          setDragProgress(0);
+          setArrowCentered(true);
           setIsDragAtEnd(false);
           setIsConfirming(false);
           setIsPostReleaseConfirming(false);
@@ -186,41 +200,63 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
       };
     }, [setBodyScrollLock]);
 
+    const draggingRef = useRef(false);
+
+    // Catch the knob the moment it's pressed: a spring in flight stops where
+    // it is, rather than running on until the drag clears its threshold. A
+    // press that never becomes a drag lets it settle home again.
+    usePointerDown(dragButtonRef, () => {
+      if (!canGrab || x.get() <= 0) return;
+      x.stop();
+      const release = () => {
+        window.removeEventListener("pointerup", release);
+        window.removeEventListener("pointercancel", release);
+        if (draggingRef.current || !isMountedRef.current) return;
+        animate(x, 0, {
+          type: "spring",
+          bounce: reduceMotion ? 0 : 0.2,
+          duration: reduceMotion ? 0.3 : 0.45,
+        });
+      };
+      window.addEventListener("pointerup", release);
+      window.addEventListener("pointercancel", release);
+    });
+
     const handleDragStart = useCallback(() => {
-      if (!canDrag) return;
+      if (!canGrab) return;
+      // Measure this drag from wherever the knob was caught, so it never
+      // jumps under the finger.
+      x.stop();
+      draggingRef.current = true;
+      dragOriginRef.current = Math.max(0, x.get());
       triggerHaptic();
       setIsDragging(true);
       setBodyScrollLock(true);
-    }, [canDrag, setBodyScrollLock]);
+    }, [canGrab, setBodyScrollLock, x]);
 
     const handleInteractionCancel = useCallback(() => {
+      draggingRef.current = false;
       setIsDragging(false);
       setBodyScrollLock(false);
     }, [setBodyScrollLock]);
 
+    // Progress changes every frame of a drag; React only hears about the
+    // two thresholds the labels care about, so a drag doesn't re-render per
+    // pointer move (setState bails out while the value is unchanged).
+    const showSpinnerRef = useRef(showSpinner);
+    showSpinnerRef.current = showSpinner;
     useEffect(() => {
-      const unsubscribe = progressFromX.on("change", (latest) => {
-        setDragProgress(latest);
-      });
-      return unsubscribe;
+      const sync = (latest: number) => {
+        setArrowCentered(latest < 0.1);
+        // Don't update confirming state while the spinner is showing.
+        if (!showSpinnerRef.current) setIsConfirming(latest >= 0.98);
+      };
+      return progressFromX.on("change", sync);
     }, [progressFromX]);
-
-    // Update confirming state based on progress (separate effect to avoid dependency issues)
-    useEffect(() => {
-      if (showSpinner) return; // Don't update confirming state while spinner is showing
-
-      const shouldShowConfirming = dragProgress >= 0.98;
-      if (shouldShowConfirming !== isConfirming) {
-        const rafId = requestAnimationFrame(() =>
-          setIsConfirming(shouldShowConfirming),
-        );
-        return () => cancelAnimationFrame(rafId);
-      }
-    }, [dragProgress, isConfirming, showSpinner]);
 
     const handleDrag = useCallback(
       (_: unknown, info: { offset: { x: number } }) => {
-        if (!constraintsRef.current || !dragButtonRef.current || !canDrag)
+        if (!constraintsRef.current || !dragButtonRef.current || !canGrab)
           return;
 
         // Update dimensions if needed (first drag or if not initialized)
@@ -237,7 +273,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
         // Translation represents how far the user has dragged
         const clampedTranslation = Math.max(
           0,
-          Math.min(info.offset.x, maxOffset),
+          Math.min(dragOriginRef.current + info.offset.x, maxOffset),
         );
 
         // Update x motion value to track drag progress
@@ -253,7 +289,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
           setIsDragAtEnd(false);
         }
       },
-      [isDragAtEnd, canDrag, x, updateDimensions],
+      [isDragAtEnd, canGrab, x, updateDimensions],
     );
 
     const getButtonStyles = useMemo(() => {
@@ -349,77 +385,88 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
       prevShowSpinnerRef.current = showSpinner;
     }, [showSpinner, isDragging, disabled, controls, springTransition, x]);
 
-    const handleDragEnd = useCallback(() => {
-      if (!canDrag) return;
+    const handleDragEnd = useCallback(
+      (_: unknown, info: { velocity: { x: number } }) => {
+        if (!canGrab) return;
 
-      // Restore body scroll
-      setIsDragging(false);
-      setBodyScrollLock(false);
+        // Restore body scroll
+        draggingRef.current = false;
+        setIsDragging(false);
+        setBodyScrollLock(false);
 
-      if (isDragAtEnd) {
-        // Show "Sending…" after release
-        setIsConfirming(false); // Clear "Release to confirm" state
-        setIsPostReleaseConfirming(true); // Show "Sending…" state
-        setIsDragAtEnd(false);
-        triggerHaptic();
-        onSlideComplete();
-        const maxOffset =
-          maxOffsetRef.current ||
-          (() => {
-            if (constraintsRef.current && dragButtonRef.current) {
-              const container = constraintsRef.current;
-              const button = dragButtonRef.current;
-              const calculated = container.offsetWidth - button.offsetWidth;
-              maxOffsetRef.current = calculated;
-              return calculated;
-            }
-            return 0;
-          })();
+        // The springs below leave at the speed the finger let go.
+        const velocity = info.velocity.x;
+        const flicked =
+          velocity >= FLICK_VELOCITY && progressFromX.get() >= FLICK_PROGRESS;
 
-        if (maxOffset > 0) {
-          animate(x, maxOffset, {
-            type: "spring",
-            stiffness: 300,
-            damping: 25,
-            bounce: 0.3,
-          });
-          // Sync controls
-          controls.start({
-            x: maxOffset,
-            transition: {
+        if (isDragAtEnd || flicked) {
+          // Show "Sending…" after release
+          setIsConfirming(false); // Clear "Release to confirm" state
+          setIsPostReleaseConfirming(true); // Show "Sending…" state
+          setIsDragAtEnd(false);
+          triggerHaptic();
+          onSlideComplete();
+          const maxOffset =
+            maxOffsetRef.current ||
+            (() => {
+              if (constraintsRef.current && dragButtonRef.current) {
+                const container = constraintsRef.current;
+                const button = dragButtonRef.current;
+                const calculated = container.offsetWidth - button.offsetWidth;
+                maxOffsetRef.current = calculated;
+                return calculated;
+              }
+              return 0;
+            })();
+
+          if (maxOffset > 0) {
+            animate(x, maxOffset, {
               type: "spring",
               stiffness: 300,
               damping: 25,
-              bounce: 0.3,
-            },
+              velocity: reduceMotion ? 0 : velocity,
+            });
+            // Sync controls
+            controls.start({
+              x: maxOffset,
+              transition: {
+                type: "spring",
+                stiffness: 300,
+                damping: 25,
+                bounce: 0.3,
+              },
+            });
+          }
+        } else {
+          setShowSpinner(false);
+          setIsConfirming(false);
+          setIsPostReleaseConfirming(false);
+          // Spring home with a little overshoot, read as a soft settle.
+          animate(x, 0, {
+            type: "spring",
+            bounce: reduceMotion ? 0 : 0.45,
+            duration: reduceMotion ? 0.3 : 0.6,
+            velocity: reduceMotion ? 0 : velocity,
+          });
+          // Sync controls
+          controls.start({
+            x: 0,
+            transition: springTransition,
           });
         }
-      } else {
-        setShowSpinner(false);
-        setIsConfirming(false);
-        setIsPostReleaseConfirming(false);
-        // Spring home with a little overshoot, read as a soft settle.
-        animate(x, 0, {
-          type: "spring",
-          bounce: reduceMotion ? 0 : 0.45,
-          duration: reduceMotion ? 0.3 : 0.6,
-        });
-        // Sync controls
-        controls.start({
-          x: 0,
-          transition: springTransition,
-        });
-      }
-    }, [
-      isDragAtEnd,
-      onSlideComplete,
-      controls,
-      springTransition,
-      canDrag,
-      x,
-      setBodyScrollLock,
-      reduceMotion,
-    ]);
+      },
+      [
+        isDragAtEnd,
+        onSlideComplete,
+        controls,
+        springTransition,
+        canGrab,
+        x,
+        progressFromX,
+        setBodyScrollLock,
+        reduceMotion,
+      ],
+    );
 
     return (
       <div
@@ -550,7 +597,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
               opacity: gateActive ? 0 : 1,
               scale: gateActive ? initialKnobScale : 1,
             }}
-            drag={canDrag ? "x" : false}
+            drag={canGrab ? "x" : false}
             dragDirectionLock
             dragConstraints={{ left: 0, right: 0 }} // Constrain to x=0 so left edge stays fixed
             dragElastic={0}
@@ -575,14 +622,13 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
               zIndex: gateActive ? 1 : 2,
               transformOrigin: "center center",
               pointerEvents: canDrag ? "auto" : "none",
-              touchAction: "pan-x",
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
             disabled={disabled || gateActive}
             className={cn(
               "primary-button relative flex items-center justify-end rounded-full",
-              canDrag && "hover:cursor-grab active:cursor-grabbing",
+              canGrab && "hover:cursor-grab active:cursor-grabbing",
               disabled && "primary-button-disabled cursor-not-allowed",
             )}
             transition={{
@@ -629,7 +675,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
                   animate={{
                     opacity: 1,
                     scale: 1,
-                    x: dragProgress < 0.1 ? 0 : undefined,
+                    x: arrowCentered ? 0 : undefined,
                   }}
                   exit={{ opacity: 0 }}
                   transition={{
@@ -641,7 +687,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
                       mass: 0.5,
                     },
                   }}
-                  className={dragProgress < 0.1 ? "absolute" : "relative"}
+                  className={arrowCentered ? "absolute" : "relative"}
                   style={{
                     maskImage:
                       "url(/media/craft/components/app/icons/actions/slide-arrow.svg)",
@@ -656,7 +702,7 @@ const SlideButtonComponent = forwardRef<SlideButtonRef, SlideButtonProps>(
                     WebkitMaskPosition: "center",
                     width: "1.75rem",
                     height: "1.75rem",
-                    ...(dragProgress < 0.1
+                    ...(arrowCentered
                       ? {
                           left: "calc(50% - 1rem)",
                           transform: "translateX(-50%)",

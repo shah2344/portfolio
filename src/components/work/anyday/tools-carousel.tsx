@@ -48,13 +48,13 @@ const TOOL_SLIDES: readonly ToolSlide[] = [
     title: "AnyDay App Store screenshots",
     label: "Employee wallet app",
     description:
-      "A rotating set of App Store screenshots showing the AnyDay member app.",
+      "A rotating set of App Store screenshots showing the AnyDay worker app.",
     size: "phone",
   },
   {
     type: "image",
     title:
-      "AnyDay internal admin showing a member profile and payment event history",
+      "AnyDay internal admin showing a worker profile and payment event history",
     label: "Operations console",
     description:
       "Behind the scenes, support and operations teams use admin tools to manage accounts and payment issues.",
@@ -67,7 +67,7 @@ export function AnyDayToolsCarousel() {
   return (
     <section className={styles.section} aria-labelledby="anyday-tools-title">
       <BlossomCarousel
-        aria-label="From manager payouts to member earnings and internal operations"
+        aria-label="From manager payouts to worker earnings and internal operations"
         aria-roledescription="carousel"
         className={styles.track}
         role="region"
@@ -148,7 +148,7 @@ export function AnyDayToolsCarousel() {
       <div className={styles.intro}>
         <p className="humi-impact__lede" id="anyday-tools-title">
           <strong>From sending payouts to managing earnings.</strong> I designed
-          how employers pay their teams, how employees manage their money, and
+          how restaurants pay their teams, how workers manage their money, and
           how our internal teams resolve issues.
         </p>
       </div>

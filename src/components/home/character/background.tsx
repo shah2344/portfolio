@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { gradientToDataURL } from "@outpacelabs/avatars";
 
-import { homeCharacterDeparture } from "./timing";
+import { HOME_CHARACTER_SHUFFLE, homeCharacterDeparture } from "./timing";
 import {
   characterBackgroundColors,
   characterShuffle,
@@ -16,26 +16,21 @@ import { createCharacterPettingTempo } from "./material";
 
 /*
  * While the page loads the bare glass stays monochrome; the first reveal
- * colours it with a shuffle through other materials. It winds up from a readable first beat to near-cuts, then
- * brakes over several growing beats, like a spring that has been flicked and
- * eases onto this load's colour on the long last step.
+ * colours it with a shuffle through other materials (`HOME_CHARACTER_SHUFFLE`).
+ * The opening holds the character at the centre long enough for it to land
+ * (`homeCharacterArrival`), so the beats here only compress as a fallback.
  */
-const SHUFFLE_STEPS_MS = [64, 44, 30, 24, 24, 28, 40, 60, 90, 170];
-// Bare glass holds a moment after load so the shuffle reads as its own beat.
-const SHUFFLE_DELAY_MS = 160;
+const {
+  stepsMs: SHUFFLE_STEPS_MS,
+  delayMs: SHUFFLE_DELAY_MS,
+  waitMs: SHUFFLE_WAIT_MS,
+  settleHoldMs: SETTLE_HOLD_MS,
+} = HOME_CHARACTER_SHUFFLE;
 // Every shift is soft, so the run reads as one smeared motion, not flashes.
 // The landing stays nearly as soft so it settles rather than snaps.
 const SHUFFLE_BLUR_PX = 6;
 const SETTLE_BLUR_PX = 7;
-// Shuffle materials that have not decoded by then are skipped, not waited on.
-const SHUFFLE_WAIT_MS = 250;
-// The settled colour holds at least this long before the opening trip leaves,
-// and up to the extra when time allows, so the landing reads while the
-// character is still. A shuffle that would overrun is compressed to fit, but
-// never below the minimum for the extra hold; below the minimum it would only
-// flicker, so the colour just fades in instead.
-const SETTLE_HOLD_MS = 120;
-const SETTLE_EXTRA_HOLD_MS = 220;
+// Below this a shuffle would only flicker, so the colour just fades in.
 const MIN_SHUFFLE_MS = 280;
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 // SVG image hrefs survive frozen DOM snapshots, unlike a cloned canvas
@@ -147,13 +142,12 @@ export function HomeCharacterBackground() {
       ];
       let steps = SHUFFLE_STEPS_MS.slice(-colors.length);
       const available = landBy();
-      // The extra hold gives way first, down to the shortest shuffle.
-      const budget = Math.max(MIN_SHUFFLE_MS, available - SETTLE_EXTRA_HOLD_MS);
+      // Only a decode slower than the opening allowed for squeezes the beats.
       if (available < MIN_SHUFFLE_MS) {
         colors = [initialBackground];
         steps = [Math.max(120, available)];
-      } else if (budget < sum(steps))
-        steps = steps.map((ms) => (ms * budget) / sum(steps));
+      } else if (available < sum(steps))
+        steps = steps.map((ms) => (ms * available) / sum(steps));
       // Each step ends on a fixed schedule, so frame latency never accumulates.
       const startedAt = performance.now();
       const ends = steps.map((_, step) => sum(steps.slice(0, step + 1)));

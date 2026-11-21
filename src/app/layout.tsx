@@ -8,6 +8,7 @@ import { AgentationTools } from "@/components/dev/agentation-tools";
 import { LiveFavicon } from "@/components/favicon/live-favicon";
 import { characterBackgroundScript } from "@/components/home/character/backgrounds";
 import { phoneSheetScript } from "@/components/work/case-sheet/phone-sheet-script";
+import { reopenSheetScript } from "@/components/work/case-sheet/reopen-sheet-script";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -112,6 +113,9 @@ export default function RootLayout({
         {/* Sets the direction of a phone's case-study transition before the
             arriving page's first frame; see `phone-sheet.ts`. */}
         <script dangerouslySetInnerHTML={{ __html: phoneSheetScript }} />
+        {/* A case study reloaded on a desktop reopens as the sheet over the
+            homepage; see `reopen-sheet-script.ts`. */}
+        <script dangerouslySetInnerHTML={{ __html: reopenSheetScript }} />
       </head>
       <body>
         {/* On a phone, the homepage stood back behind a story opened from

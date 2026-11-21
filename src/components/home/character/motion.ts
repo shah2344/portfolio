@@ -218,7 +218,9 @@ export function startHomeCharacter(
   // partway down still greets at the centre before it dissolves.
   const fresh = !options.preview && !isReturnVisit() && !document.hidden;
   const opening = fresh && !location.hash;
-  const { waitedMs } = fresh ? homeCharacterArrival() : { waitedMs: 0 };
+  const { waitedMs, timing: openingTiming } = fresh
+    ? homeCharacterArrival()
+    : { waitedMs: 0, timing: HOME_CHARACTER_TIMING };
   // A slow load ran the arrival in CSS already; join its clock, not restart it.
   const openedAt = start - Math.min(waitedMs, HOME_CHARACTER_TIMING.arrivalMs);
   let wakeAt = opening ? openedAt : -Infinity;
@@ -231,9 +233,7 @@ export function startHomeCharacter(
       : undefined;
   if (travelEmotion) root.dataset.arrivalEmotion = travelEmotion;
   const greetingEnd =
-    wakeAt === openedAt
-      ? openedAt + HOME_CHARACTER_TIMING.contentDelayMs
-      : -Infinity;
+    wakeAt === openedAt ? openedAt + openingTiming.contentDelayMs : -Infinity;
   if (wakeAt === openedAt && !reduce.matches) {
     director.play(
       "greeting",
@@ -245,7 +245,7 @@ export function startHomeCharacter(
   // A waiting character that was sent straight home lands after the trip alone.
   const arrivalSettlesAt =
     wakeAt === openedAt
-      ? openedAt + HOME_CHARACTER_TIMING.entranceMs
+      ? openedAt + openingTiming.entranceMs
       : fresh && waitedMs > 0
         ? start +
           HOME_CHARACTER_TIMING.entranceMs -
@@ -517,7 +517,7 @@ export function startHomeCharacter(
           secondary.comfort === 0,
       ),
       !adaptation.active && wakeAt === openedAt ? travelEmotion : undefined,
-      time - openedAt - HOME_CHARACTER_TIMING.travelDelayMs,
+      time - openedAt - openingTiming.travelDelayMs,
     );
     // An ignored character's blinks grow heavy and slow.
     if (!adaptation.active && director.active !== "nap" && time >= nextBlink)

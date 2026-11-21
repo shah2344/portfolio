@@ -42,13 +42,12 @@ const ANYDAY_SECTIONS: readonly TocSection[] = [
 
 const OLD_PORTAL_MARKS: readonly CaseStudyAnnotation[] = [
   {
-    /* The top of the payments dashboard: the second platform managers
-       switched to. */
-    mark: { x: 0.625, y: 0.28, h: 0.02 },
-    note: { x: 0.7, y: 0.2, w: 0.2, tilt: 1 },
-    /* The same spot, given the width to stay on one line. */
-    narrow: { note: { x: 0.69, y: 0.19, w: 0.3, tilt: 1 } },
-    text: "Disconnected tools",
+    /* The foot of the dashboard's reporting table, where the payouts
+       managers worked out in their own spreadsheets were imported. */
+    mark: { x: 0.6, y: 0.875, h: 0.02, side: "left", leave: "side" },
+    note: { x: 0.22, y: 0.95, w: 0.24, tilt: -1 },
+    narrow: { note: { x: 0.06, y: 0.95, w: 0.36, tilt: -1 } },
+    text: "Payouts imported from Excel",
   },
   {
     mark: {
@@ -65,9 +64,6 @@ const OLD_PORTAL_MARKS: readonly CaseStudyAnnotation[] = [
   },
 ];
 
-/** Landscape captures of the portal run wide. */
-const PORTAL = "2000 / 1075";
-
 /*
  * Walkthroughs of the original app, trimmed from a 2022 recording and played
  * at real speed. On a board the phones sit a fifth of the plate wide and 74.5%
@@ -77,13 +73,13 @@ const PORTAL = "2000 / 1075";
 const OLD_APP_CLIPS: readonly AnyDayPhoneClip[] = [
   {
     description:
-      "A member adds a debit card, enters an amount, opens a sheet of send limits and tiered fees, picks a recipient, and confirms the transfer with the fee added before reaching a success screen.",
+      "A worker adds a debit card, enters an amount, opens a sheet of send limits and tiered fees, picks a recipient, and confirms the transfer with the fee added before reaching a success screen.",
     src: "/media/anyday/old-app-instant-transfer.mp4",
     title: "Sending an instant transfer in the original app",
   },
   {
     description:
-      "A member types their email and password, logs in, and lands on a $0.00 balance until their tips load.",
+      "A worker types their email and password, logs in, and lands on a $0.00 balance until their tips load.",
     src: "/media/anyday/old-app-login.mp4",
     title: "Logging in to the original app",
   },
@@ -91,11 +87,11 @@ const OLD_APP_CLIPS: readonly AnyDayPhoneClip[] = [
 
 const OLD_PORTAL_CLIP: AnyDayScreenClip = {
   description:
-    "A manager fills in two members by hand, submits, and gets back a wallet error on each row, then an invalid identifier error once the wallets are fixed.",
+    "A manager fills in two workers by hand, submits, and gets back a wallet error on each row, then an invalid identifier error once the wallets are fixed.",
   ground: "#f8f8f8",
   height: 1068,
   src: "/media/anyday/old-portal-add-members.mp4?v=3",
-  title: "Adding members in the original portal",
+  title: "Adding workers in the original portal",
   width: 1920,
 };
 
@@ -204,9 +200,9 @@ export function AnyDayCaseStudy() {
           <div className="case-study-sheet">
             <header className="humi-story-intro">
               <h1 className="humi-story-intro__lede">
-                I spent four years at AnyDay, first as a designer and later
-                building in code, shipping the employer portal and the worker
-                app across web and mobile.
+                I spent four years at AnyDay designing a payout portal for
+                managers and a wallet app for employees, and later helped build
+                parts of them in code.
               </h1>
               <p className="humi-story-intro__date">2022 – 2026 · Team of 50</p>
             </header>
@@ -265,8 +261,8 @@ export function AnyDayCaseStudy() {
                   AnyDay helped restaurants move beyond cash tip-outs.
                 </strong>{" "}
                 Its platform simplified payments for over 3,500 restaurants in
-                Canada and gave workers quicker access to their earnings through
-                a digital wallet.
+                Canada and gave restaurant workers quicker access to their
+                earnings through a digital wallet.
               </p>
             </div>
 
@@ -292,28 +288,28 @@ export function AnyDayCaseStudy() {
                 <CaseStudyMedia
                   expandable
                   alt="The original Today employer portal, with a tip calculator and restaurant wallet dashboard shown side by side."
-                  description="Tip pools were confusing to set up, and with no POS connection, managers still keyed in every payout."
+                  description="Automated tip pools were confusing to set up, so managers stuck with spreadsheets and imported them. Each shift took hours to enter, and mistakes surfaced only after staff were paid."
                   annotations={OLD_PORTAL_MARKS}
                   ground="#f2f2f2"
                   src={oldPortalImage}
-                  title="Faster than handing out cash, but still operationally exhausting."
+                  title="One broken formula could mean a wrong payout."
                 />
               </CaseStudyCard>
 
-              {/* Discovery pairs both sides of the product: why members moved
+              {/* Discovery pairs both sides of the product: why workers moved
                   money off the card, and why payouts resisted automation. */}
               <CaseStudySection id="research">Discovery</CaseStudySection>
               <AnyDayStoryCard
                 id="member-research"
-                title="We interviewed representative workers."
-                description="Most moved their pay straight out, so we set out to learn what it would take to earn a place in their everyday banking."
+                title="We talked with workers about how they bank."
+                description="Most moved their pay the moment it landed, so we set out to learn what it would take to earn a place in their everyday banking."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
                     aspect="2000 / 1075"
-                    alt="A research collage: a Notion table tracking survey participants and incentives, a video call where a member types a card number into the old app, and a mind map of the new app’s Home, Insights, Payments, Support, and Account sections."
+                    alt="A research collage: a Notion table tracking survey participants and incentives, a video call where a worker types a card number into the old app, and a mind map of the new app’s Home, Insights, Payments, Support, and Account sections."
                     height={1075}
-                    label="AnyDay member research"
+                    label="AnyDay worker research"
                     ground="#ffca00"
                     src="/media/anyday/research.webp"
                     width={2000}
@@ -341,8 +337,8 @@ export function AnyDayCaseStudy() {
               <CaseStudySection id="solution">Solution</CaseStudySection>
               <AnyDayStoryCard
                 id="foundation"
-                title="I designed the new app to give workers a reason to stay."
-                description="Savings, rewards, and budgeting made AnyDay worth keeping as a primary account."
+                title="I designed the new app as an everyday account, not a payout tool."
+                description="Savings, rewards, and budgeting gave workers a reason to keep their pay there."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -360,7 +356,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="saving"
                 title="Set money aside with every payout."
-                description="I designed auto-save to split earnings between spending and savings goals. In its first two months, it accounted for 76% of all deposit value into Pockets."
+                description="I designed auto-save so workers could split earnings between spending and savings goals. In its first two months, it accounted for 76% of all savings deposit value."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -377,8 +373,8 @@ export function AnyDayCaseStudy() {
               </AnyDayStoryCard>
               <AnyDayStoryCard
                 id="portal-system"
-                title="I designed the portal around how managers work."
-                description="Precise filtering and pinned locations cut the digging, and proactive funding alerts cut the surprises. It all ran 6x faster on slower networks and devices."
+                title="I redesigned the portal around how managers work."
+                description="Setting up tip rules had needed our help, so I turned it into a clear checklist any location could finish alone. Precise filtering, pinned locations, and funding alerts then cut the daily digging and surprises."
               >
                 <AnyDayFigureRow width="full">
                   <figure className="anyday-figure">
@@ -387,28 +383,11 @@ export function AnyDayCaseStudy() {
                       className="sr-only"
                       id="anyday-client-portal-description"
                     >
-                      Four walkthroughs of the AnyDay client portal across
-                      payments, wallet funding, location activity, and setup.
+                      The AnyDay client portal&rsquo;s setup checklist, then
+                      four walkthroughs across payments, wallet funding,
+                      location activity, and wallet setup.
                     </figcaption>
                   </figure>
-                </AnyDayFigureRow>
-              </AnyDayStoryCard>
-              <AnyDayStoryCard
-                id="portal-onboarding"
-                title="I chose a rule builder over presets."
-                description="Presets would have been quicker to ship, but no location would switch to a split that didn't match its own. Setup took longer with a builder, so I added a checklist managers could follow on their own."
-              >
-                <AnyDayFigureRow width="wide">
-                  <AnyDayFigure
-                    alt="Two angled portal screens: the Oakville setup checklist on the Payments page, running from data collection to a first tip rule, and the “Review tip rule” step summarizing contributors, receivers, payout frequency, and services."
-                    aspect={PORTAL}
-                    ground="#f2f2f2"
-                    height={2064}
-                    label="Portal onboarding — setup checklist and tip rule review"
-                    src="/media/anyday/portal-onboarding.webp"
-                    unoptimized
-                    width={3840}
-                  />
                 </AnyDayFigureRow>
               </AnyDayStoryCard>
               <AnyDayStoryCard
@@ -448,7 +427,7 @@ export function AnyDayCaseStudy() {
                       id="anyday-payout-review-description"
                     >
                       Reviewing synced sales, hours worked, and allocated tips
-                      before sending a payout to restaurant staff.
+                      before sending a payout to workers.
                     </figcaption>
                   </figure>
                 </AnyDayFigureRow>
@@ -461,7 +440,7 @@ export function AnyDayCaseStudy() {
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
-                    aspect={PORTAL}
+                    aspect="2000 / 1075"
                     label="Roles and permissions chart"
                   />
                 </AnyDayFigureRow>
@@ -471,7 +450,7 @@ export function AnyDayCaseStudy() {
                 <AnyDayStoryCard
                   id="choice"
                   title="Making room for choice."
-                  description="Members could receive tips in a bank account of their choice for free each week, or keep daily access on the card. Employers chose the payout day and paid a small fee, but couldn’t delay payouts beyond weekly."
+                  description="Workers could receive tips in a bank account of their choice for free each week, or keep daily access on the card. Employers chose the payout day and paid a small fee, but couldn’t delay payouts beyond weekly."
                 >
                   <AnyDayFigureRow width="wide">
                     <figure className="anyday-figure">
@@ -496,7 +475,7 @@ export function AnyDayCaseStudy() {
                         id="anyday-scheduled-payout-video-description"
                       >
                         Setting up a weekly payout schedule for tips sent to
-                        members’ chosen bank accounts.
+                        workers’ chosen bank accounts.
                       </figcaption>
                     </figure>
                   </AnyDayFigureRow>
@@ -505,7 +484,7 @@ export function AnyDayCaseStudy() {
               {showCardMigration && (
                 <AnyDayStoryCard
                   id="card-migration"
-                  title="100k+ members needed new cards."
+                  title="100k+ workers needed new cards."
                   description="I designed the transition to virtual cards with our new sponsor bank before the old card programme expired."
                 >
                   <AnyDayFigureRow width="wide">
@@ -530,7 +509,7 @@ export function AnyDayCaseStudy() {
                         className="sr-only"
                         id="anyday-card-migration-video-description"
                       >
-                        The member flow for moving to a new virtual card.
+                        The worker flow for moving to a new virtual card.
                       </figcaption>
                     </figure>
                   </AnyDayFigureRow>
@@ -551,9 +530,9 @@ export function AnyDayCaseStudy() {
                     Over one summer, we moved{" "}
                     <strong>
                       <span aria-hidden="true">~</span>
-                      <span className="sr-only">about </span>200k members
+                      <span className="sr-only">about </span>200k workers
                     </strong>{" "}
-                    and <strong>3,500 restaurants</strong> onto our new
+                    and <strong>over 3,500 restaurants</strong> onto our new
                     platform. We launched in batches, fixing issues before each
                     next group.
                   </p>
@@ -565,7 +544,7 @@ export function AnyDayCaseStudy() {
                     <strong>30 minutes</strong>.
                   </p>
                   <p className="humi-impact__lede">
-                    Auto-save became the main way members saved within two
+                    Auto-save became the main way workers saved within two
                     months of launch. Over the same period, the app’s rating
                     rose from 2.4 to <strong>4.6 stars</strong>.
                   </p>

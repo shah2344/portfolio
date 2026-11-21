@@ -1,0 +1,30 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Fey Logo (2) 2">
+<g clip-path="url(#clip0_0_329)">
+<g id="Vector">
+<path d="M0 22C0 9.84974 9.84974 0 22 0C34.1503 0 44 9.84974 44 22C44 34.1503 34.1503 44 22 44C9.84974 44 0 34.1503 0 22Z" fill="#34C759"/>
+<mask id="stroke0_0_329" fill="white">
+<path d="M0 22C0 9.84974 9.84974 0 22 0C34.1503 0 44 9.84974 44 22C44 34.1503 34.1503 44 22 44C9.84974 44 0 34.1503 0 22Z"/>
+</mask>
+<path d="M22 44C9.84974 44 0 34.1503 0 22C0 9.84974 9.84974 0 22 0C34.1503 0 44 9.84974 44 22C44 34.1503 34.1503 44 22 44Z" stroke-width="2" stroke="black" stroke-opacity="0.06" mask="url(#stroke0_0_329)"/>
+</g>
+<g id="money, bill, dollar, euro" filter="url(#filter0_d_0_329)">
+<path id="Icon" d="M11 18C11 15.7909 12.7909 14 15 14H29C31.2091 14 33 15.7909 33 18V26C33 28.2091 31.2091 30 29 30H15C12.7909 30 11 28.2091 11 26V18ZM14 16C13.4477 16 13 16.4477 13 17C13 17.5523 13.4477 18 14 18H15C15.5523 18 16 17.5523 16 17C16 16.4477 15.5523 16 15 16H14ZM22 19.5C20.6193 19.5 19.5 20.6193 19.5 22C19.5 23.3807 20.6193 24.5 22 24.5C23.3807 24.5 24.5 23.3807 24.5 22C24.5 20.6193 23.3807 19.5 22 19.5ZM29 26C28.4477 26 28 26.4477 28 27C28 27.5523 28.4477 28 29 28H30C30.5523 28 31 27.5523 31 27C31 26.4477 30.5523 26 30 26H29Z" fill-rule="evenodd" clip-rule="evenodd" fill="white"/>
+</g>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_0_329" x="10" y="10" width="24" height="25" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="1"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_329"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_329" result="shape"/>
+</filter>
+<clipPath id="clip0_0_329">
+<rect width="44" height="44" rx="22" fill="white"/>
+</clipPath>
+</defs>
+</svg>

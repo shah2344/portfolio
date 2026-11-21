@@ -17,6 +17,8 @@ import { holdMedia } from "@/components/motion/page-wipe";
 
 import styles from "./case-sheet.module.css";
 import { isPhoneSheet, openAsPage } from "./phone-sheet";
+import { REOPEN_KEY } from "./reopen-sheet-script";
+import { trackSheetWheel } from "./sheet-wheel";
 
 type Story = { href: string; name: string; content: ReactNode };
 
@@ -144,6 +146,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const cornersRef = useRef<HTMLSpanElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const homeScroll = useRef(0);
   const scrollRestoration = useRef<ScrollRestoration | null>(null);
   const openRef = useRef(false);
@@ -362,6 +365,19 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     };
   }, [closeSheet, openSheet, releaseHome]);
 
+  // A case study reloaded on a desktop came back here to open again as the
+  // sheet; see `reopen-sheet-script.ts`.
+  useEffect(() => {
+    let path: string | null = null;
+    try {
+      path = sessionStorage.getItem(REOPEN_KEY);
+      sessionStorage.removeItem(REOPEN_KEY);
+    } catch {}
+    if (path?.startsWith("/work/") && !isPhoneSheet()) {
+      router.push(path, { scroll: false });
+    }
+  }, [router]);
+
   // Leaving the homepage with the sheet up lets the page go at once.
   useEffect(
     () => () => {
@@ -391,6 +407,60 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
     scroller.addEventListener("scroll", relay, { passive: true });
     return () => scroller.removeEventListener("scroll", relay);
   }, [open, sheet]);
+
+  // Scroll to close: scrolling on up past the story's top pulls the sheet
+  // down, as the handle does; see `sheet-wheel.ts`. The sheet and its dim
+  // are moved here, and the page behind is painted by the same share as
+  // under a drag. A close slides on from where the pull left the sheet,
+  // since Vaul's exit keyframes only name where they end.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!open || !sheet || !scroller) return;
+    let settle = 0;
+    const place = (offset: number, animate: boolean) => {
+      const overlay = overlayRef.current;
+      const height = sheet.getBoundingClientRect().height || 1;
+      const transition = animate ? `${DURATION}ms ${EASE}` : "";
+      sheet.style.transition = animate ? `transform ${transition}` : "none";
+      sheet.style.transform = `translate3d(0, ${offset}px, 0)`;
+      if (overlay) {
+        overlay.style.transition = animate ? `opacity ${transition}` : "none";
+        overlay.style.opacity = String(1 - Math.min(1, offset / height));
+      }
+      paintHome(1 - Math.min(1, offset / height), animate);
+    };
+    const stop = trackSheetWheel(sheet, scroller, {
+      canStart: () =>
+        openRef.current &&
+        !sheet.hasAttribute("data-landing") &&
+        !sheet.classList.contains("vaul-dragging"),
+      onMove: (offset) => {
+        window.clearTimeout(settle);
+        // With reduced motion the sheet holds still until it closes.
+        if (!reducedMotion()) place(offset, false);
+      },
+      onEnd: (close) => {
+        window.clearTimeout(settle);
+        if (close) {
+          closeSheet(false);
+          return;
+        }
+        if (reducedMotion()) return;
+        place(0, true);
+        settle = window.setTimeout(() => {
+          for (const element of [sheet, overlayRef.current]) {
+            element?.style.removeProperty("transition");
+            element?.style.removeProperty("transform");
+            element?.style.removeProperty("opacity");
+          }
+        }, DURATION);
+      },
+    });
+    return () => {
+      window.clearTimeout(settle);
+      stop();
+    };
+  }, [closeSheet, open, paintHome, sheet]);
 
   return (
     <>
@@ -454,7 +524,7 @@ export function CaseSheetHost({ children }: { children: ReactNode }) {
         open={open}
       >
         <Drawer.Portal>
-          <Drawer.Overlay className={styles.overlay} />
+          <Drawer.Overlay className={styles.overlay} ref={overlayRef} />
           <Drawer.Content
             aria-describedby={undefined}
             className={styles.sheet}

@@ -3,6 +3,7 @@
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
@@ -16,6 +17,7 @@ import {
   m,
   useMotionValue,
   useReducedMotion,
+  useSpring,
   useTransform,
   type MotionValue,
 } from "motion/react";
@@ -28,34 +30,52 @@ import { ToggleSwitch } from "./toggle-switch";
 
 const ICONS = "/media/craft/components/app/icons/rows";
 
-/** Every configuration is one height, as the activity rows below are. */
+/** Configurations are one height, as the activity rows below are; only
+    wrapped text sets its own. */
 const ROW_HEIGHT = 72;
 /** Room under the row for the leader and its label. */
 const NOTE_SLOT = 52;
-/** How long each variant stays before the next. */
+/** How long each step of a family stays before the next, and how long the
+    last one holds before the next family, a beat longer. */
+const STEP = 2400;
 const INTERVAL = 3200;
+/** The row's gap between its parts. */
+const GAP = 12;
+/** The selection's space around the part it marks. */
+const PAD = 2;
+/** The readout's distance under the row. */
+const NOTE_GAP = 10;
 
 /** The activity rows' own card shadow. */
 const ROW_SHADOW =
   "0 0 0 1px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03)";
 /** Figma's category swatch (#32ADE6), in Display P3. */
 const CATEGORY = "color(display-p3 0.35 0.669 0.881)";
+/** Figma's person colour (#5F5AFA), apart from the product's own purple. */
+const PERSON = "#5f5afa";
 /** The overlay's ink: an inspector blue, apart from the product's own. */
 const INK = "color(display-p3 0.2 0.45 1)";
 /** Lifts the row a few points above the card's middle, where it reads as
     centred: the eye puts the middle a little higher than the geometry. */
 const OPTICAL_LIFT = 4;
 
-/** A variant arrives with a spring and leaves quicker and smaller. */
+/** A family arrives with a spring and leaves quicker and smaller. */
 const ENTER = { type: "spring", duration: 0.4, bounce: 0 } as const;
 const EXIT = { duration: 0.15, ease: "easeOut" } as const;
 const SETTLE = { type: "spring", duration: 0.3, bounce: 0 } as const;
+/** Within a family the row reshapes around what changes: slots open and
+    close, the row grows, and the selection follows. */
+const MORPH = { type: "spring", duration: 0.45, bounce: 0 } as const;
+const FOLLOW = { visualDuration: 0.4, bounce: 0 } as const;
+const INSTANT = { duration: 0 } as const;
 // The scrubber swells quickly under a press and settles back with a small
 // give on release, since a finger has just pushed on it.
 const PRESS_SCALE = 1.1;
 // The scrubber's dot and the current variant's pill, in px.
 const DOT = 6;
 const PILL = 20;
+/** Extra room between one family's dots and the next. */
+const FAMILY_GAP = 10;
 const PRESS = { type: "spring", duration: 0.2, bounce: 0 } as const;
 const RELEASE = { type: "spring", duration: 0.4, bounce: 0.2 } as const;
 
@@ -74,8 +94,10 @@ function Glyph({ name, size = 24 }: { name: string; size?: number }) {
   );
 }
 
-/** The Services category avatar: its cube on a wash of the same colour. */
+/** The Services category avatar: its cube on a wash of the same colour.
+    The badge pops on and off, so the avatar under it can stay put. */
 function Category({ badge = false }: { badge?: boolean }) {
+  const reduce = useReducedMotion();
   return (
     <span className="relative flex shrink-0">
       <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full">
@@ -86,28 +108,87 @@ function Category({ badge = false }: { badge?: boolean }) {
         />
         <Glyph name="cube" />
       </span>
-      {badge && (
-        <span className="absolute -top-0.5 -left-0.5 flex h-5 w-5 items-center justify-center">
-          <Glyph name="clock-badge" size={22.6667} />
-        </span>
-      )}
+      <AnimatePresence initial={false}>
+        {badge && (
+          <m.span
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute -top-0.5 -left-0.5 flex h-5 w-5 items-center justify-center"
+            exit={{ opacity: 0, scale: reduce ? 1 : 0.4 }}
+            initial={{ opacity: 0, scale: reduce ? 1 : 0.4 }}
+            transition={reduce ? EXIT : MORPH}
+          >
+            <Glyph name="clock-badge" size={22.6667} />
+          </m.span>
+        )}
+      </AnimatePresence>
     </span>
   );
 }
 
-function Amount({
-  children,
-  credit = false,
-}: {
-  children: string;
-  credit?: boolean;
-}) {
+/** A white glyph on a rounded tile of colour. */
+function Tile({ color, icon }: { color: string; icon: string }) {
   return (
     <span
-      className="font-inter-amounts text-[17px] leading-[22px] font-semibold tabular-nums"
+      className="flex rounded-[10px] p-1.5"
+      style={{ backgroundColor: color }}
+    >
+      <Glyph name={icon} />
+    </span>
+  );
+}
+
+/** A person's initials on a wash of their colour, with a country flag. */
+function Person({ initials }: { initials: string }) {
+  return (
+    <span className="relative flex shrink-0">
+      <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full">
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 opacity-16"
+          style={{ backgroundColor: PERSON }}
+        />
+        <span
+          className="relative text-[17px] leading-[22px] font-bold"
+          style={{ color: PERSON }}
+        >
+          {initials}
+        </span>
+      </span>
+      <span className="absolute -top-0.5 -left-0.5 flex h-5 w-5 items-center justify-center">
+        <Glyph name="flag-india" size={18.1818} />
+      </span>
+    </span>
+  );
+}
+
+/** An amount; as a credit its sign slides in and it turns green, while
+    the figure itself holds still. */
+function Amount({
+  value,
+  credit = false,
+}: {
+  value: string;
+  credit?: boolean;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <span
+      className="font-inter-amounts relative flex text-[17px] leading-[22px] font-semibold tabular-nums transition-colors duration-300 ease-out"
       style={{ color: credit ? "var(--green)" : "var(--labels-primary)" }}
     >
-      {children}
+      <AnimatePresence anchorX="right" initial={false} mode="popLayout">
+        {credit && (
+          <m.span
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: reduce ? 0 : 6 }}
+            initial={{ opacity: 0, x: reduce ? 0 : 6 }}
+            transition={reduce ? EXIT : MORPH}
+          >
+            +
+          </m.span>
+        )}
+      </AnimatePresence>
+      <span>{value}</span>
     </span>
   );
 }
@@ -139,125 +220,186 @@ function LocalToggle({ label }: { label: string }) {
 
 type Slot = "Leading" | "Trailing" | "Subtitle";
 
+/** A leading or trailing part. Steps that share an id share the element,
+    so it stays where it is while the rest of the row changes around it. */
+type Piece = { id: string; node: ReactNode };
+
 type Variant = {
   /** Which part of the row the variant is about, and what it is. */
   slot: Slot;
   type: string;
-  title: string;
+  /** Plain text morphs from step to step; anything else holds still. */
+  title: ReactNode;
   subtitle?: string;
-  leading?: ReactNode;
-  trailing: ReactNode;
-  /** The selection's corner radius, to hug round parts. */
-  round?: boolean;
+  /** The subtitle's size: Footnote (13/19) unless Subheadline (15/20). */
+  subheadline?: boolean;
+  /** Lets the subtitle wrap over lines instead of truncating. */
+  wrap?: boolean;
+  /** A row taller than the rest, for wrapped text. */
+  height?: number;
+  leading?: Piece;
+  trailing?: Piece;
+};
+
+/** The help question, its last word picked out as a link. */
+function AvailablePay() {
+  return (
+    // A touch tighter, so the whole question fits the card's narrower row.
+    <span className="font-normal tracking-[-0.02em]">
+      Why don’t I have more available{" "}
+      <span className="font-medium" style={{ color: "var(--blue)" }}>
+        pay
+      </span>
+      ?
+    </span>
+  );
+}
+
+const chevron: Piece = {
+  id: "chevron",
+  node: <Glyph name="chevron-right" size={16} />,
 };
 
 /**
- * Every configuration of the wallet's list row, from its Figma component:
- * a title with or without a subtitle, an optional leading image, and one
- * trailing accessory. The content is the wallet's own.
+ * Every configuration of the wallet's list row, from its Figma component,
+ * in families that each tell one row's story: every step changes one part,
+ * and whatever else stays holds still, its text morphing where it has to
+ * read differently. The content is the wallet's own.
  */
-const VARIANTS: Variant[] = [
-  {
-    slot: "Trailing",
-    type: "Copy",
-    title: "Account number",
-    subtitle: "•••• 4821",
-    trailing: <Glyph name="copy" />,
-  },
-  {
-    slot: "Trailing",
-    type: "Amount",
-    title: "Daily limit",
-    trailing: <Amount>$500</Amount>,
-  },
-  {
-    slot: "Leading",
-    type: "Icon",
-    title: "Add bank account",
-    subtitle: "Instant to your bank",
-    leading: (
-      // Figma's extra 4pt after the icon, as margin so the icon's own box
-      // is what gets selected.
-      <span className="mr-1 flex">
-        <Glyph name="plus" />
-      </span>
-    ),
-    trailing: <Glyph name="chevron-right" size={16} />,
-  },
-  {
-    slot: "Trailing",
-    type: "Button",
-    title: "Your card",
-    subtitle: "Arrived today",
-    round: true,
-    trailing: (
-      <PrimaryButton className="h-[38px] px-4" tabIndex={-1}>
-        Activate
-      </PrimaryButton>
-    ),
-  },
-  {
-    slot: "Trailing",
-    type: "Toggle",
-    title: "Lock card",
-    round: true,
-    trailing: <LocalToggle label="Lock card" />,
-  },
-  {
-    slot: "Subtitle",
-    type: "With toggle",
-    title: "Autosave",
-    subtitle: "10% of every payout",
-    trailing: <LocalToggle label="Autosave" />,
-  },
-  {
-    slot: "Leading",
-    type: "Icon tile",
-    title: "New pocket",
-    subtitle: "Save toward a goal",
-    leading: (
-      <span
-        className="flex rounded-[10px] p-1.5"
-        style={{ backgroundColor: "var(--blue)" }}
-      >
-        <Glyph name="plus-white" />
-      </span>
-    ),
-    trailing: <Glyph name="info" />,
-  },
-  {
-    slot: "Leading",
-    type: "Badge",
-    title: "Riverside Grill",
-    subtitle: "Tip-out · Pending",
-    round: true,
-    leading: <Category badge />,
-    trailing: <Amount>$50</Amount>,
-  },
-  {
-    slot: "Trailing",
-    type: "Credit",
-    title: "Riverside Grill",
-    subtitle: "Tip-out",
-    leading: <Category />,
-    trailing: <Amount credit>+$50</Amount>,
-  },
-  {
-    slot: "Leading",
-    type: "Avatar",
-    title: "Shift pool",
-    subtitle: "Code RG-2048",
-    round: true,
-    leading: <Category />,
-    trailing: <Glyph name="copy" />,
-  },
-  {
-    slot: "Trailing",
-    type: "Selected",
-    title: "Pay out weekly",
-    trailing: <Check />,
-  },
+const FAMILIES: Variant[][] = [
+  // The card's trailing accessory, the rest of the row held.
+  [
+    {
+      slot: "Trailing",
+      type: "Button",
+      title: "Your card",
+      subtitle: "•••• 4821",
+      trailing: {
+        id: "button",
+        node: (
+          <PrimaryButton className="h-[38px] px-4" tabIndex={-1}>
+            Activate
+          </PrimaryButton>
+        ),
+      },
+    },
+    {
+      slot: "Trailing",
+      type: "Copy",
+      title: "Your card",
+      subtitle: "•••• 4821",
+      trailing: { id: "copy", node: <Glyph name="copy" /> },
+    },
+    {
+      slot: "Trailing",
+      type: "Selected",
+      title: "Your card",
+      subtitle: "•••• 4821",
+      trailing: { id: "check", node: <Check /> },
+    },
+  ],
+  // A settings row built up around its toggle: a subtitle, then an icon.
+  [
+    {
+      slot: "Trailing",
+      type: "Toggle",
+      title: "Face ID",
+      trailing: { id: "toggle", node: <LocalToggle label="Face ID" /> },
+    },
+    {
+      slot: "Subtitle",
+      type: "With toggle",
+      title: "Face ID",
+      subtitle: "Unlock with a glance",
+      trailing: { id: "toggle", node: <LocalToggle label="Face ID" /> },
+    },
+    {
+      slot: "Leading",
+      type: "Icon tile",
+      title: "Face ID",
+      subtitle: "Unlock with a glance",
+      leading: {
+        id: "face-id",
+        node: <Tile color="var(--green)" icon="face-id" />,
+      },
+      trailing: { id: "toggle", node: <LocalToggle label="Face ID" /> },
+    },
+  ],
+  // One payment settling: pending, then credited.
+  [
+    {
+      slot: "Leading",
+      type: "Badge",
+      title: "Riverside Grill",
+      subtitle: "Tip-out · Pending",
+      leading: { id: "category", node: <Category badge /> },
+      trailing: { id: "amount", node: <Amount value="$50" /> },
+    },
+    {
+      slot: "Trailing",
+      type: "Credit",
+      title: "Riverside Grill",
+      subtitle: "Tip-out",
+      leading: { id: "category", node: <Category /> },
+      trailing: { id: "amount", node: <Amount credit value="$50" /> },
+    },
+  ],
+  // A navigation row, its leading part swapped.
+  [
+    {
+      slot: "Leading",
+      type: "Logo",
+      title: "Deposit cash",
+      subtitle: "Add cash to your account",
+      subheadline: true,
+      leading: { id: "logo", node: <Glyph name="fey-logo" size={44} /> },
+      trailing: chevron,
+    },
+    {
+      slot: "Leading",
+      type: "Avatar",
+      title: "Priya Sharma",
+      subtitle: "Account ending in ･･8923",
+      subheadline: true,
+      leading: { id: "person", node: <Person initials="PS" /> },
+      trailing: chevron,
+    },
+  ],
+  // The subtitle runs longer, and the row grows with it.
+  [
+    {
+      slot: "Subtitle",
+      type: "Two lines",
+      title: <AvailablePay />,
+      subtitle:
+        "There could be a few reasons for this. One of these may apply.",
+      subheadline: true,
+      wrap: true,
+      height: 88,
+    },
+    {
+      slot: "Subtitle",
+      type: "Multiline",
+      title: <AvailablePay />,
+      subtitle:
+        "There could be a few reasons for this. One of the following may apply to your situation…",
+      subheadline: true,
+      wrap: true,
+      height: 104,
+    },
+  ],
 ];
+
+type Step = Variant & { family: number; first: boolean; last: boolean };
+
+const VARIANTS: Step[] = FAMILIES.flatMap((steps, family) =>
+  steps.map((variant, i) => ({
+    ...variant,
+    family,
+    first: i === 0,
+    last: i === steps.length - 1,
+  })),
+);
 
 /** Where `element` sits inside `ancestor`, ignoring transforms. */
 function boxWithin(element: HTMLElement, ancestor: HTMLElement) {
@@ -272,96 +414,393 @@ function boxWithin(element: HTMLElement, ancestor: HTMLElement) {
   return { x, y, width: element.offsetWidth, height: element.offsetHeight };
 }
 
-function Row({ variant }: { variant: Variant }) {
-  const { slot, title, subtitle, leading, trailing } = variant;
-  const mark = (part: Slot) => (slot === part ? { "data-annotate": "" } : {});
+/**
+ * An element's width or height, kept current. The first reading is marked
+ * instant, so a slot that mounts at its size doesn't animate into it.
+ */
+function useSize(ref: RefObject<HTMLElement | null>, axis: "width" | "height") {
+  const [size, setSize] = useState({ value: 0, instant: true });
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const read = () =>
+      axis === "width" ? element.offsetWidth : element.offsetHeight;
+    setSize({ value: read(), instant: true });
+    let first = true;
+    const observer = new ResizeObserver(() => {
+      if (first) {
+        first = false;
+        return;
+      }
+      setSize({ value: read(), instant: false });
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref, axis]);
+
+  return size;
+}
+
+/** How a part enters and leaves its slot. */
+function swap(reduce: boolean, shift: { x?: number; y?: number }) {
+  const away = reduce
+    ? { opacity: 0 }
+    : { opacity: 0, scale: 0.92, filter: "blur(3px)", ...shift };
+  return {
+    initial: away,
+    animate: { opacity: 1, scale: 1, x: 0, y: 0, filter: "blur(0px)" },
+    exit: { ...away, transition: EXIT },
+    transition: reduce ? EXIT : { ...MORPH, delay: 0.06 },
+  } as const;
+}
+
+/**
+ * A leading or trailing slot. It opens and closes to fit what it holds, gap
+ * included, so the text beside it slides over rather than jumping; a new
+ * part fades in as the old one leaves, and a kept one doesn't move.
+ */
+function Side({
+  piece,
+  side,
+  annotate,
+  reduce,
+}: {
+  piece?: Piece;
+  side: "leading" | "trailing";
+  annotate?: number;
+  reduce: boolean;
+}) {
+  const inner = useRef<HTMLSpanElement>(null);
+  const size = useSize(inner, "width");
 
   return (
-    <div
-      className="flex items-center gap-3 rounded-[20px] px-5"
+    <m.span
+      animate={{ width: size.value ? size.value + GAP : 0 }}
+      className={`flex shrink-0 items-center ${
+        side === "trailing" ? "justify-end" : ""
+      }`}
+      initial={false}
+      transition={size.instant || reduce ? INSTANT : MORPH}
+    >
+      <span className="relative flex shrink-0 items-center" ref={inner}>
+        {/* A leaving part keeps to its own edge while the slot resizes. */}
+        <AnimatePresence
+          anchorX={side === "trailing" ? "right" : "left"}
+          initial={false}
+          mode="popLayout"
+        >
+          {piece && (
+            <m.span
+              key={piece.id}
+              className="flex"
+              data-annotate={annotate}
+              {...swap(reduce, { x: side === "leading" ? -6 : 6 })}
+            >
+              {piece.node}
+            </m.span>
+          )}
+        </AnimatePresence>
+      </span>
+    </m.span>
+  );
+}
+
+/** Where two strings stop agreeing, pulled back to the start of a word so
+    letters don't regroup mid-word, unless one simply runs on from the other. */
+function sharedPrefix(a: string, b: string) {
+  let n = 0;
+  while (n < a.length && n < b.length && a[n] === b[n]) n++;
+  if (n === a.length || n === b.length) return n;
+  const space = a.lastIndexOf(" ", n - 1);
+  return space < 0 ? 0 : space + 1;
+}
+
+const FADE_OUT = { duration: 0.18, ease: "easeOut" } as const;
+const FADE_IN = { duration: 0.3, ease: "easeOut", delay: 0.06 } as const;
+
+/**
+ * Text that morphs rather than swapping: what the old and new strings share
+ * stays exactly where it is, and only the rest crossfades. The old text
+ * fades out over the new, its shared start hidden so nothing doubles up.
+ */
+function MorphText({
+  text,
+  truncate,
+  reduce,
+}: {
+  text: string;
+  truncate: boolean;
+  reduce: boolean;
+}) {
+  const [morph, setMorph] = useState({
+    text,
+    from: null as string | null,
+    id: 0,
+  });
+  if (morph.text !== text)
+    setMorph({ text, from: morph.text, id: morph.id + 1 });
+
+  const { from, id } = morph;
+  const animated = from !== null && from !== text && !reduce;
+  const kept = animated ? sharedPrefix(from, text) : text.length;
+
+  return (
+    <span className={`relative block ${truncate ? "truncate" : ""}`}>
+      {text.slice(0, kept)}
+      {kept < text.length && (
+        <m.span
+          key={`in-${id}`}
+          animate={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
+          transition={FADE_IN}
+        >
+          {text.slice(kept)}
+        </m.span>
+      )}
+      {animated && (
+        <m.span
+          key={`out-${id}`}
+          animate={{ opacity: 0 }}
+          aria-hidden="true"
+          className={`pointer-events-none absolute top-0 left-0 ${
+            truncate ? "whitespace-nowrap" : "right-0"
+          }`}
+          initial={{ opacity: 1 }}
+          transition={FADE_OUT}
+        >
+          <span className="invisible">{from.slice(0, kept)}</span>
+          {from.slice(kept)}
+        </m.span>
+      )}
+    </span>
+  );
+}
+
+/** How a line of text appears or goes: no scale, so it reads as the same
+    line settling rather than a new one bouncing in. */
+function fade(reduce: boolean) {
+  const away = reduce
+    ? { opacity: 0 }
+    : { opacity: 0, filter: "blur(2px)", y: 2 };
+  return {
+    initial: away,
+    animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+    exit: { ...away, transition: EXIT },
+    transition: reduce ? EXIT : { ...MORPH, delay: 0.06 },
+  } as const;
+}
+
+/** The subtitle, its height easing open, closed, or onto more lines. */
+function Subtitle({
+  variant,
+  annotate,
+  reduce,
+}: {
+  variant: Variant;
+  annotate?: number;
+  reduce: boolean;
+}) {
+  const inner = useRef<HTMLSpanElement>(null);
+  const size = useSize(inner, "height");
+  const { subtitle, subheadline, wrap } = variant;
+
+  return (
+    <m.span
+      animate={{ height: size.value }}
+      className="flex flex-col"
+      initial={false}
+      transition={size.instant || reduce ? INSTANT : MORPH}
+    >
+      <span className="relative flex flex-col" ref={inner}>
+        <AnimatePresence initial={false} mode="popLayout">
+          {subtitle && (
+            <m.span
+              key="subtitle"
+              className={`mt-px max-w-full self-start text-[var(--labels-secondary)] ${
+                subheadline
+                  ? "text-[15px] leading-[20px]"
+                  : "text-[13px] leading-[19px]"
+              }`}
+              data-annotate={annotate}
+              {...fade(reduce)}
+            >
+              <MorphText reduce={reduce} text={subtitle} truncate={!wrap} />
+            </m.span>
+          )}
+        </AnimatePresence>
+      </span>
+    </m.span>
+  );
+}
+
+function Row({
+  variant,
+  step,
+  height,
+  reduce,
+}: {
+  variant: Variant;
+  step: number;
+  height: MotionValue<number>;
+  reduce: boolean;
+}) {
+  const { slot, title, leading, trailing } = variant;
+  const mark = (part: Slot) => (slot === part ? step : undefined);
+
+  return (
+    <m.div
+      className="flex items-center rounded-[20px] px-5"
       data-row=""
       style={{
-        height: ROW_HEIGHT,
+        height,
         backgroundColor: "var(--card-background)",
         boxShadow: ROW_SHADOW,
       }}
     >
-      {leading && (
-        <span className="flex shrink-0" {...mark("Leading")}>
-          {leading}
+      <Side
+        annotate={mark("Leading")}
+        piece={leading}
+        reduce={reduce}
+        side="leading"
+      />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-spec-17 font-medium text-[var(--labels-primary)]">
+          {typeof title === "string" ? (
+            <MorphText reduce={reduce} text={title} truncate />
+          ) : (
+            <span className="block truncate">{title}</span>
+          )}
         </span>
-      )}
-      <span className="flex min-w-0 flex-1 flex-col gap-px">
-        <span className="text-spec-17 truncate font-medium text-[var(--labels-primary)]">
-          {title}
-        </span>
-        {subtitle && (
-          <span
-            className="max-w-full self-start truncate text-[13px] leading-[19px] text-[var(--labels-secondary)]"
-            {...mark("Subtitle")}
-          >
-            {subtitle}
-          </span>
-        )}
+        <Subtitle
+          annotate={mark("Subtitle")}
+          reduce={reduce}
+          variant={variant}
+        />
       </span>
-      <span
-        className="flex shrink-0 items-center justify-end"
-        {...mark("Trailing")}
-      >
-        {trailing}
-      </span>
-    </div>
+      <Side
+        annotate={mark("Trailing")}
+        piece={trailing}
+        reduce={reduce}
+        side="trailing"
+      />
+    </m.div>
   );
 }
 
 type Box = { x: number; y: number; width: number; height: number };
+type BoxValues = {
+  x: MotionValue<number>;
+  y: MotionValue<number>;
+  width: MotionValue<number>;
+  height: MotionValue<number>;
+};
+
+/**
+ * The marked part's box: `place` it as the part is measured, and read the
+ * `shown` box, which springs after it, so the selection glides from one
+ * part to the next. The first placement lands without a glide.
+ */
+function useSelection(reduce: boolean) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const width = useMotionValue(0);
+  const height = useMotionValue(0);
+  const sx = useSpring(x, FOLLOW);
+  const sy = useSpring(y, FOLLOW);
+  const sWidth = useSpring(width, FOLLOW);
+  const sHeight = useSpring(height, FOLLOW);
+
+  return useMemo(() => {
+    const raw = [x, y, width, height] as const;
+    const springs = [sx, sy, sWidth, sHeight] as const;
+    return {
+      shown: reduce
+        ? { x, y, width, height }
+        : { x: sx, y: sy, width: sWidth, height: sHeight },
+      place(box: Box, jump: boolean) {
+        const values = [box.x, box.y, box.width, box.height];
+        raw.forEach((value, i) => value.set(values[i]!));
+        if (jump) springs.forEach((value, i) => value.jump(values[i]!));
+      },
+    };
+  }, [reduce, x, y, width, height, sx, sy, sWidth, sHeight]);
+}
 
 /**
  * An inspector's overlay on the part of the row that makes it this
  * variant: a hairline bounding box with crop marks, a leader, and a mono
- * readout of the slot, its type and its size. It sits over the product
- * rather than in it, so none of it borrows the product's type or surfaces.
+ * readout of the slot, its type and its size. Within a family it travels
+ * with the change, resizing onto the next part as its size counts over.
+ * It sits over the product rather than in it, so none of it borrows the
+ * product's type or surfaces.
  */
-function Note({ variant, target }: { variant: Variant; target: Box }) {
+function Note({
+  variant,
+  box,
+  rowHeight,
+}: {
+  variant: Variant;
+  box: BoxValues;
+  rowHeight: MotionValue<number>;
+}) {
   const reduce = useReducedMotion();
   const label = useRef<HTMLSpanElement>(null);
-  const pad = 3;
-  const box = {
-    left: target.x - pad,
-    top: target.y - pad,
-    width: target.width + pad * 2,
-    height: target.height + pad * 2,
-  };
-  const x = target.x + target.width / 2;
-  const leaderTop = box.top + box.height;
-  const labelTop = ROW_HEIGHT + 18;
-  const [left, setLeft] = useState(x);
+  const labelHalf = useMotionValue(0);
+  const stageWidth = useMotionValue(Infinity);
 
   // The readout centres on the leader, kept inside the stage.
   useLayoutEffect(() => {
     const element = label.current;
     const parent = element?.parentElement;
     if (!element || !parent) return;
-    const half = element.offsetWidth / 2;
-    setLeft(Math.min(Math.max(x, half), parent.offsetWidth - half));
-  }, [x]);
+    const observer = new ResizeObserver(() => {
+      labelHalf.set(element.offsetWidth / 2);
+      stageWidth.set(parent.offsetWidth);
+    });
+    observer.observe(element);
+    observer.observe(parent);
+    return () => observer.disconnect();
+  }, [labelHalf, stageWidth]);
 
-  const fade = (delay: number) =>
-    ({
-      initial: { opacity: 0 },
-      animate: { opacity: 1 },
-      transition: { duration: 0.15, ease: "easeOut", delay },
-    }) as const;
+  const left = useTransform(box.x, (v) => v - PAD);
+  const top = useTransform(box.y, (v) => v - PAD);
+  const width = useTransform(box.width, (v) => v + PAD * 2);
+  const height = useTransform(box.height, (v) => v + PAD * 2);
+  const centre = useTransform(() => box.x.get() + box.width.get() / 2);
+  const labelTop = useTransform(rowHeight, (v) => v + NOTE_GAP);
+  const leaderTop = useTransform(
+    () => box.y.get() + box.height.get() + PAD + 2,
+  );
+  const leaderHeight = useTransform(() =>
+    Math.max(0, labelTop.get() - leaderTop.get() - 4),
+  );
+  const dotTop = useTransform(labelTop, (v) => v - 4);
+  const readoutTop = useTransform(labelTop, (v) => v + 2);
+  const labelLeft = useTransform(() => {
+    const half = labelHalf.get();
+    return Math.min(
+      Math.max(centre.get(), half),
+      Math.max(half, stageWidth.get() - half),
+    );
+  });
+  const shownWidth = useTransform(box.width, (v) => Math.round(v));
+  const shownHeight = useTransform(box.height, (v) => Math.round(v));
+
   const mark = "absolute h-[5px] w-[5px]";
   const edge = `1px solid ${INK}`;
+  const name = `${variant.slot}/${variant.type}`;
 
   return (
-    <div
+    <m.div
+      animate={{ opacity: 1 }}
       aria-hidden="true"
       className="pointer-events-none absolute inset-0"
+      initial={{ opacity: 0 }}
       style={{ fontFamily: "var(--site-font-mono)" }}
+      transition={{ duration: 0.15, ease: "easeOut", delay: 0.18 }}
     >
-      <m.span className="absolute" style={box} {...fade(0.18)}>
+      <m.span className="absolute" style={{ left, top, width, height }}>
         <span
           className="absolute inset-0"
           style={{ outline: `1px dashed ${INK}`, opacity: 0.55 }}
@@ -384,65 +823,99 @@ function Note({ variant, target }: { variant: Variant; target: Box }) {
         />
       </m.span>
       <m.span
-        animate={{ scaleY: 1, opacity: 0.6 }}
-        className="absolute w-px origin-top -translate-x-1/2"
-        initial={reduce ? { opacity: 0 } : { scaleY: 0, opacity: 0.6 }}
+        className="absolute w-px -translate-x-1/2"
         style={{
-          left: x,
-          top: leaderTop + 3,
-          height: labelTop - leaderTop - 6,
+          left: centre,
+          top: leaderTop,
+          height: leaderHeight,
           backgroundColor: INK,
+          opacity: 0.6,
         }}
-        transition={{ duration: 0.2, ease: [0.2, 0, 0, 1], delay: 0.24 }}
       />
       <m.span
         className="absolute h-[3px] w-[3px] -translate-x-1/2"
-        style={{ left: x, top: labelTop - 4, backgroundColor: INK }}
-        {...fade(0.34)}
+        style={{ left: centre, top: dotTop, backgroundColor: INK }}
       />
       <m.span
         className="absolute flex -translate-x-1/2 items-baseline gap-1.5 text-[11px] leading-[14px] tracking-[0.06em] whitespace-nowrap uppercase"
         ref={label}
-        style={{ left, top: labelTop + 2, color: INK }}
-        {...fade(0.36)}
+        style={{ left: labelLeft, top: readoutTop, color: INK }}
       >
-        <span>
-          {variant.slot}
-          <span style={{ opacity: 0.45 }}> / </span>
-          {variant.type}
-        </span>
+        <AnimatePresence initial={false} mode="popLayout">
+          <m.span
+            key={name}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: reduce ? 0 : -3 }}
+            initial={{ opacity: 0, y: reduce ? 0 : 3 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+          >
+            {variant.slot}
+            <span style={{ opacity: 0.45 }}> / </span>
+            {variant.type}
+          </m.span>
+        </AnimatePresence>
         <span className="tabular-nums" style={{ opacity: 0.5 }}>
-          {Math.round(target.width)}×{Math.round(target.height)}
+          <m.span>{shownWidth}</m.span>×<m.span>{shownHeight}</m.span>
         </span>
       </m.span>
-    </div>
+    </m.div>
   );
 }
 
-function Frame({ variant }: { variant: Variant }) {
+/**
+ * One family's row and its overlay. The row stays mounted through the
+ * family's steps; the overlay finds the marked part each frame while the
+ * row reshapes, so it tracks the part as it moves.
+ */
+function Frame({ variant, step }: { variant: Step; step: number }) {
+  const reduce = useReducedMotion() ?? false;
   const root = useRef<HTMLDivElement>(null);
-  const [target, setTarget] = useState<Box | null>(null);
+  const target = variant.height ?? ROW_HEIGHT;
+  const rowHeight = useMotionValue(target);
+  // A taller row grows out from the stage's middle, lifted a touch.
+  const y = useTransform(
+    rowHeight,
+    (v) => NOTE_SLOT - OPTICAL_LIFT - (v - ROW_HEIGHT) / 2,
+  );
+  const frameHeight = useTransform(rowHeight, (v) => v + NOTE_SLOT);
+  const selection = useSelection(reduce);
+  const placed = useRef(false);
+  const [shown, setShown] = useState(false);
 
-  // The marked slot wraps the part; the part's own box (not the wrapper,
-  // its margin or its fixed width) is what the overlay measures.
+  useEffect(() => {
+    const run = animate(rowHeight, target, reduce ? INSTANT : MORPH);
+    return () => run.stop();
+  }, [rowHeight, target, reduce]);
+
   useLayoutEffect(() => {
     const element = root.current;
-    const slot = element?.querySelector<HTMLElement>("[data-annotate]");
-    if (!element || !slot) return;
-    const child = slot.firstElementChild;
-    const part = child instanceof HTMLElement ? child : slot;
-    setTarget(boxWithin(part, element));
-  }, []);
+    if (!element) return;
+    let frame = 0;
+    const until = performance.now() + 900;
+    const track = () => {
+      const part = element.querySelector<HTMLElement>(
+        `[data-annotate="${step}"]`,
+      );
+      if (part) {
+        selection.place(boxWithin(part, element), !placed.current);
+        if (!placed.current) {
+          placed.current = true;
+          setShown(true);
+        }
+      }
+      if (performance.now() < until) frame = requestAnimationFrame(track);
+    };
+    track();
+    return () => cancelAnimationFrame(frame);
+  }, [step, selection]);
 
   return (
-    <div
-      className="relative"
-      ref={root}
-      style={{ height: ROW_HEIGHT + NOTE_SLOT }}
-    >
-      <Row variant={variant} />
-      {target && <Note target={target} variant={variant} />}
-    </div>
+    <m.div className="relative" ref={root} style={{ y, height: frameHeight }}>
+      <Row height={rowHeight} reduce={reduce} step={step} variant={variant} />
+      {shown && (
+        <Note box={selection.shown} rowHeight={rowHeight} variant={variant} />
+      )}
+    </m.div>
   );
 }
 
@@ -518,8 +991,8 @@ function usePlaying(ref: RefObject<HTMLElement | null>) {
 }
 
 /**
- * A segmented scrubber pinned to the card's foot, one dot per variant; the
- * current dot stretches into a black pill and its neighbours make room.
+ * A segmented scrubber pinned to the card's foot, one dot per variant, set
+ * in groups by family; the current dot stretches into a black pill and its neighbours make room.
  * Press anywhere on it and slide: the variant under the finger is the one
  * shown. Arrow keys, Home and End step through it too. Inside the current
  * pill a black dot grows to fill it as `fill` runs from 0 to 1. While a finger is
@@ -545,19 +1018,20 @@ function Scrubber({
     current.current = index;
   }, [index]);
 
-  // The track splits evenly by variant, so the slot under the finger never
-  // moves while the dots resize.
+  // The dot nearest the finger is the one shown. Growing into the pill
+  // only pushes its neighbours further from the finger, so the choice
+  // holds steady while the dots resize, family gaps and all.
   const pick = (event: PointerEvent<HTMLDivElement>) => {
-    const track = event.currentTarget;
-    const box = track.getBoundingClientRect();
-    const style = getComputedStyle(track);
-    const inset =
-      parseFloat(style.paddingLeft) * (box.width / track.offsetWidth || 1);
-    const ratio = (event.clientX - box.left - inset) / (box.width - inset * 2);
-    const next = Math.min(
-      last,
-      Math.max(0, Math.floor(ratio * VARIANTS.length)),
-    );
+    let next = 0;
+    let nearest = Infinity;
+    Array.from(event.currentTarget.children).forEach((dot, i) => {
+      const box = dot.getBoundingClientRect();
+      const distance = Math.abs(event.clientX - (box.left + box.width / 2));
+      if (distance < nearest) {
+        nearest = distance;
+        next = i;
+      }
+    });
     if (next !== current.current) {
       current.current = next;
       onSelect(next);
@@ -626,6 +1100,7 @@ function Scrubber({
           animate={{ width: i === index ? PILL : DOT }}
           className={styles.dot}
           initial={false}
+          style={item.first && i > 0 ? { marginLeft: FAMILY_GAP } : undefined}
           transition={reduce ? { duration: 0 } : SETTLE}
         >
           <m.span
@@ -642,10 +1117,11 @@ function Scrubber({
 }
 
 /**
- * The wallet's list row in each of its configurations, one at a time: each
- * arrives out of a blur as the last one leaves, an inspector's overlay
- * names the part that makes it that variant, and a scrubber at the foot
- * moves between them.
+ * The wallet's list row in each of its configurations, a family at a time:
+ * within a family the row stays and reshapes around the part that changes,
+ * an inspector's overlay following that part; between families one row
+ * arrives out of a blur as the last leaves. A scrubber at the foot moves
+ * between them.
  */
 export function RowConfigsPrimitive() {
   const [index, setIndex] = useState(0);
@@ -655,7 +1131,7 @@ export function RowConfigsPrimitive() {
   const fill = useMotionValue(1);
   const shown = useRef(index);
 
-  // Playing, the current pill fills over the interval and then moves on; a
+  // Playing, the current pill fills over the step and then moves on; a
   // new pill starts from its dot. Held, it fills to full, and when let go it
   // shrinks back to the dot and starts again. Time passes linearly, so the
   // fill does too.
@@ -668,6 +1144,7 @@ export function RowConfigsPrimitive() {
       return () => hold.stop();
     }
     if (moved) fill.set(0);
+    const duration = (VARIANTS[index]!.last ? INTERVAL : STEP) / 1000;
     let stopped = false;
     let run = animate(fill, 0, {
       duration: fill.get() > 0 ? 0.25 : 0,
@@ -676,7 +1153,7 @@ export function RowConfigsPrimitive() {
     run.then(() => {
       if (stopped) return;
       run = animate(fill, 1, {
-        duration: INTERVAL / 1000,
+        duration,
         ease: "linear",
         onComplete: () => {
           if (!stopped) setIndex((i) => (i + 1) % VARIANTS.length);
@@ -703,9 +1180,9 @@ export function RowConfigsPrimitive() {
         >
           <AnimatePresence initial={false}>
             <m.div
-              key={index}
+              key={variant.family}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              className="absolute inset-x-0"
+              className="absolute inset-x-0 top-0"
               exit={
                 reduce
                   ? { opacity: 0, transition: EXIT }
@@ -721,11 +1198,9 @@ export function RowConfigsPrimitive() {
                   ? { opacity: 0 }
                   : { opacity: 0, scale: 0.96, filter: "blur(4px)" }
               }
-              // The row's box is centred over the card, then lifted a touch.
-              style={{ top: NOTE_SLOT - OPTICAL_LIFT }}
               transition={ENTER}
             >
-              <Frame variant={variant} />
+              <Frame step={index} variant={variant} />
             </m.div>
           </AnimatePresence>
         </div>

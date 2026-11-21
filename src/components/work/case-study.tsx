@@ -7,8 +7,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { Tilt } from "@/components/motion-primitives/tilt";
 import { CASE_STUDY_ART_SIZES } from "@/components/motion/case-study-art";
 import { PlaygroundTile } from "@/components/home/playground/tile";
-import { RouteLink } from "@/components/motion/route-link";
 import { GlassMaterial } from "@/components/ui/glass-material";
+import { CaseStudyNextLink } from "@/components/work/case-study-next-link";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SectionToc, type TocSection } from "@/components/ui/section-toc";
 import {
@@ -342,7 +342,7 @@ export function CaseStudyEnding({
       <div className="case-study-ending__actions">
         <div aria-hidden="true" className="mobile-toc-landing" />
         <span aria-hidden="true" className="case-study-ending__divider" />
-        <RouteLink
+        <CaseStudyNextLink
           aria-label={`View ${next.label} case study`}
           className="case-study-ending__next"
           href={next.href}
@@ -375,7 +375,7 @@ export function CaseStudyEnding({
               strokeWidth="2"
             />
           </svg>
-        </RouteLink>
+        </CaseStudyNextLink>
       </div>
     </section>
   );

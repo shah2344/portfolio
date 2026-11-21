@@ -3,7 +3,6 @@
 import { useLayoutEffect } from "react";
 
 import {
-  HOME_CHARACTER_TIMING,
   homeCharacterArrival,
   setHomeCharacterDeparture,
 } from "./character/timing";
@@ -49,7 +48,7 @@ export function HomeEntranceRoot({
       target.dataset.homeEnter = "done";
     };
     // Read while the masthead is idle: the CSS waiting state ends with it.
-    const { waitedMs, waitingAt } = homeCharacterArrival();
+    const { waitedMs, waitingAt, timing } = homeCharacterArrival();
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const character = document.querySelector<HTMLElement>(
@@ -74,8 +73,8 @@ export function HomeEntranceRoot({
 
     // A slow load already showed the arrival in CSS; continue it from where
     // it is rather than replaying it, however long the character waited.
-    const elapsed = Math.min(waitedMs, HOME_CHARACTER_TIMING.arrivalMs);
-    const contentDelayMs = HOME_CHARACTER_TIMING.contentDelayMs - elapsed;
+    const elapsed = Math.min(waitedMs, timing.arrivalMs);
+    const contentDelayMs = timing.contentDelayMs - elapsed;
     const home = document.querySelector<HTMLElement>(".home");
     home?.style.setProperty(
       "--home-character-content-delay",
@@ -96,12 +95,13 @@ export function HomeEntranceRoot({
       (slotHidden ? homeCharacterDissolveFrames : homeCharacterEntranceFrames)(
         centerX - slot.left - slot.width / 2,
         centerY - slot.top - slot.height / 2,
+        timing,
       ),
-      { duration: HOME_CHARACTER_TIMING.entranceMs, fill: "both" },
+      { duration: timing.entranceMs, fill: "both" },
     );
     arrival.currentTime = elapsed;
     setHomeCharacterDeparture(
-      performance.now() + HOME_CHARACTER_TIMING.travelDelayMs - elapsed,
+      performance.now() + timing.travelDelayMs - elapsed,
     );
     let disposed = false;
     const settleCharacter = () => {
@@ -128,11 +128,7 @@ export function HomeEntranceRoot({
     const openingAt = performance.now() - elapsed;
     const abort = new AbortController();
     const skipOpening = () => {
-      if (
-        performance.now() - openingAt >
-        HOME_CHARACTER_TIMING.contentDelayMs + 750
-      )
-        return;
+      if (performance.now() - openingAt > timing.contentDelayMs + 750) return;
       settleCharacter();
       home?.style.setProperty("--home-character-content-delay", "0ms");
       for (const target of targets) {
