@@ -35,15 +35,13 @@ export function characterBackgroundColors(seed: number) {
 }
 
 const LAST_BACKGROUND_KEY = "home-character-background";
-/** Materials the first reveal flicks through before landing on this load's. */
-export const CHARACTER_SHUFFLE_LENGTH = 9;
 
 /*
  * Choose seeds before hydration without importing the browser-only renderer
  * into the root layout. The client generates the meshes locally; this script
  * never fetches images. Keep the per-load choice across client navigation.
  */
-export const characterBackgroundScript = `(function(){var b=${JSON.stringify(CHARACTER_BACKGROUNDS)},p,n;try{p=sessionStorage.getItem(${JSON.stringify(LAST_BACKGROUND_KEY)})}catch(e){}var c=b.filter(function(x){return String(x)!==p});n=c[Math.floor(Math.random()*c.length)];try{sessionStorage.setItem(${JSON.stringify(LAST_BACKGROUND_KEY)},String(n))}catch(e){}var s=b.filter(function(x){return x!==n}).sort(function(){return Math.random()-0.5}).slice(0,${CHARACTER_SHUFFLE_LENGTH});var d=document.documentElement.dataset;d.characterBackground=n;d.characterShuffle=s.join(",")})()`;
+export const characterBackgroundScript = `(function(){var b=${JSON.stringify(CHARACTER_BACKGROUNDS)},p,n;try{p=sessionStorage.getItem(${JSON.stringify(LAST_BACKGROUND_KEY)})}catch(e){}var c=b.filter(function(x){return String(x)!==p});n=c[Math.floor(Math.random()*c.length)];try{sessionStorage.setItem(${JSON.stringify(LAST_BACKGROUND_KEY)},String(n))}catch(e){}document.documentElement.dataset.characterBackground=n})()`;
 
 let current: number | undefined;
 
@@ -59,20 +57,6 @@ export function currentCharacterBackground() {
     CHARACTER_BACKGROUNDS[
       Math.floor(Math.random() * CHARACTER_BACKGROUNDS.length)
     ]!);
-}
-
-/** The head script's shuffle for this load, or a fresh one without it. */
-export function characterShuffle(initial: number) {
-  const early = (document.documentElement.dataset.characterShuffle ?? "")
-    .split(",")
-    .map(Number)
-    .filter((index) => isBackground(index) && index !== initial);
-  if (early.length) return early;
-  return CHARACTER_BACKGROUNDS.filter((index) => index !== initial)
-    .map((index) => ({ index, order: Math.random() }))
-    .sort((a, b) => a.order - b.order)
-    .slice(0, CHARACTER_SHUFFLE_LENGTH)
-    .map(({ index }) => index);
 }
 
 export function followingCharacterBackground(index: number) {

@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { HomeCharacterBackground } from "../../src/components/home/character/background";
 import {
   CHARACTER_BACKGROUNDS,
-  CHARACTER_SHUFFLE_LENGTH,
   characterBackgroundColors,
   characterBackgroundScript,
 } from "../../src/components/home/character/backgrounds";
@@ -25,7 +24,7 @@ function choose(storage: {
 }
 
 describe("generated character backgrounds", () => {
-  it("chooses a different colour on reload and keeps the reveal seeds distinct", () => {
+  it("chooses a different colour on reload", () => {
     let previous = String(CHARACTER_BACKGROUNDS[0]);
     for (let load = 0; load < 30; load++) {
       const before = previous;
@@ -38,11 +37,8 @@ describe("generated character backgrounds", () => {
       expect(String(dataset.characterBackground)).not.toBe(before);
       expect(String(dataset.characterBackground)).toBe(previous);
       expect(CHARACTER_BACKGROUNDS).toContain(Number(previous));
-      const shuffle = dataset.characterShuffle!.split(",").map(Number);
-      expect(shuffle).toHaveLength(CHARACTER_SHUFFLE_LENGTH);
-      expect(new Set(shuffle).size).toBe(shuffle.length);
-      expect(shuffle).not.toContain(Number(previous));
-      for (const seed of shuffle) expect(CHARACTER_BACKGROUNDS).toContain(seed);
+      // The reveal is a single fade: no shuffle seeds are chosen.
+      expect(Object.keys(dataset)).toEqual(["characterBackground"]);
     }
   });
 
@@ -53,9 +49,6 @@ describe("generated character backgrounds", () => {
     const dataset = choose({ getItem: unavailable, setItem: unavailable });
     expect(CHARACTER_BACKGROUNDS).toContain(
       Number(dataset.characterBackground),
-    );
-    expect(dataset.characterShuffle!.split(",")).toHaveLength(
-      CHARACTER_SHUFFLE_LENGTH,
     );
   });
 

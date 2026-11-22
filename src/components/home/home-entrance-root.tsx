@@ -2,10 +2,7 @@
 
 import { useLayoutEffect } from "react";
 
-import {
-  homeCharacterArrival,
-  setHomeCharacterDeparture,
-} from "./character/timing";
+import { homeCharacterArrival } from "./character/timing";
 import {
   homeCharacterDissolveFrames,
   homeCharacterEntranceFrames,
@@ -100,14 +97,10 @@ export function HomeEntranceRoot({
       { duration: timing.entranceMs, fill: "both" },
     );
     arrival.currentTime = elapsed;
-    setHomeCharacterDeparture(
-      performance.now() + timing.travelDelayMs - elapsed,
-    );
     let disposed = false;
     const settleCharacter = () => {
       finish(character);
       arrival.cancel();
-      setHomeCharacterDeparture(undefined);
     };
     void arrival.finished.then(
       () => {
@@ -236,7 +229,6 @@ export function HomeEntranceRoot({
       disposed = true;
       abort.abort();
       arrival.cancel();
-      setHomeCharacterDeparture(undefined);
       observer.disconnect();
       cleanupSections?.();
       home?.style.removeProperty("--home-character-content-delay");
