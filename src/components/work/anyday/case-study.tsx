@@ -356,7 +356,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="saving"
                 title="Workers chose where each payout went."
-                description="I designed auto-save to split every payout between spending and savings goals before it reached the card. Heavily tipped servers no longer had to hold a large balance on the card they spent from."
+                description="I designed auto-save to split each payout into savings goals before it hit the card, so tipped servers stopped carrying big balances there."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -545,8 +545,8 @@ export function AnyDayCaseStudy() {
                     from 8 hours a week to about <strong>30 minutes</strong>.
                   </p>
                   <p className="humi-impact__lede">
-                    For workers, <strong>64%</strong> turned on auto-save, and
-                    within two months it made up{" "}
+                    <strong>Nearly two-thirds</strong> of workers turned on
+                    auto-save, and within two months it made up{" "}
                     <strong>76% of savings deposits</strong>. Across the
                     relaunch, the app’s App Store rating rose from 2.4 to{" "}
                     <strong>4.6 stars</strong>.
