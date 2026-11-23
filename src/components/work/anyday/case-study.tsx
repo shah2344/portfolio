@@ -356,7 +356,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="saving"
                 title="Set money aside with every payout."
-                description="I designed auto-save so workers could split earnings between spending and savings goals. In its first two months, it accounted for 76% of all savings deposit value."
+                description="I designed auto-save so workers could split earnings between spending and savings goals. In its first two months, it accounted for 76% of all savings deposits."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -530,23 +530,26 @@ export function AnyDayCaseStudy() {
                     Over one summer, we moved{" "}
                     <strong>
                       <span aria-hidden="true">~</span>
-                      <span className="sr-only">about </span>200k workers
+                      <span className="sr-only">about </span>200k worker
+                      accounts
                     </strong>{" "}
-                    and <strong>over 3,500 restaurants</strong> onto our new
-                    platform. We launched in batches, fixing issues before each
-                    next group.
+                    and <strong>over 3,500 restaurants</strong> onto the new
+                    platform. We rolled out in waves and fixed issues before
+                    each one.
                   </p>
                   <p className="humi-impact__lede">
-                    Restaurants got started faster and spent less time on
-                    payouts. Onboarding a new location fell from 7 to{" "}
-                    <strong>3 days</strong>, and simpler payouts cut
-                    reconciliation from an 8-hour shift to about{" "}
-                    <strong>30 minutes</strong>.
+                    For managers, setup and payouts got much faster. Once a
+                    location cleared due diligence, the self-serve setup
+                    checklist got it live in <strong>3 days</strong> instead of
+                    7. Payouts built from synced POS data cut reconciliation
+                    from 8 hours a week to about <strong>30 minutes</strong>.
                   </p>
                   <p className="humi-impact__lede">
-                    Auto-save became the main way workers saved within two
-                    months of launch. Over the same period, the app’s rating
-                    rose from 2.4 to <strong>4.6 stars</strong>.
+                    For workers, auto-save overtook manual transfers as the main
+                    way to save: within two months, it made up{" "}
+                    <strong>76% of savings deposits</strong>. Across the
+                    relaunch, the app’s App Store rating rose from 2.4 to{" "}
+                    <strong>4.6 stars</strong>.
                   </p>
                 </div>
               </div>
