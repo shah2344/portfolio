@@ -319,7 +319,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="discovery-findings"
                 title="We mapped payout journeys with managers."
-                description="Tipping rules varied by restaurant and even by location. Automation only worked if any location could easily set up their own rules exactly how they had it in their spreadsheets."
+                description="Tip rules varied by location, so automation had to let each one copy the rules from its spreadsheet."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
@@ -374,7 +374,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="portal-system"
                 title="I redesigned the portal around how managers work."
-                description="Setting up tip rules had needed our help, so I turned it into a clear checklist any location could finish alone. Precise filtering, pinned locations, and funding alerts then cut the daily digging and surprises."
+                description="I turned tip-rule setup into a checklist any location could finish alone, then added filters, pinned locations, and funding alerts."
               >
                 <AnyDayFigureRow width="full">
                   <figure className="anyday-figure">
@@ -450,7 +450,7 @@ export function AnyDayCaseStudy() {
                 <AnyDayStoryCard
                   id="choice"
                   title="Making room for choice."
-                  description="Workers could receive tips in a bank account of their choice for free each week, or keep daily access on the card. Employers chose the payout day and paid a small fee, but couldn’t delay payouts beyond weekly."
+                  description="Workers could take tips to their own bank for free each week, or keep daily access on the card. Employers picked the payout day, up to weekly."
                 >
                   <AnyDayFigureRow width="wide">
                     <figure className="anyday-figure">
