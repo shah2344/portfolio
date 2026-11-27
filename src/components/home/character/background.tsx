@@ -3,10 +3,8 @@
 import { useLayoutEffect, useRef } from "react";
 import { gradientToDataURL } from "@outpacelabs/avatars";
 
-import { HOME_CHARACTER_SHUFFLE, homeCharacterDeparture } from "./timing";
 import {
   characterBackgroundColors,
-  characterShuffle,
   currentCharacterBackground,
   followingCharacterBackground,
   rememberCharacterBackground,
@@ -16,23 +14,10 @@ import { createCharacterPettingTempo } from "./material";
 
 /*
  * While the page loads the bare glass stays monochrome; the first reveal
- * colours it with a shuffle through other materials (`HOME_CHARACTER_SHUFFLE`).
- * The opening holds the character at the centre long enough for it to land
- * (`homeCharacterArrival`), so the beats here only compress as a fallback.
+ * fades this load's colour in once its mesh has decoded.
  */
-const {
-  stepsMs: SHUFFLE_STEPS_MS,
-  delayMs: SHUFFLE_DELAY_MS,
-  waitMs: SHUFFLE_WAIT_MS,
-  settleHoldMs: SETTLE_HOLD_MS,
-} = HOME_CHARACTER_SHUFFLE;
-// Every shift is soft, so the run reads as one smeared motion, not flashes.
-// The landing stays nearly as soft so it settles rather than snaps.
-const SHUFFLE_BLUR_PX = 6;
-const SETTLE_BLUR_PX = 7;
-// Below this a shuffle would only flicker, so the colour just fades in.
-const MIN_SHUFFLE_MS = 280;
-const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+const REVEAL_MS = 400;
+const REVEAL_BLUR_PX = 6;
 // SVG image hrefs survive frozen DOM snapshots, unlike a cloned canvas
 // bitmap. Cache the small, generated PNGs across remounts and lab faces.
 // The finite seed list bounds this cache; nothing is fetched or persisted.
@@ -101,68 +86,9 @@ export function HomeCharacterBackground() {
         wipe,
       );
     };
-    const reveal = async () => {
+    const reveal = () => {
       if (disposed || generation > 0) return;
-      if (reduced.matches) {
-        void show(initialBackground, 0, 0);
-        return;
-      }
-      const landBy = () => {
-        const departure = homeCharacterDeparture();
-        return departure === undefined
-          ? Infinity
-          : departure - SETTLE_HOLD_MS - performance.now();
-      };
-      // The delay and decode wait overlap, and neither eats into the shortest shuffle.
-      const startAt =
-        performance.now() +
-        Math.min(SHUFFLE_DELAY_MS, Math.max(0, landBy() - MIN_SHUFFLE_MS));
-      // Stragglers may only use time the shortest shuffle can spare.
-      const wait = Math.min(
-        SHUFFLE_WAIT_MS,
-        Math.max(0, landBy() - MIN_SHUFFLE_MS),
-      );
-      await Promise.race([
-        Promise.allSettled(others.map(prepare)),
-        new Promise((resolve) => window.setTimeout(resolve, wait)),
-      ]);
-      const delay = startAt - performance.now();
-      if (delay > 0)
-        await new Promise((resolve) => window.setTimeout(resolve, delay));
-      if (disposed || generation > 0) return;
-      const ready = others.filter((index) => backgroundUrls.has(index));
-      // Two or more decoded materials can fill every beat by repeating.
-      let colors = [
-        ...(ready.length > 1
-          ? SHUFFLE_STEPS_MS.slice(1).map(
-              (_, step) => ready[step % ready.length]!,
-            )
-          : ready),
-        initialBackground,
-      ];
-      let steps = SHUFFLE_STEPS_MS.slice(-colors.length);
-      const available = landBy();
-      // Only a decode slower than the opening allowed for squeezes the beats.
-      if (available < MIN_SHUFFLE_MS) {
-        colors = [initialBackground];
-        steps = [Math.max(120, available)];
-      } else if (available < sum(steps))
-        steps = steps.map((ms) => (ms * available) / sum(steps));
-      // Each step ends on a fixed schedule, so frame latency never accumulates.
-      const startedAt = performance.now();
-      const ends = steps.map((_, step) => sum(steps.slice(0, step + 1)));
-      for (const [step, index] of colors.entries()) {
-        if (disposed || generation > 0) return;
-        const duration = Math.max(
-          16,
-          startedAt + ends[step]! - performance.now(),
-        );
-        await show(
-          index,
-          duration,
-          step === colors.length - 1 ? SETTLE_BLUR_PX : SHUFFLE_BLUR_PX,
-        );
-      }
+      void show(initialBackground, REVEAL_MS, REVEAL_BLUR_PX);
     };
     const change = async () => {
       const duration = pettingTempo(performance.now());
@@ -202,12 +128,8 @@ export function HomeCharacterBackground() {
     button.addEventListener("click", change);
     reduced.addEventListener("change", onReducedChange);
     // Generate only in the client effect, never during server rendering.
-    const others = characterShuffle(initialBackground);
     const revealing = !backgroundUrls.has(initialBackground);
-    // Prioritize the settled fill. Reduced motion never needs shuffle meshes.
     const initialReady = prepare(initialBackground);
-    if (revealing && !reduced.matches)
-      for (const index of others) void prepare(index).catch(() => {});
     if (!revealing) group.style.opacity = "1";
     else
       void initialReady.then(reveal, () => {

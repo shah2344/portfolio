@@ -11,7 +11,12 @@ export function HomeFooter({ className }: { className?: string }) {
           I&rsquo;m looking for my next hard product problem.{" "}
           <span className="home-contact__ask">
             Tell me about yours at{" "}
-            <ContactLink href="mailto:hello@muhammad.design">
+            <ContactLink
+              data-track="contact"
+              data-track-channel="email"
+              data-track-place="footer"
+              href="mailto:hello@muhammad.design"
+            >
               hello@muhammad.design
             </ContactLink>
             .

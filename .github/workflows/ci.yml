@@ -15,7 +15,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -31,3 +31,32 @@ jobs:
 
       - name: Run quality checks
         run: bun run check
+
+      # Lab scores for the production build on a throttled phone: tracked over
+      # time in each run's summary, with the full reports kept as an artifact.
+      # Only accessibility below 95 fails the job; performance scores vary
+      # between runners, so their budgets warn.
+      - name: Run Lighthouse
+        run: bunx @lhci/cli@0.16.1 autorun --config=.github/lighthouse/lighthouserc.json
+
+      - name: Summarize Lighthouse scores
+        if: ${{ !cancelled() }}
+        run: |
+          manifest=.lighthouseci/reports/manifest.json
+          [ -f "$manifest" ] || exit 0
+          {
+            echo "### Lighthouse (mobile, representative of 3 runs)"
+            echo
+            echo "| Page | Performance | Accessibility | Best practices |"
+            echo "| --- | --- | --- | --- |"
+            jq -r '.[] | select(.isRepresentativeRun) | "| \(.url | sub("^https?://[^/]+"; "")) | \(.summary.performance * 100 | round) | \(.summary.accessibility * 100 | round) | \(.summary["best-practices"] * 100 | round) |"' "$manifest"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/reports
+          if-no-files-found: ignore
+          retention-days: 30

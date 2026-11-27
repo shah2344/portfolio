@@ -1,95 +1,38 @@
-import { clamp, ease } from "./pose";
-import { HOME_CHARACTER_TIMING, type HomeCharacterTiming } from "./timing";
+import { ease } from "./pose";
 
-/** Underdamped spring, sampled once for WAAPI rather than a second frame loop. */
-function travelSpring(t: number) {
+/**
+ * Underdamped spring, normalised to land exactly on 1. One visible overshoot
+ * and a small correction, then still.
+ */
+function popSpring(t: number) {
   const response = (s: number) =>
-    1 - Math.exp(-8 * s) * (Math.cos(6 * s) + (4 / 3) * Math.sin(6 * s));
+    1 - Math.exp(-5 * s) * (Math.cos(11 * s) + (5 / 11) * Math.sin(11 * s));
   return response(t) - (response(1) - 1) * ease(t);
 }
 
-/** One trip with a small overshoot, then an exact, drift-free resting slot. */
-export function homeCharacterEntranceFrames(
-  x: number,
-  y: number,
-  timing: HomeCharacterTiming = HOME_CHARACTER_TIMING,
-): Keyframe[] {
-  const centered = `translate(${x}px, ${y}px)`;
-  const travelStart = timing.travelDelayMs / timing.entranceMs;
-  const travel = Array.from({ length: 48 }, (_, index): Keyframe => {
-    const t = (index + 1) / 48;
+/**
+ * The character leads the masthead stagger with its own entrance. The copy
+ * rises softly out of a blur; the character pops up from a little below, tips
+ * back level and settles on a spring, so it reads as alive rather than as one
+ * more line of text. It stays in its slot and never crosses the copy.
+ */
+export function homeCharacterEntranceFrames(): Keyframe[] {
+  const steps = 32;
+  return Array.from({ length: steps + 1 }, (_, index): Keyframe => {
+    const t = index / steps;
     if (t === 1)
       return {
         offset: 1,
         opacity: 1,
         filter: "blur(0px)",
-        transform: "translate(0px, 0px) scale(1)",
+        transform: "translateY(0px) rotate(0deg) scale(1)",
       };
-    const progress = travelSpring(t);
-    // Cap the spring's overshoot at 5px even on very large viewports.
-    const remaining =
-      progress <= 1
-        ? 1 - progress
-        : -Math.min(progress - 1, 5 / Math.max(1, Math.hypot(x, y)));
-    const size = 1.5 - 0.5 * clamp(progress);
-    // Stretch on the rise, compress on arrival; at most 3.5% deformation.
-    const stretch = 0.035 * Math.sin(2 * Math.PI * t) * Math.sin(Math.PI * t);
+    const away = 1 - popSpring(t);
     return {
-      offset: travelStart + (1 - travelStart) * t,
-      opacity: 1,
-      filter: "blur(0px)",
-      transform: `translate(${x * remaining}px, ${y * remaining}px) scale(${size / (1 + stretch)}, ${size * (1 + stretch)})`,
+      offset: t,
+      opacity: ease(t / 0.22),
+      filter: `blur(${(5 * (1 - ease(t / 0.3))).toFixed(3)}px)`,
+      transform: `translateY(${(10 * away).toFixed(3)}px) rotate(${(-12 * away).toFixed(3)}deg) scale(${(1 - 0.45 * away).toFixed(4)})`,
     };
   });
-  return [...arrivalFrames(centered, timing), ...travel];
-}
-
-/**
- * The same arrival and greeting, for a load restored below the masthead: the
- * character drifts a little toward its out-of-view slot and dissolves there.
- */
-export function homeCharacterDissolveFrames(
-  x: number,
-  y: number,
-  timing: HomeCharacterTiming = HOME_CHARACTER_TIMING,
-): Keyframe[] {
-  const drift = 16 / Math.max(1, Math.hypot(x, y));
-  return [
-    ...arrivalFrames(`translate(${x}px, ${y}px)`, timing),
-    {
-      offset: 1,
-      opacity: 0,
-      filter: "blur(10px)",
-      transform: `translate(${x * (1 - drift)}px, ${y * (1 - drift)}px) scale(1.2)`,
-    },
-  ];
-}
-
-/** Arrives at the centre and holds there through the greeting. */
-function arrivalFrames(
-  centered: string,
-  timing: HomeCharacterTiming,
-): Keyframe[] {
-  return [
-    {
-      offset: 0,
-      opacity: 0,
-      filter: "blur(10px)",
-      transform: `${centered} scale(0.55)`,
-      easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-    },
-    {
-      offset: timing.arrivalMs / timing.entranceMs,
-      opacity: 1,
-      filter: "blur(0px)",
-      transform: `${centered} scale(1.5)`,
-    },
-    {
-      offset: timing.travelDelayMs / timing.entranceMs,
-      opacity: 1,
-      filter: "blur(0px)",
-      transform: `${centered} scale(1.5)`,
-      easing: "cubic-bezier(0.4, 0, 0.7, 1)",
-    },
-  ];
 }

@@ -33,7 +33,6 @@ import { HomeTooltip } from "@/components/home/tooltip/tooltip";
 import { HomeDock } from "@/components/home/dock/dock";
 import { HomeLogo } from "@/components/home/character/home-logo";
 import { HomeThemeToggle } from "@/components/home/home-theme-toggle";
-import { HOME_CHARACTER_TIMING } from "@/components/home/character/timing";
 import {
   PlaygroundTile,
   PlaygroundVideo,
@@ -86,19 +85,21 @@ export const projects = [
   },
 ] satisfies readonly CaseStudyTileProject[];
 
-const DOCK_ENTER_STEP = 2;
+// Step 0 is the character (`HomeEntranceRoot`); the copy follows it.
+const INTRO_ENTER_STEP = 1;
+const DOCK_ENTER_STEP = INTRO_ENTER_STEP + 2;
 // The work heading follows the profile links by one beat.
 const WORK_ENTER_STEP = DOCK_ENTER_STEP + 1;
 const enterDelay = (index: number) =>
   ({
-    "--home-enter-delay": `calc(var(--home-character-content-delay, ${HOME_CHARACTER_TIMING.contentDelayMs}ms) + ${entranceDelayMs(index)}ms)`,
+    "--home-enter-delay": `${entranceDelayMs(index)}ms`,
   }) as CSSProperties;
 
 export function HomeContent() {
   return (
     <div className="editorial-page">
       {/* Before the masthead is parsed, so a resumed load never paints the
-          opening's waiting state. */}
+          opening's hidden state. */}
       <script dangerouslySetInnerHTML={{ __html: homeResumeScript }} />
       <HomeEntranceRoot />
       <HomeKeyboardFocus />
@@ -118,7 +119,7 @@ export function HomeContent() {
               data-home-enter="idle"
               data-home-load=""
               data-home-enter-kind="chrome"
-              style={enterDelay(0)}
+              style={enterDelay(INTRO_ENTER_STEP)}
             >
               <HomeThemeToggle />
             </div>
@@ -131,7 +132,7 @@ export function HomeContent() {
                 data-home-enter="idle"
                 data-home-load=""
                 data-home-enter-kind="text"
-                style={enterDelay(0)}
+                style={enterDelay(INTRO_ENTER_STEP)}
               >
                 I&rsquo;m <span className="home-intro__name">Muhammad</span>, a
                 product designer from Toronto, currently designing and building
@@ -141,7 +142,7 @@ export function HomeContent() {
                 data-home-enter="idle"
                 data-home-load=""
                 data-home-enter-kind="text"
-                style={enterDelay(1)}
+                style={enterDelay(INTRO_ENTER_STEP + 1)}
               >
                 I&rsquo;ve spent the last {experienceYears()} years designing
                 fintech and HR tech products used by hundreds of thousands of

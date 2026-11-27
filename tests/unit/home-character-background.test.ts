@@ -1,61 +1,21 @@
 import { describe, expect, it } from "bun:test";
-import { runInNewContext } from "node:vm";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { HomeCharacterBackground } from "../../src/components/home/character/background";
 import {
   CHARACTER_BACKGROUNDS,
-  CHARACTER_SHUFFLE_LENGTH,
+  HOME_CHARACTER_BACKGROUND,
   characterBackgroundColors,
-  characterBackgroundScript,
+  currentCharacterBackground,
+  followingCharacterBackground,
 } from "../../src/components/home/character/backgrounds";
 
-function choose(storage: {
-  getItem(): string | null;
-  setItem(k: string, v: string): void;
-}) {
-  const dataset: Record<string, string> = {};
-  // No Image, canvas or network APIs: choosing a seed in <head> must not
-  // load the renderer or request the retired static background images.
-  runInNewContext(characterBackgroundScript, {
-    document: { documentElement: { dataset } },
-    sessionStorage: storage,
-  });
-  return dataset;
-}
-
 describe("generated character backgrounds", () => {
-  it("chooses a different colour on reload and keeps the reveal seeds distinct", () => {
-    let previous = String(CHARACTER_BACKGROUNDS[0]);
-    for (let load = 0; load < 30; load++) {
-      const before = previous;
-      const dataset = choose({
-        getItem: () => previous,
-        setItem: (_key, value) => {
-          previous = value;
-        },
-      });
-      expect(String(dataset.characterBackground)).not.toBe(before);
-      expect(String(dataset.characterBackground)).toBe(previous);
-      expect(CHARACTER_BACKGROUNDS).toContain(Number(previous));
-      const shuffle = dataset.characterShuffle!.split(",").map(Number);
-      expect(shuffle).toHaveLength(CHARACTER_SHUFFLE_LENGTH);
-      expect(new Set(shuffle).size).toBe(shuffle.length);
-      expect(shuffle).not.toContain(Number(previous));
-      for (const seed of shuffle) expect(CHARACTER_BACKGROUNDS).toContain(seed);
-    }
-  });
-
-  it("still selects a valid colour when session storage is blocked", () => {
-    const unavailable = () => {
-      throw new Error("Storage unavailable");
-    };
-    const dataset = choose({ getItem: unavailable, setItem: unavailable });
-    expect(CHARACTER_BACKGROUNDS).toContain(
-      Number(dataset.characterBackground),
-    );
-    expect(dataset.characterShuffle!.split(",")).toHaveLength(
-      CHARACTER_SHUFFLE_LENGTH,
+  it("starts every load on the same material, and a tap moves on from it", () => {
+    expect(CHARACTER_BACKGROUNDS).toContain(HOME_CHARACTER_BACKGROUND);
+    expect(currentCharacterBackground()).toBe(HOME_CHARACTER_BACKGROUND);
+    expect(followingCharacterBackground(HOME_CHARACTER_BACKGROUND)).not.toBe(
+      HOME_CHARACTER_BACKGROUND,
     );
   });
 

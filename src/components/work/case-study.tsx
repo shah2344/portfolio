@@ -20,6 +20,7 @@ import {
   HumiStoryCard,
 } from "@/components/work/humi/case-study-shell";
 import { CaseStudyMediaArrival } from "@/components/work/case-study-media-arrival";
+import { TrackOnView } from "@/components/analytics/track-on-view";
 import { cn } from "@/lib/utils";
 
 /*
@@ -337,6 +338,7 @@ export function CaseStudyEnding({
 }) {
   return (
     <section className="humi-story-ending" id={id}>
+      <TrackOnView event="case-study-finished" targetId={id} />
       {heading ? <h2>{heading}</h2> : null}
       {children}
       <div className="case-study-ending__actions">

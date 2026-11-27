@@ -22,15 +22,16 @@ const diffusionMask = (stops: [number, number][]) =>
   `data:image/svg+xml,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 96 96"><defs><linearGradient id="weight" gradientUnits="userSpaceOnUse" x1="0" y1="3" x2="0" y2="59">${stops.map(([offset, opacity]) => `<stop offset="${offset}" stop-color="white" stop-opacity="${opacity}"/>`).join("")}</linearGradient></defs><rect x="-16" y="-16" width="96" height="96" fill="url(#weight)"/></svg>`,
   )}`;
-// Blur values are displayed pixels; convert to the 58-unit viewBox below. The
-// radius roughly doubles per band, so each step reads as the same change, and
-// each band peaks where its neighbours fall to zero.
+// Blur values are displayed pixels; convert to the 58-unit viewBox below. Each
+// band peaks where its neighbours fall to zero. The base dissolves into the
+// page while the upper half stays nearly sharp: past roughly 2.5px at 44px, the
+// silhouette goes and the orb reads as out of focus rather than diffused.
 const diffusionLevels = [
   { blur: 0, at: 0 },
-  { blur: 0.75, at: 0.25 },
-  { blur: 1.75, at: 0.5 },
-  { blur: 3.25, at: 0.75 },
-  { blur: 5.5, at: 1 },
+  { blur: 0.4, at: 0.25 },
+  { blur: 1, at: 0.5 },
+  { blur: 1.75, at: 0.75 },
+  { blur: 2.5, at: 1 },
 ];
 const diffusionBands = diffusionLevels.map(({ blur, at }, index) => {
   const previous = diffusionLevels[index - 1]?.at;
@@ -147,23 +148,23 @@ export function HomeLogo({
           y2="59"
         >
           {/* Eased rather than linear, so the fade has no visible knee. The
-              base stays mostly solid: the orb dissolves, it doesn't vanish. */}
+              base thins but holds, so the silhouette survives the blur. */}
           <stop offset="0" stopColor="white" />
           <stop offset="0.34" stopColor="white" />
           <stop
             offset="0.54"
             stopColor="white"
-            style={{ stopOpacity: "var(--character-diffusion-middle, 0.94)" }}
+            style={{ stopOpacity: "var(--character-diffusion-middle, 0.97)" }}
           />
           <stop
             offset="0.74"
             stopColor="white"
-            style={{ stopOpacity: "var(--character-diffusion-lower, 0.83)" }}
+            style={{ stopOpacity: "var(--character-diffusion-lower, 0.88)" }}
           />
           <stop
             offset="1"
             stopColor="white"
-            style={{ stopOpacity: "var(--character-diffusion-bottom, 0.6)" }}
+            style={{ stopOpacity: "var(--character-diffusion-bottom, 0.75)" }}
           />
         </linearGradient>
         <mask

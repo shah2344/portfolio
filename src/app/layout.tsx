@@ -4,9 +4,9 @@ import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import { UmamiScript } from "@/components/analytics/umami-script";
 import { AgentationTools } from "@/components/dev/agentation-tools";
 import { LiveFavicon } from "@/components/favicon/live-favicon";
-import { characterBackgroundScript } from "@/components/home/character/backgrounds";
 import { phoneSheetScript } from "@/components/work/case-sheet/phone-sheet-script";
 import { reopenSheetScript } from "@/components/work/case-sheet/reopen-sheet-script";
 import { siteConfig } from "@/config/site";
@@ -107,9 +107,6 @@ export default function RootLayout({
             __html: `try{var t=localStorage.getItem('portfolio-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==='dark'?'#0f0f0f':'#fcfcfc'})}}catch(e){}`,
           }}
         />
-        <script
-          dangerouslySetInnerHTML={{ __html: characterBackgroundScript }}
-        />
         {/* Sets the direction of a phone's case-study transition before the
             arriving page's first frame; see `phone-sheet.ts`. */}
         <script dangerouslySetInnerHTML={{ __html: phoneSheetScript }} />
@@ -127,6 +124,7 @@ export default function RootLayout({
         <LiveFavicon />
         <Analytics />
         <SpeedInsights />
+        <UmamiScript />
       </body>
     </html>
   );

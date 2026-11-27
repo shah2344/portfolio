@@ -288,7 +288,7 @@ export function AnyDayCaseStudy() {
                 <CaseStudyMedia
                   expandable
                   alt="The original Today employer portal, with a tip calculator and restaurant wallet dashboard shown side by side."
-                  description="Automated tip pools were confusing to set up, so managers stuck with spreadsheets and imported them. Each shift took hours to enter, and mistakes surfaced only after staff were paid."
+                  description="Automated tip pools were confusing to set up, so managers stuck with spreadsheets and imported amounts. Every shift was keyed in by hand, so mistakes slipped in and only surfaced after staff were paid."
                   annotations={OLD_PORTAL_MARKS}
                   ground="#f2f2f2"
                   src={oldPortalImage}
@@ -319,7 +319,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="discovery-findings"
                 title="We mapped payout journeys with managers."
-                description="Tipping rules varied by restaurant and even by location. Automation only worked if any location could easily set up their own rules exactly how they had it in their spreadsheets."
+                description="Tipping rules varied by restaurant and even by location. So we set out to make tip rules as easy to set up as the spreadsheets managers already relied on."
               >
                 <AnyDayFigureRow width="full">
                   <AnyDayFigure
@@ -337,8 +337,8 @@ export function AnyDayCaseStudy() {
               <CaseStudySection id="solution">Solution</CaseStudySection>
               <AnyDayStoryCard
                 id="foundation"
-                title="I designed the new app as an everyday account, not a payout tool."
-                description="Savings, rewards, and budgeting gave workers a reason to keep their pay there."
+                title="Getting paid was only the start."
+                description="I designed what came after: savings, rewards, and budgeting that gave workers a reason to stay."
               >
                 <AnyDayFigureRow width="wide">
                   <AnyDayFigure
@@ -374,7 +374,7 @@ export function AnyDayCaseStudy() {
               <AnyDayStoryCard
                 id="portal-system"
                 title="I redesigned the portal around how managers work."
-                description="Setting up tip rules had needed our help, so I turned it into a clear checklist any location could finish alone. Precise filtering, pinned locations, and funding alerts then cut the daily digging and surprises."
+                description="Onboarding used to need our help, so I made it a checklist any location could finish alone. Sharper filters, pinned locations, and funding alerts gave back the hours lost to digging and surprises."
               >
                 <AnyDayFigureRow width="full">
                   <figure className="anyday-figure">

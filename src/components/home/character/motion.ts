@@ -1,11 +1,6 @@
 import { BRAND_TURN_EVENT } from "@/components/motion/brand-turn-motion";
 import { isReturnVisit } from "@/components/motion/return-visit";
-import {
-  HOME_CHARACTER_LONG_WAIT_MS,
-  HOME_CHARACTER_TIMING,
-  homeCharacterArrival,
-} from "./timing";
-import { homeTravelEmotion, sampleTravelEmotion } from "./travel";
+import { HOME_CHARACTER_TIMING, homeCharacterArrival } from "./timing";
 import { appearanceReaction, APPEARANCE_REACTION_MS } from "./appearance";
 import { createCharacterGrab } from "./grab";
 import { createCharacterDizziness } from "./dizziness";
@@ -214,43 +209,23 @@ export function startHomeCharacter(
     leftAt = -Infinity,
     nodAt = -Infinity,
     selectionAt = -Infinity;
-  // Matches `HomeEntranceRoot`: a deep link has no opening. A load restored
-  // partway down still greets at the centre before it dissolves.
+  // Matches `HomeEntranceRoot`: a deep link has no opening.
   const fresh = !options.preview && !isReturnVisit() && !document.hidden;
   const opening = fresh && !location.hash;
-  const { waitedMs, timing: openingTiming } = fresh
+  const { timing: openingTiming } = fresh
     ? homeCharacterArrival()
-    : { waitedMs: 0, timing: HOME_CHARACTER_TIMING };
-  // A slow load ran the arrival in CSS already; join its clock, not restart it.
-  const openedAt = start - Math.min(waitedMs, HOME_CHARACTER_TIMING.arrivalMs);
+    : { timing: HOME_CHARACTER_TIMING };
+  const openedAt = start;
   let wakeAt = opening ? openedAt : -Infinity;
-  // After a long wait the trip to the masthead is relief, not a random mood.
-  const travelEmotion =
-    wakeAt === openedAt && !reduce.matches
-      ? waitedMs >= HOME_CHARACTER_LONG_WAIT_MS
-        ? "delighted"
-        : homeTravelEmotion()
-      : undefined;
-  if (travelEmotion) root.dataset.arrivalEmotion = travelEmotion;
   const greetingEnd =
-    wakeAt === openedAt ? openedAt + openingTiming.contentDelayMs : -Infinity;
+    wakeAt === openedAt ? openedAt + openingTiming.greetingEndMs : -Infinity;
   if (wakeAt === openedAt && !reduce.matches) {
-    director.play(
-      "greeting",
-      Math.max(start, openedAt + HOME_CHARACTER_TIMING.greetingDelayMs),
-    );
+    director.play("greeting", openedAt + HOME_CHARACTER_TIMING.greetingDelayMs);
   }
-  // The opening translates an ancestor without resizing the SVG. Invalidate
-  // its pointer geometry once it has reached the resting slot.
-  // A waiting character that was sent straight home lands after the trip alone.
+  // The opening moves and scales an ancestor without resizing the SVG.
+  // Invalidate its pointer geometry once it has settled in its slot.
   const arrivalSettlesAt =
-    wakeAt === openedAt
-      ? openedAt + openingTiming.entranceMs
-      : fresh && waitedMs > 0
-        ? start +
-          HOME_CHARACTER_TIMING.entranceMs -
-          HOME_CHARACTER_TIMING.travelDelayMs
-        : -Infinity;
+    wakeAt === openedAt ? openedAt + openingTiming.entranceMs : -Infinity;
   let arrivalRectPending = arrivalSettlesAt > -Infinity;
   let showcaseAt: number | null = null,
     showcaseIndex = 0;
@@ -505,19 +480,15 @@ export function startHomeCharacter(
     const fixation = gazeShift?.sample(time);
     base.gazeX = greeting ? 0.6 : (fixation?.x ?? attention.x * 6.3);
     base.gazeY = greeting ? 1 : (fixation?.y ?? attention.y * 7.2);
-    const target = sampleTravelEmotion(
-      director.sample(
-        time,
-        base,
-        !adaptation.active &&
-          time - lastInput > 1800 &&
-          showcaseAt === null &&
-          !fixedGaze &&
-          !playingWithGrab &&
-          secondary.comfort === 0,
-      ),
-      !adaptation.active && wakeAt === openedAt ? travelEmotion : undefined,
-      time - openedAt - openingTiming.travelDelayMs,
+    const target = director.sample(
+      time,
+      base,
+      !adaptation.active &&
+        time - lastInput > 1800 &&
+        showcaseAt === null &&
+        !fixedGaze &&
+        !playingWithGrab &&
+        secondary.comfort === 0,
     );
     // An ignored character's blinks grow heavy and slow.
     if (!adaptation.active && director.active !== "nap" && time >= nextBlink)

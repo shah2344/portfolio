@@ -21,9 +21,9 @@
   vertical-align: middle;
 }
 :global(:root[data-theme="dark"]) .root {
-  --character-diffusion-middle: 0.92;
-  --character-diffusion-lower: 0.78;
-  --character-diffusion-bottom: 0.5;
+  --character-diffusion-middle: 0.96;
+  --character-diffusion-lower: 0.85;
+  --character-diffusion-bottom: 0.68;
   --character-eye-outline: black;
   --character-glass-shade: 0.4;
   --character-glass-grain: 0.28;
@@ -37,9 +37,9 @@
 }
 @media (prefers-color-scheme: dark) {
   :global(:root:not([data-theme])) .root {
-    --character-diffusion-middle: 0.92;
-    --character-diffusion-lower: 0.78;
-    --character-diffusion-bottom: 0.5;
+    --character-diffusion-middle: 0.96;
+    --character-diffusion-lower: 0.85;
+    --character-diffusion-bottom: 0.68;
     --character-eye-outline: black;
     --character-glass-shade: 0.4;
     --character-glass-grain: 0.28;

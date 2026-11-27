@@ -77,6 +77,9 @@ export function HomeDock({ enterStyle }: { enterStyle?: CSSProperties }) {
                     aria-label={ariaLabel ?? label}
                     className="home-dock__link"
                     data-profile={id}
+                    data-track="contact"
+                    data-track-channel={id}
+                    data-track-place="dock"
                     href={href}
                     rel={opensNewTab ? "noopener noreferrer" : undefined}
                     target={opensNewTab ? "_blank" : undefined}

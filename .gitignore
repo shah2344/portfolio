@@ -6,6 +6,7 @@
 /out
 
 # testing
+/.lighthouseci
 /playwright-report
 /test-results
 

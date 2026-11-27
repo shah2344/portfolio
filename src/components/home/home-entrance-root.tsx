@@ -2,14 +2,8 @@
 
 import { useLayoutEffect } from "react";
 
-import {
-  homeCharacterArrival,
-  setHomeCharacterDeparture,
-} from "./character/timing";
-import {
-  homeCharacterDissolveFrames,
-  homeCharacterEntranceFrames,
-} from "./character/entrance";
+import { homeCharacterArrival } from "./character/timing";
+import { homeCharacterEntranceFrames } from "./character/entrance";
 import { isHomeResume, rememberHomeResume } from "./resume";
 
 import { observeSectionEntrances } from "@/components/motion/section-entrances";
@@ -47,8 +41,7 @@ export function HomeEntranceRoot({
     const finish = (target: HTMLElement) => {
       target.dataset.homeEnter = "done";
     };
-    // Read while the masthead is idle: the CSS waiting state ends with it.
-    const { waitedMs, waitingAt, timing } = homeCharacterArrival();
+    const { timing } = homeCharacterArrival();
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const character = document.querySelector<HTMLElement>(
@@ -71,43 +64,17 @@ export function HomeEntranceRoot({
       return;
     }
 
-    // A slow load already showed the arrival in CSS; continue it from where
-    // it is rather than replaying it, however long the character waited.
-    const elapsed = Math.min(waitedMs, timing.arrivalMs);
-    const contentDelayMs = timing.contentDelayMs - elapsed;
+    // The character is the stagger's first beat (step 0, no delay), released
+    // in the same commit as the copy; its own spring sets it apart from text.
     const home = document.querySelector<HTMLElement>(".home");
-    home?.style.setProperty(
-      "--home-character-content-delay",
-      `${contentDelayMs}ms`,
-    );
-    // Measure the untransformed resting slot. Only the character moves; the
-    // document retains its final layout throughout the opening.
-    const slot = character.getBoundingClientRect();
-    const viewport = window.visualViewport;
-    const centerX =
-      waitingAt?.x ??
-      (viewport?.offsetLeft ?? 0) + (viewport?.width ?? innerWidth) / 2;
-    const centerY =
-      waitingAt?.y ??
-      (viewport?.offsetTop ?? 0) + (viewport?.height ?? innerHeight) / 2;
-    const slotHidden = slot.bottom <= 0 || slot.top >= window.innerHeight;
-    const arrival = character.animate(
-      (slotHidden ? homeCharacterDissolveFrames : homeCharacterEntranceFrames)(
-        centerX - slot.left - slot.width / 2,
-        centerY - slot.top - slot.height / 2,
-        timing,
-      ),
-      { duration: timing.entranceMs, fill: "both" },
-    );
-    arrival.currentTime = elapsed;
-    setHomeCharacterDeparture(
-      performance.now() + timing.travelDelayMs - elapsed,
-    );
+    const arrival = character.animate(homeCharacterEntranceFrames(), {
+      duration: timing.entranceMs,
+      fill: "both",
+    });
     let disposed = false;
     const settleCharacter = () => {
       finish(character);
       arrival.cancel();
-      setHomeCharacterDeparture(undefined);
     };
     void arrival.finished.then(
       () => {
@@ -125,12 +92,11 @@ export function HomeEntranceRoot({
       }
     }
 
-    const openingAt = performance.now() - elapsed;
+    const openingAt = performance.now();
     const abort = new AbortController();
     const skipOpening = () => {
-      if (performance.now() - openingAt > timing.contentDelayMs + 750) return;
+      if (performance.now() - openingAt > timing.entranceMs + 750) return;
       settleCharacter();
-      home?.style.setProperty("--home-character-content-delay", "0ms");
       for (const target of targets) {
         if (target.hasAttribute("data-home-load")) finish(target);
       }
@@ -180,9 +146,7 @@ export function HomeEntranceRoot({
       listener,
     );
 
-    const cleanupSections = home
-      ? observeSectionEntrances(home, contentDelayMs)
-      : undefined;
+    const cleanupSections = home ? observeSectionEntrances(home) : undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -236,10 +200,8 @@ export function HomeEntranceRoot({
       disposed = true;
       abort.abort();
       arrival.cancel();
-      setHomeCharacterDeparture(undefined);
       observer.disconnect();
       cleanupSections?.();
-      home?.style.removeProperty("--home-character-content-delay");
       for (const target of targets) {
         target.removeEventListener("animationend", onAnimationEnd);
       }

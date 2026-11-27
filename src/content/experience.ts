@@ -39,7 +39,7 @@ const roles: readonly Role[] = [
     start: "2026-04",
     startLabel: "Apr",
     end: null,
-    title: "Design Consultant",
+    title: "Design Systems Lead",
     employment: "Contract",
     workplace: "Remote",
   },

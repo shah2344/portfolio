@@ -164,7 +164,7 @@ function environment() {
   };
 }
 describe("character lifecycle", () => {
-  it("greets on initial arrival before the reading content is released, ignoring obsolete saved pause state", () => {
+  it("greets on initial arrival, ignoring obsolete saved pause state", () => {
     const e = environment();
     const initialMouth = e.svg
       .querySelector("[data-mouth]")!
@@ -174,7 +174,7 @@ describe("character lifecycle", () => {
     expect(e.svg.querySelector("[data-mouth]")!.attributes.get("d")).not.toBe(
       initialMouth,
     );
-    expect(HOME_CHARACTER_TIMING.contentDelayMs).toBeGreaterThanOrEqual(
+    expect(HOME_CHARACTER_TIMING.greetingEndMs).toBeGreaterThanOrEqual(
       HOME_CHARACTER_TIMING.greetingDelayMs + performanceDuration.greeting,
     );
     for (let time = 0; time < 600; time += 16) e.advance(16);
